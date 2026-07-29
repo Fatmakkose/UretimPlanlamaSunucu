@@ -1,0 +1,222 @@
+@model List<UretimPlanlama.Models.Fabricator>
+@{
+    ViewData["Title"] = "Kumaşçı Tanımı";
+}
+
+<div class="dashboard-header" style="margin-bottom: 25px;">
+    <div class="header-title">
+        <h1 style="font-size: 1.8rem; margin: 0; color: var(--text-main);">Kumaşçı Tanımı</h1>
+    </div>
+    <div class="header-actions">
+        <a href="/Definitions/CreateFabricator" class="btn-planner" style="text-decoration: none;"><i class="fa-solid fa-plus"></i> Yeni Kumaşçı Ekle</a>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div style="background-color: var(--success-bg); color: var(--success-text); padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid rgba(13, 148, 136, 0.2);">
+        <i class="fa-solid fa-circle-check" style="margin-right: 8px;"></i> @TempData["SuccessMessage"]
+    </div>
+}
+
+<div class="dashboard-grid" style="grid-template-columns: 1fr;">
+    <div class="schedule-section">
+        <div class="section-header">
+            <div>
+                <h2>Mevcut Kumaşçılar</h2>
+            </div>
+            <div class="search-box" style="width: 300px; margin-top: -10px;">
+                <i class="fa-solid fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Kumaşçı ara..." />
+            </div>
+        </div>
+
+        <div class="schedule-list">
+            @if (Model == null || Model.Count == 0)
+            {
+                <div class="schedule-item" style="justify-content: center; padding: 40px;">
+                    <div style="text-align: center; color: var(--text-muted);">
+                        <i class="fa-solid fa-truck" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.5;"></i>
+                        <p style="font-size: 1.1rem; margin: 0;">Henüz kayıtlı bir kumaşçı bulunmuyor.</p>
+                        <p style="font-size: 0.9rem; margin-top: 5px;">Yeni bir kumaşçı tanımlamak için sağ üstteki butonu kullanabilirsiniz.</p>
+                    </div>
+                </div>
+            }
+            else
+            {
+                @foreach (var f in Model)
+                {
+                    <div class="schedule-item searchable-item" style="padding: 16px 24px;">
+                        <div class="time-slot" style="margin-right: 20px;">
+                            <span style="color: var(--primary-color);"><i class="fa-solid fa-truck fa-lg"></i></span>
+                        </div>
+                        <div class="job-info" style="flex-grow: 1; display: flex; align-items: center; justify-content: space-between;">
+                            <div class="job-title" style="margin: 0;">
+                                <span class="job-id" style="font-size: 1.1rem; font-weight: 600; color: var(--text-main);">@f.Name</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                @if (f.IsActive)
+                                {
+                                    <span class="badge badge-progress" style="font-size: 0.7rem; width: 45px; text-align: center;" id="fab-badge-@f.Id">Aktif</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-high" style="font-size: 0.7rem; width: 45px; text-align: center;" id="fab-badge-@f.Id">Pasif</span>
+                                }
+                                <label class="switch" style="margin: 0;" title="Durumu Değiştir">
+                                    <input type="checkbox" class="toggle-fab-checkbox" data-id="@f.Id" @(f.IsActive ? "checked" : "")>
+                                    <span class="slider round"></span>
+                                </label>
+                                <button class="btnDeleteFab" data-id="@f.Id" data-name="@f.Name" title="Kumaşçıyı Sil" style="background: transparent; border: none; color: #ef4444; cursor: pointer; padding: 4px 6px; border-radius: 4px; transition: all 0.2s; font-size: 0.9rem;"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Kumaşçı Silme Onay Modalı -->
+<div id="deleteFabModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(8px); z-index: 1100; justify-content: center; align-items: center; transition: all 0.3s ease;">
+    <div style="background: white; width: 90%; max-width: 440px; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); padding: 32px; text-align: center;">
+        <div style="margin-bottom: 20px;">
+            <div style="width: 56px; height: 56px; background: #fef2f2; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.5rem; color: #ef4444;"></i>
+            </div>
+            <h3 style="margin: 0 0 8px 0; font-size: 1.2rem; font-weight: 700; color: #0f172a;">Kumaşçıyı Silmek İstediğinize Emin Misiniz?</h3>
+            <p style="margin: 0; font-size: 0.9rem; color: #64748b; line-height: 1.5;"><strong id="deleteFabName"></strong> kalıcı olarak silinecektir.</p>
+        </div>
+        <div style="display: flex; gap: 12px; justify-content: center;">
+            <button id="btnCancelDeleteFab" style="padding: 10px 24px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #334155; font-weight: 600; font-size: 0.9rem; cursor: pointer;">İptal</button>
+            <button id="btnConfirmDeleteFab" style="padding: 10px 24px; border-radius: 8px; border: none; background: #ef4444; color: white; font-weight: 600; font-size: 0.9rem; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.3);">Evet, Sil</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <style>
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
+        .switch input { 
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #cbd5e1;
+            transition: .3s;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .3s;
+        }
+        input:checked + .slider {
+            background-color: #10b981;
+        }
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+        .slider.round {
+            border-radius: 20px;
+        }
+        .slider.round:before {
+            border-radius: 50%;
+        }
+    </style>
+    <script>
+        $(document).ready(function() {
+            $('#searchInput').on('keyup', function() {
+                var value = $(this).val().toLowerCase();
+                $('.searchable-item').filter(function() {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+                });
+            });
+
+            $('.toggle-fab-checkbox').change(function(e) {
+                var checkbox = $(this);
+                var id = checkbox.data('id');
+                var isChecked = checkbox.is(':checked');
+                
+                $.ajax({
+                    url: '/Definitions/ToggleFabricatorStatus',
+                    type: 'POST',
+                    data: { id: id },
+                    success: function(res) {
+                        if (res.success) {
+                            var badge = $('#fab-badge-' + id);
+                            if (res.isActive) {
+                                badge.removeClass('badge-high').addClass('badge-progress').text('Aktif');
+                                checkbox.prop('checked', true);
+                            } else {
+                                badge.removeClass('badge-progress').addClass('badge-high').text('Pasif');
+                                checkbox.prop('checked', false);
+                            }
+                        } else {
+                            alert('Bir hata oluştu.');
+                            checkbox.prop('checked', !isChecked); // revert
+                        }
+                    },
+                    error: function() {
+                        alert('Bir hata oluştu.');
+                        checkbox.prop('checked', !isChecked); // revert
+                    }
+                });
+            });
+
+            // Kumaşçı Silme
+            var deleteFabId = 0;
+
+            $(document).on('click', '.btnDeleteFab', function(e) {
+                e.preventDefault();
+                deleteFabId = $(this).data('id');
+                var name = $(this).data('name');
+                $('#deleteFabName').text(name);
+                $('#deleteFabModal').css('display', 'flex').hide().fadeIn(200);
+            });
+
+            $('#btnConfirmDeleteFab').click(function() {
+                if (deleteFabId === 0) return;
+                $.ajax({
+                    url: '/Definitions/DeleteFabricator',
+                    type: 'POST',
+                    data: { id: deleteFabId },
+                    success: function(res) {
+                        if (res.success) {
+                            window.location.reload();
+                        } else {
+                            alert('Hata: ' + (res.message || 'Silinemedi.'));
+                        }
+                    },
+                    error: function() {
+                        alert('Sunucu hatası oluştu.');
+                    }
+                });
+                $('#deleteFabModal').fadeOut(200);
+            });
+
+            $('#btnCancelDeleteFab, #deleteFabModal').click(function(e) {
+                if (e.target === this || $(e.target).closest('#btnCancelDeleteFab').length > 0) {
+                    $('#deleteFabModal').fadeOut(200);
+                    deleteFabId = 0;
+                }
+            });
+        });
+    </script>
+}

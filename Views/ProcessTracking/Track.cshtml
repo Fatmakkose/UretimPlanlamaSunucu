@@ -1,0 +1,2373 @@
+@model UretimPlanlama.Models.Order
+@{
+    ViewData["Title"] = "Süreç Takip Detay";
+    var stokKartlari = ViewBag.StokKartlari as List<UretimPlanlama.Models.StokKarti> ?? new List<UretimPlanlama.Models.StokKarti>();
+    var workshops = ViewBag.Workshops as List<UretimPlanlama.Models.Workshop> ?? new List<UretimPlanlama.Models.Workshop>();
+
+    var prodData = new System.Collections.Generic.Dictionary<string, string>();
+    if (!string.IsNullOrEmpty(Model.ProductionJson))
+    {
+        try {
+            prodData = System.Text.Json.JsonSerializer.Deserialize<System.Collections.Generic.Dictionary<string, string>>(Model.ProductionJson);
+        } catch {}
+    }
+    string GetProdVal(string key) => prodData != null && prodData.ContainsKey(key) ? prodData[key] : "";
+
+    var purData = new System.Collections.Generic.Dictionary<string, string>();
+    if (!string.IsNullOrEmpty(Model.PurchasingMaterialsJson))
+    {
+        try {
+            purData = System.Text.Json.JsonSerializer.Deserialize<System.Collections.Generic.Dictionary<string, string>>(Model.PurchasingMaterialsJson);
+        } catch {}
+    }
+    string GetPurVal(string key) => purData != null && purData.ContainsKey(key) ? purData[key] : "";
+
+    string colorKey = string.IsNullOrEmpty(Model.Color) ? "GENEL" : Model.Color;
+    string plannedCutQtyStr = GetPurVal($"pur_color_{colorKey}_beden_cikacak");
+    if (string.IsNullOrEmpty(plannedCutQtyStr)) {
+        plannedCutQtyStr = GetPurVal("pur_color_GENEL_beden_cikacak");
+    }
+    int plannedCutQty = Model.CalculatedQuantity;
+    if (!string.IsNullOrEmpty(plannedCutQtyStr) && int.TryParse(plannedCutQtyStr.Replace(".", ""), out int parsedVal) && parsedVal > 0)
+    {
+        plannedCutQty = parsedVal;
+    }
+
+    int totalCutQty = 0;
+    if (!string.IsNullOrEmpty(Model.CuttingProcessJson))
+    {
+        try {
+            using var doc = System.Text.Json.JsonDocument.Parse(Model.CuttingProcessJson);
+            foreach(var item in doc.RootElement.EnumerateArray())
+            {
+                if(item.TryGetProperty("TotalQuantity", out var tq)) {
+                    if (tq.ValueKind == System.Text.Json.JsonValueKind.Number) {
+                        totalCutQty += tq.GetInt32();
+                    } else if (tq.ValueKind == System.Text.Json.JsonValueKind.String && int.TryParse(tq.GetString(), out int q)) {
+                        totalCutQty += q;
+                    }
+                }
+            }
+        } catch {}
+    }
+    int packingQty = totalCutQty > 0 ? totalCutQty : Model.Quantity;
+}
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <div>
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+            <a href="/ProcessTracking" style="display: inline-flex; align-items: center; gap: 6px; background: #f1f5f9; color: #475569; padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 0.8rem; text-decoration: none; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);" onmouseover="this.style.background='#e2e8f0'; this.style.color='#0f172a';" onmouseout="this.style.background='#f1f5f9'; this.style.color='#475569';">
+                <i class="fa-solid fa-arrow-left"></i> Geri Dön
+            </a>
+            <span style="font-size: 0.8rem; color: #94a3b8; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;">
+                SÜREÇ TAKİP DETAYI
+            </span>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 8px; user-select: none;">
+            <h2 style="margin: 0; color: #0f172a; padding-bottom: 2px;">@Model.OrderCode</h2>
+        </div>
+    </div>
+</div>
+
+<ul class="nav nav-tabs" id="trackTabs" style="margin-bottom: 20px;">
+    <li class="nav-item">
+        <button class="nav-link active" onclick="switchTab('purchase')" id="purchase-tab">Sevk Onay</button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" onclick="switchTab('timeline')" id="timeline-tab" style="background: #fdf4ff; color: #a21caf;">Takvim & Planlama <i class="fa-solid fa-calendar-check"></i></button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" onclick="switchTab('cutting')" id="cutting-tab">Kesim Süreci</button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" onclick="switchTab('packing')" id="packing-tab">Çeki Listesi</button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" onclick="switchTab('fileclosing')" id="fileclosing-tab" style="background: #fdf4ff; color: #db2777;">Dosya Kapama <i class="fa-solid fa-file-signature"></i></button>
+    </li>
+</ul>
+
+<div class="tabs-container">
+    <div class="tab-content" id="trackTabsContent">
+        
+        <!-- BİRLEŞTİRİLMİŞ SİPARİŞ ÖZELLİKLERİ ÜST ALANI -->
+        <div id="orderDetailsCard" style="margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid #e2e8f0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 14px;">
+                <h3 style="margin: 0; font-weight: 800; color: #0f172a; font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-box-open" style="color: #0ea5e9; font-size: 1.25rem;"></i> Sipariş Özellikleri
+                </h3>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px;">
+                <div style="background: #f8fafc; padding: 10px 14px; border-radius: 8px; border: 1px solid #f1f5f9;">
+                    <div style="font-size: 0.72rem; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.6px;">MODEL</div>
+                    <div style="font-weight: 700; color: #0f172a; font-size: 0.95rem;">@Model.ModelName</div>
+                </div>
+                <div style="background: #f8fafc; padding: 10px 14px; border-radius: 8px; border: 1px solid #f1f5f9;">
+                    <div style="font-size: 0.72rem; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.6px;">RENK</div>
+                    <div style="font-weight: 700; color: #0f172a; font-size: 0.95rem;">@Model.Color</div>
+                </div>
+                <div style="background: #f8fafc; padding: 10px 14px; border-radius: 8px; border: 1px solid #f1f5f9;">
+                    <div style="font-size: 0.72rem; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.6px;">MÜŞTERİ</div>
+                    <div style="font-weight: 700; color: #0f172a; font-size: 0.95rem;">@Model.Customer</div>
+                </div>
+                <div style="background: #fdf4ff; padding: 10px 14px; border-radius: 8px; border: 1px solid #fae8ff;">
+                    <div style="font-size: 0.72rem; color: #a21caf; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.6px;">ATÖLYE</div>
+                    <div style="font-weight: 700; color: #701a75; font-size: 0.95rem;">
+                        @{
+                            var atolyeInfo = GetProdVal("prod_dikim_atolyesi");
+                            <text>@(string.IsNullOrEmpty(atolyeInfo) ? "-" : atolyeInfo)</text>
+                        }
+                    </div>
+                </div>
+                <div style="background: #f8fafc; padding: 10px 14px; border-radius: 8px; border: 1px solid #f1f5f9;">
+                    <div style="font-size: 0.72rem; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.6px;">ADET</div>
+                    <div style="font-weight: 700; color: #0f172a; font-size: 0.95rem;">@Model.CalculatedQuantity.ToString("N0")</div>
+                </div>
+                <div style="background: #f0f9ff; padding: 10px 14px; border-radius: 8px; border: 1px solid #e0f2fe;">
+                    <div style="font-size: 0.72rem; color: #0284c7; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.6px;">TERMİN TARİHİ</div>
+                    <div style="font-weight: 700; color: #0c4a6e; font-size: 0.95rem;">@(Model.PlannedPackagingEndDate.HasValue ? Model.PlannedPackagingEndDate.Value.ToString("dd.MM.yyyy") : "-")</div>
+                </div>
+                <div style="background: #fdf2f8; padding: 10px 14px; border-radius: 8px; border: 1px solid #fce7f3;">
+                    <div style="font-size: 0.72rem; color: #db2777; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.6px;">REVİZE TERMİN</div>
+                    <div style="font-weight: 700; color: #9d174d; font-size: 0.95rem;">
+                        @{
+                            var revizeTermin = Model.RevisedInspectionDate.HasValue 
+                                ? Model.RevisedInspectionDate.Value.ToString("dd.MM.yyyy") 
+                                : "";
+                            
+                            if (string.IsNullOrEmpty(revizeTermin))
+                            {
+                                var revizeTerminStr = GetProdVal("prod_knn_revize_termin");
+                                if (!string.IsNullOrEmpty(revizeTerminStr))
+                                {
+                                    if (DateTime.TryParse(revizeTerminStr, out DateTime dtRevize))
+                                    {
+                                        revizeTermin = dtRevize.ToString("dd.MM.yyyy");
+                                    }
+                                    else
+                                    {
+                                        revizeTermin = revizeTerminStr;
+                                    }
+                                }
+                            }
+                            <text>@(string.IsNullOrEmpty(revizeTermin) ? "-" : revizeTermin)</text>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SEVK ONAY (ESKİ SATIN ALMA ONAYI) TAB -->
+        <div class="tab-pane active" id="purchase">
+            <div style="border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; margin-top: 0;">
+                <table style="margin: 0; width: 100%; border-collapse: collapse;">
+                    <thead style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                        <tr>
+                            <th style="padding: 16px; text-align: left; font-weight: 600; color: #475569; font-size: 0.85rem; border-right: 1px solid #e2e8f0;">MALZEME</th>
+                            <th style="padding: 16px; text-align: right; font-weight: 600; color: #b45309; font-size: 0.85rem; background: #fef08a; border-right: 1px solid #e2e8f0;">PLANLANAN MİKTAR</th>
+                            <th style="padding: 16px; text-align: center; font-weight: 600; color: #0284c7; font-size: 0.85rem; background: #e0f2fe; border-right: 1px solid #e2e8f0;">KNN DEPO</th>
+                            <th style="padding: 16px; text-align: center; font-weight: 600; color: #475569; font-size: 0.85rem;">KARŞILAŞTIRMA</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @{
+                        string ExtractFromOzellikler(string json, string keyContains) {
+                            if (string.IsNullOrEmpty(json)) return null;
+                            try {
+                                using var doc = System.Text.Json.JsonDocument.Parse(json);
+                                if (doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Array) {
+                                    foreach(var item in doc.RootElement.EnumerateArray()) {
+                                        if (item.TryGetProperty("Key", out var k) && item.TryGetProperty("Value", out var v)) {
+                                            if (k.GetString().Contains(keyContains, StringComparison.OrdinalIgnoreCase)) return v.GetString();
+                                        }
+                                    }
+                                } else if (doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object) {
+                                    foreach(var prop in doc.RootElement.EnumerateObject()) {
+                                        if (prop.Name.Contains(keyContains, StringComparison.OrdinalIgnoreCase)) {
+                                            return prop.Value.GetString();
+                                        }
+                                    }
+                                }
+                            } catch {}
+                            return null;
+                        }
+
+                        var salesMovements = ViewBag.SalesMovements as List<UretimPlanlama.Models.StokHareket> ?? new List<UretimPlanlama.Models.StokHareket>();
+                        var purchaseMovements = ViewBag.PurchaseMovements as List<UretimPlanlama.Models.StokHareket> ?? new List<UretimPlanlama.Models.StokHareket>();
+                        var orderMats = Model.OrderMaterials != null ? Model.OrderMaterials.ToList() : new List<UretimPlanlama.Models.OrderMaterial>();
+
+                        var purDataTrack = new Dictionary<string, string>();
+                        if (!string.IsNullOrEmpty(Model.PurchasingMaterialsJson)) {
+                            try { purDataTrack = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(Model.PurchasingMaterialsJson) ?? new Dictionary<string, string>(); } catch {}
+                        }
+                        var trackColors = new List<string>();
+                        if (!string.IsNullOrEmpty(Model.Color)) {
+                            trackColors = Model.Color.Split(new[] { ',', '-' }, StringSplitOptions.RemoveEmptyEntries).Select(c => c.Trim().ToUpper()).ToList();
+                        }
+                        if (!trackColors.Any()) trackColors.Add("GENEL");
+
+                        Func<string, double> parseTr = (string v) => {
+                            if (string.IsNullOrWhiteSpace(v)) return 0;
+                            v = v.Trim();
+                            if (v.Contains(",") && v.Contains(".")) v = v.Replace(".", "").Replace(",", ".");
+                            else if (v.Contains(",")) v = v.Replace(",", ".");
+                            else if (v.Contains(".") && v.IndexOf(".") == v.Length - 4) v = v.Replace(".", "");
+                            double.TryParse(v, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double r);
+                            return r;
+                        };
+                    }
+
+                    @if(orderMats.Any())
+                    {
+                        foreach(var mat in orderMats)
+                        {
+                            var stokKarti = mat.StokKarti;
+                            string dynBoyut = ExtractFromOzellikler(mat.OzelliklerJson, "BOYUT") ?? ExtractFromOzellikler(mat.OzelliklerJson, "EBAT") ?? ExtractFromOzellikler(mat.OzelliklerJson, "BÜYÜKLÜK") ?? ExtractFromOzellikler(mat.OzelliklerJson, "BOY");
+                            string extraInfo = !string.IsNullOrEmpty(dynBoyut) ? dynBoyut : mat.Aciklama;
+
+                            string dynMatBirim = ExtractFromOzellikler(mat.OzelliklerJson, "TELA BİRİM") 
+                                ?? ExtractFromOzellikler(mat.OzelliklerJson, "BİRİM KULLANIM") 
+                                ?? ExtractFromOzellikler(mat.OzelliklerJson, "BİRİM") 
+                                ?? ExtractFromOzellikler(mat.OzelliklerJson, "BIRIM");
+
+                            if (!string.IsNullOrEmpty(dynMatBirim)) {
+                                if (string.IsNullOrEmpty(extraInfo)) {
+                                    extraInfo = $"BİRİM: {dynMatBirim}";
+                                } else if (!extraInfo.Contains("BİRİM", StringComparison.OrdinalIgnoreCase) && !extraInfo.Contains("BIRIM", StringComparison.OrdinalIgnoreCase)) {
+                                    extraInfo = $"{extraInfo} | BİRİM: {dynMatBirim}";
+                                }
+                            }
+
+                            string matName = !string.IsNullOrEmpty(extraInfo) ? $"{stokKarti?.StokAdi ?? "Bilinmeyen Malzeme"} ({extraInfo})" : (stokKarti?.StokAdi ?? "Belirtilmemiş Malzeme");
+
+                            // Hesaplanan Planlanan Miktar (Sipariş adeti, renk, birim kullanım ve fire oranına göre)
+                            double totalIstenen = 0;
+                            string itemKey = "stk_" + mat.StokKartiId;
+                            string cat = (stokKarti?.Kategori ?? "").Trim().ToUpperInvariant();
+
+                            foreach(var c in trackColors) {
+                                string sipAdetiStr = purDataTrack.ContainsKey($"pur_color_{c}_siparis_adeti") ? purDataTrack[$"pur_color_{c}_siparis_adeti"] : Model.CalculatedQuantity.ToString();
+                                double siparisAdeti = parseTr(sipAdetiStr);
+                                if (siparisAdeti == 0) siparisAdeti = Model.CalculatedQuantity;
+
+                                string bedenMiktarStr = purDataTrack.ContainsKey($"pur_color_{c}_beden_miktar") ? purDataTrack[$"pur_color_{c}_beden_miktar"] : "0";
+                                double bedenMiktar = parseTr(bedenMiktarStr);
+
+                                string bedenCikacakStr = purDataTrack.ContainsKey($"pur_color_{c}_beden_cikacak") ? purDataTrack[$"pur_color_{c}_beden_cikacak"] : "0";
+                                double bedenCikacak = parseTr(bedenCikacakStr);
+
+                                double jobQty = bedenMiktar > 0 ? bedenCikacak : siparisAdeti;
+                                
+                                if (cat == "KUMAŞ" || cat == "KUMAS") {
+                                    string kumasIstenenStr = purDataTrack.ContainsKey($"pur_color_{c}_beden_miktar") ? purDataTrack[$"pur_color_{c}_beden_miktar"] : null;
+                                    double dKumas = 0;
+                                    if (kumasIstenenStr != null) {
+                                        dKumas = parseTr(kumasIstenenStr);
+                                    }
+                                    
+                                    if (dKumas == 0) {
+                                        string kumasIhtiyacStr = purDataTrack.ContainsKey($"pur_color_{c}_istenen_kumas_miktar") ? purDataTrack[$"pur_color_{c}_istenen_kumas_miktar"] : null;
+                                        if (kumasIhtiyacStr != null) {
+                                            dKumas = parseTr(kumasIhtiyacStr);
+                                        }
+                                    }
+                                    
+                                    if (dKumas > 0) {
+                                        totalIstenen += dKumas;
+                                    } else {
+                                        string metrajStr = ExtractFromOzellikler(mat.OzelliklerJson, "METRAJ") ?? mat.Miktar.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                                        double metraj = 0; double.TryParse(metrajStr.Replace(",", "."), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out metraj);
+                                        totalIstenen += Math.Round(jobQty * metraj);
+                                    }
+                                } else if (cat == "TELA") {
+                                    string dynBirim = ExtractFromOzellikler(mat.OzelliklerJson, "TELA BİRİM") ?? ExtractFromOzellikler(mat.OzelliklerJson, "BİRİM");
+                                    string defBirim = !string.IsNullOrEmpty(dynBirim) ? dynBirim : mat.Miktar.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                                    string birimStr = purDataTrack.ContainsKey($"pur_color_{c}_tela_birim_{itemKey}") ? purDataTrack[$"pur_color_{c}_tela_birim_{itemKey}"] : defBirim;
+                                    double birim = 0; double.TryParse(birimStr.Replace(",", "."), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out birim);
+                                    totalIstenen += Math.Ceiling(jobQty * birim);
+                                } else if (cat == "ETİKET" || cat == "ETIKET") {
+                                    string dynFire = ExtractFromOzellikler(mat.OzelliklerJson, "FİRE (%)") ?? ExtractFromOzellikler(mat.OzelliklerJson, "FIRE") ?? ExtractFromOzellikler(mat.OzelliklerJson, "FİRE");
+                                    string defFire = !string.IsNullOrEmpty(dynFire) ? dynFire : "0";
+                                    string fireStr = purDataTrack.ContainsKey($"pur_color_{c}_label_fire_{itemKey}") ? purDataTrack[$"pur_color_{c}_label_fire_{itemKey}"] : defFire;
+                                    double fire = 0; double.TryParse(fireStr.Replace(",", "."), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out fire);
+                                    double tmp = jobQty * 1; 
+                                    totalIstenen += Math.Round(tmp + Math.Round(tmp * (fire / 100.0)));
+                                } else {
+                                    string dynBirim = ExtractFromOzellikler(mat.OzelliklerJson, "BİRİM KULLANIM") ?? ExtractFromOzellikler(mat.OzelliklerJson, "BİRİM") ?? ExtractFromOzellikler(mat.OzelliklerJson, "BIRIM");
+                                    string defBirim = !string.IsNullOrEmpty(dynBirim) ? dynBirim : mat.Miktar.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                                    string birimStr = purDataTrack.ContainsKey($"pur_color_{c}_birim_{itemKey}") ? purDataTrack[$"pur_color_{c}_birim_{itemKey}"] : defBirim;
+                                    double birim = 0; double.TryParse(birimStr.Replace(",", "."), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out birim);
+                                    
+                                    string dynFire = ExtractFromOzellikler(mat.OzelliklerJson, "FİRE (%)") ?? ExtractFromOzellikler(mat.OzelliklerJson, "FIRE") ?? ExtractFromOzellikler(mat.OzelliklerJson, "FİRE");
+                                    string defFire = !string.IsNullOrEmpty(dynFire) ? dynFire : (Model.WastageRate ?? 0).ToString(System.Globalization.CultureInfo.InvariantCulture);
+                                    string fireStr = purDataTrack.ContainsKey($"pur_color_{c}_fire_{itemKey}") ? purDataTrack[$"pur_color_{c}_fire_{itemKey}"] : defFire;
+                                    double fire = 0; double.TryParse(fireStr.Replace(",", "."), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out fire);
+                                    
+                                    double toplam = jobQty * birim;
+                                    double fazla = Math.Round(toplam * (fire / 100.0));
+                                    totalIstenen += Math.Round(toplam + fazla);
+                                }
+                            }
+
+                            double planMiktar = totalIstenen > 0 ? totalIstenen : (double)mat.Miktar;
+
+                            // 1. Siparişe Özel Alınan (Alış / Giriş) Miktarlar Toplamı
+                            double siparisAlisMiktar = 0;
+                            if (mat.StokVaryantId.HasValue && mat.StokVaryantId > 0) {
+                                siparisAlisMiktar = (double)purchaseMovements.Where(p => p.StokKartiId == mat.StokKartiId && p.StokVaryantId == mat.StokVaryantId).Sum(p => p.Miktar);
+                            } else if (!string.IsNullOrEmpty(mat.OzelliklerJson) && stokKarti != null && stokKarti.Varyantlar != null) {
+                                var vMatch = stokKarti.Varyantlar.FirstOrDefault(v => v.VaryantAdi == mat.OzelliklerJson.Trim());
+                                if (vMatch != null) {
+                                    siparisAlisMiktar = (double)purchaseMovements.Where(p => p.StokKartiId == mat.StokKartiId && p.StokVaryantId == vMatch.Id).Sum(p => p.Miktar);
+                                }
+                            }
+                            if (siparisAlisMiktar == 0) {
+                                siparisAlisMiktar = (double)purchaseMovements.Where(p => p.StokKartiId == mat.StokKartiId).Sum(p => p.Miktar);
+                            }
+
+                            // 2. Depodaki Anlık Stok (Asla eksiye düşmez)
+                            double rawDepoStok = 0;
+                            if (mat.StokVaryant != null) {
+                                rawDepoStok = (double)mat.StokVaryant.MevcutMiktar;
+                            } else if (!string.IsNullOrEmpty(mat.OzelliklerJson) && stokKarti != null && stokKarti.Varyantlar != null) {
+                                var vMatch = stokKarti.Varyantlar.FirstOrDefault(v => v.VaryantAdi == mat.OzelliklerJson.Trim());
+                                if (vMatch != null) {
+                                    rawDepoStok = (double)vMatch.MevcutMiktar;
+                                } else if (stokKarti != null) {
+                                    rawDepoStok = (double)stokKarti.MevcutMiktar;
+                                }
+                            } else if (stokKarti != null) {
+                                rawDepoStok = (double)stokKarti.MevcutMiktar;
+                            }
+                            double mevcutDepoStok = Math.Max(0, rawDepoStok);
+
+                            // 3. Sipariş Süreç Takibinde Kullanılabilir Miktar (Siparişe özel alış veya depodaki stok)
+                            double sevkMiktar = Math.Max(siparisAlisMiktar, mevcutDepoStok);
+
+                            bool isStokYeterli = sevkMiktar >= planMiktar;
+                            double fark = sevkMiktar - planMiktar;
+                            string statusBadgeStyle = isStokYeterli 
+                                ? "background: #dcfce7; color: #166534; border: 1px solid #bbf7d0;" 
+                                : "background: #fef2f2; color: #dc2626; border: 1px solid #fecaca;";
+                            string statusBadgeText = isStokYeterli 
+                                ? "STOK YETERLİ" 
+                                : "YETERSİZ STOK (" + fark.ToString("N0") + ")";
+
+                            <tr>
+                                <td style="padding: 16px; border-right: 1px solid #e2e8f0; font-weight: 600; color: #1e293b;">
+                                    @matName
+                                </td>
+                                <td style="padding: 16px; text-align: right; border-right: 1px solid #e2e8f0; font-weight: 800; font-size: 1.1rem; color: #b45309; background: #fffbeb;">
+                                    @planMiktar.ToString("N2")
+                                </td>
+                                <td style="padding: 16px; text-align: center; border-right: 1px solid #e2e8f0; background: #f0f9ff;">
+                                    <input type="text" readonly class="form-control" value="@sevkMiktar.ToString("N2")" style="text-align: center; font-weight: 700; background: white; border: 1px solid #bae6fd; color: #0369a1; width: 140px; margin: 0 auto;" />
+                                </td>
+                                <td style="padding: 16px; text-align: center;">
+                                    <span class="badge" style="padding: 8px 14px; font-size: 0.85rem; font-weight: 700; border-radius: 20px; @statusBadgeStyle">@statusBadgeText</span>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="4" style="text-align: center; padding: 40px; color: #64748b;">
+                                <i class="fa-solid fa-boxes-stacked" style="font-size: 2.5rem; margin-bottom: 12px; opacity: 0.5;"></i>
+                                <p style="margin: 0; font-size: 1rem; font-weight: 600;">Bu siparişe tanımlı malzeme bulunmuyor.</p>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+            <div class="text-end mt-3 mb-2" style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button class="btn btn-outline-secondary" style="background: white; border: 1px solid #cbd5e1; color: #475569;" onclick="printDispatchSlip()">
+                    <i class="fa-solid fa-print" style="margin-right: 6px;"></i> Çıkış Fişi Yazdır
+                </button>
+                <button class="btn btn-primary" onclick="processSevkExit()">Kaydet ve Devam Et <i class="fa-solid fa-arrow-right" style="margin-left: 8px;"></i></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Custom Styles since Bootstrap is not present */
+    .nav-tabs {
+        display: flex;
+        list-style: none;
+        padding: 6px;
+        margin: 0 auto 24px auto;
+        background: #f1f5f9;
+        border-radius: 12px;
+        width: max-content;
+        gap: 4px;
+    }
+    .nav-item {
+        margin-bottom: 0;
+    }
+    .nav-link {
+        background: transparent;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-weight: 600;
+        color: #64748b;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-size: 0.95rem;
+    }
+    .nav-link:hover {
+        color: var(--text-main);
+        background: #e2e8f0;
+    }
+    .nav-link.active {
+        color: var(--primary-color);
+        background: white;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    }
+    .tab-content {
+        background: white;
+        padding: 32px;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+        border: 1px solid #f1f5f9;
+    }
+    .tab-pane {
+        display: none;
+    }
+    .tab-pane.active {
+        display: block;
+        animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @@keyframes slideUpFade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    
+    .row { display: flex; flex-wrap: wrap; margin: 0 -10px; }
+    .col-12 { width: 100%; padding: 0 10px; }
+    .col-md-2 { width: 16.666%; padding: 0 10px; }
+    .col-md-4 { width: 33.333%; padding: 0 10px; }
+    .mb-3 { margin-bottom: 1rem; }
+    
+    .form-control, .form-select {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+        background-color: #f8fafc;
+        color: #334155;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary-color);
+        background-color: #fff;
+        outline: none;
+        box-shadow: 0 0 0 4px rgba(0, 71, 187, 0.1);
+    }
+    label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 6px;
+        color: #475569;
+        font-size: 0.85rem;
+        letter-spacing: 0.3px;
+        text-transform: uppercase;
+    }
+    
+    .btn {
+        padding: 10px 20px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-size: 0.95rem;
+    }
+    .btn-primary { 
+        background: linear-gradient(135deg, var(--primary-color) 0%, #003996 100%); 
+        color: white; 
+        box-shadow: 0 4px 6px -1px rgba(0, 71, 187, 0.2);
+    }
+    .btn-primary:hover { 
+        transform: translateY(-1px);
+        box-shadow: 0 6px 8px -1px rgba(0, 71, 187, 0.3);
+    }
+    .btn-success { 
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%); 
+        color: white; 
+        box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
+    }
+    .btn-success:hover { 
+        transform: translateY(-1px);
+        box-shadow: 0 6px 8px -1px rgba(16, 185, 129, 0.3);
+    }
+    .btn-danger { background: #ef4444; color: white; }
+    .btn-danger:hover { background: #dc2626; }
+    .btn-outline-primary { 
+        background: transparent; 
+        border: 2px solid var(--primary-color); 
+        color: var(--primary-color); 
+    }
+    .btn-outline-primary:hover { 
+        background: var(--primary-color); 
+        color: white; 
+    }
+    .w-100 { width: 100%; }
+    .d-flex { display: flex; }
+    .align-items-end { align-items: flex-end; }
+    .gap-2 { gap: 8px; }
+    
+    .table { width: 100%; border-collapse: separate; border-spacing: 0; margin-bottom: 1.5rem; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; }
+    .table th, .table td { padding: 14px 16px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+    .table th { background: #f8fafc; font-weight: 600; color: #475569; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px; }
+    .table tbody tr:last-child td { border-bottom: none; }
+    .table tbody tr:hover { background: #f8fafc; }
+    
+    .badge { padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+    .bg-success { background: #dcfce7; color: #166534; }
+    .bg-warning { background: #fef9c3; color: #854d0e; }
+    .text-end { text-align: right; }
+</style>
+
+
+
+        <!-- KESİM SÜRECİ TAB -->
+        <div class="tab-pane" id="cutting">
+            @{
+                var sizesObj = new Dictionary<string, string>();
+                if (!string.IsNullOrEmpty(Model.SizeDistributionJson)) {
+                    try { 
+                        using (var doc = System.Text.Json.JsonDocument.Parse(Model.SizeDistributionJson)) {
+                            foreach(var prop in doc.RootElement.EnumerateObject()) {
+                                if (prop.Value.ValueKind == System.Text.Json.JsonValueKind.Number) sizesObj[prop.Name] = prop.Value.GetInt32().ToString();
+                                else if (prop.Value.ValueKind == System.Text.Json.JsonValueKind.String) sizesObj[prop.Name] = prop.Value.GetString() ?? "0";
+                            }
+                        }
+                    } catch {}
+                }
+                if (sizesObj.Count == 0) {
+                    if (Model.SizeS > 0) sizesObj.Add("S", Model.SizeS.ToString());
+                    if (Model.SizeM > 0) sizesObj.Add("M", Model.SizeM.ToString());
+                    if (Model.SizeL > 0) sizesObj.Add("L", Model.SizeL.ToString());
+                    if (Model.SizeXL > 0) sizesObj.Add("XL", Model.SizeXL.ToString());
+                    if (Model.Size2XL > 0) sizesObj.Add("2XL", Model.Size2XL.ToString());
+                    if (Model.Size3XL > 0) sizesObj.Add("3XL", Model.Size3XL.ToString());
+                }
+
+                var asortiObj = new Dictionary<string, string>();
+                if (!string.IsNullOrEmpty(Model.AsortiDistributionJson)) {
+                    try { 
+                        using (var doc = System.Text.Json.JsonDocument.Parse(Model.AsortiDistributionJson)) {
+                            foreach(var prop in doc.RootElement.EnumerateObject()) {
+                                if (prop.Value.ValueKind == System.Text.Json.JsonValueKind.Number) asortiObj[prop.Name] = prop.Value.GetInt32().ToString();
+                                else if (prop.Value.ValueKind == System.Text.Json.JsonValueKind.String) asortiObj[prop.Name] = prop.Value.GetString() ?? "0";
+                            }
+                        }
+                    } catch {}
+                }
+                if (asortiObj.Count == 0) {
+                    if (Model.AsortiSizeS > 0) asortiObj.Add("S", Model.AsortiSizeS.ToString());
+                    if (Model.AsortiSizeM > 0) asortiObj.Add("M", Model.AsortiSizeM.ToString());
+                    if (Model.AsortiSizeL > 0) asortiObj.Add("L", Model.AsortiSizeL.ToString());
+                    if (Model.AsortiSizeXL > 0) asortiObj.Add("XL", Model.AsortiSizeXL.ToString());
+                    if (Model.AsortiSize2XL > 0) asortiObj.Add("2XL", Model.AsortiSize2XL.ToString());
+                    if (Model.AsortiSize3XL > 0) asortiObj.Add("3XL", Model.AsortiSize3XL.ToString());
+                }
+
+                int acikAdetTotal = 0;
+                foreach(var v in sizesObj.Values) { if (int.TryParse(v, out int val)) acikAdetTotal += val; }
+                
+                int asortiTotal = 0;
+                foreach(var v in asortiObj.Values) { if (int.TryParse(v, out int val)) asortiTotal += val; }
+            }
+
+            <h4 style="margin-bottom: 24px; color: #0f172a; font-weight: 700; font-size: 1.25rem;"><i class="fa-solid fa-scissors" style="color: var(--primary-color);"></i> Kesim Süreci (Günlük Takip)</h4>
+            
+            <!-- SİPARİŞ HEDEFİ BİLGİ ŞERİDİ -->
+            <div style="padding: 18px 24px; margin-bottom: 24px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; box-shadow: 0 2px 4px rgba(22, 101, 52, 0.05);">
+                <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: center;">
+                        <div style="font-size: 1.25rem; color: #15803d; font-weight: 700;">
+                            <i class="fa-solid fa-bullseye" style="margin-right: 8px;"></i>Genel Toplam Hedef: @plannedCutQty Adet
+                        </div>
+                    </div>
+                    <div style="font-size: 1.2rem; color: #166534; text-align: right;" id="divRemainingCut">
+                        Kalan İhtiyaç: <strong id="lblRemainingQty">@plannedCutQty</strong> Adet
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- PLANLANAN KESİM TABLOSU -->
+            <div style="margin-bottom: 30px; border: 2px solid #bfdbfe; border-radius: 12px; overflow: hidden;">
+                <div style="background: linear-gradient(135deg, #1e40af, #2563eb); padding: 14px 20px; display: flex; align-items: center; gap: 10px;">
+                    <i class="fa-solid fa-clipboard-list" style="color: #fff; font-size: 1.1rem;"></i>
+                    <span style="font-weight: 700; color: #fff; font-size: 1.05rem;">Planlanan Kesim Tablosu (Üretim Planlamasından)</span>
+                </div>
+                <div style="padding: 20px; background: #f8faff;">
+                    <div id="plannedCuttingTablesContainer">
+                        <p style="color: #94a3b8; font-style: italic; margin: 0;"><i class="fa-solid fa-info-circle" style="margin-right: 6px;"></i>Henüz üretim planlamasında kesim planlanmamış.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- JS Array Definitions for Sizes -->
+            <script>
+                var acikSizesArr = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(sizesObj.Keys));
+                var asortiSizesArr = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(asortiObj.Keys));
+            </script>
+
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 30px; margin-bottom: 15px;">
+                <div>
+                    <h5 style="margin: 0 0 8px 0; color: #334155; font-weight: 700;">Açık Adet Kesim Tablosu</h5>
+                    <div style="font-size: 0.85rem; color: #15803d; display: flex; flex-wrap: wrap; align-items: center;">
+                        <strong style="margin-right: 8px;"><i class="fa-solid fa-shirt" style="margin-right: 4px;"></i> Sipariş Açık Adet Dağılımı:</strong>
+                        @if (sizesObj.Any()) {
+                            foreach(var kvp in sizesObj) {
+                                <span style="display: inline-block; background: #dcfce7; padding: 2px 8px; border-radius: 12px; margin-right: 6px; font-weight: 600; border: 1px solid #bbf7d0;">@kvp.Key: @kvp.Value</span>
+                            }
+                            <span style="display: inline-block; margin-left: 8px; padding-left: 12px; border-left: 1px solid #bbf7d0; font-weight: 700; color: #166534;">
+                                Toplam: @acikAdetTotal Adet
+                            </span>
+                        } else {
+                            <span style="font-style: italic;">Yok</span>
+                        }
+                    </div>
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="toggleCutForm('AcikAdet')" style="margin-bottom: 2px;"><i class="fa-solid fa-plus" style="margin-right: 4px;"></i> Açık Adet Kesim Ekle</button>
+            </div>
+            <table class="table table-bordered" id="tblCuttingAcik">
+                <thead style="background: #f8fafc; text-align: center;">
+                    <tr>
+                        <th rowspan="2" style="vertical-align: middle;">Kesim No</th>
+                        <th rowspan="2" style="vertical-align: middle;">Kat Sayısı</th>
+                        <th colspan="@Math.Max(1, sizesObj.Count)">Bedenler</th>
+                        <th rowspan="2" style="vertical-align: middle;">Çıkan Adet</th>
+                        <th rowspan="2" style="vertical-align: middle;">Pastal Boyu</th>
+                        <th rowspan="2" style="vertical-align: middle;">Birim Metraj</th>
+                        <th rowspan="2" style="vertical-align: middle;">Tarih</th>
+                        <th rowspan="2" style="vertical-align: middle;">İşlem</th>
+                    </tr>
+                    <tr>
+                        @if (sizesObj.Count > 0) {
+                            foreach (var k in sizesObj.Keys) {
+                                <th>@k</th>
+                            }
+                        } else {
+                            <th>-</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody id="cuttingBodyAcik">
+                </tbody>
+                <tbody id="cuttingEntryAcik" style="display: none; background: #f0fdf4; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);">
+                    <tr>
+                        <td style="vertical-align: middle; text-align: center;"><span style="font-size: 0.75rem; color: #166534; font-weight: 800; text-transform: uppercase;">YENİ KAYIT</span></td>
+                        <td style="vertical-align: middle;"><input type="number" id="txtAcikMultiplier" class="form-control form-control-sm" value="1" oninput="calculateAcik()" style="min-width: 80px; padding: 4px;; text-align: center; font-weight: bold;" /></td>
+                        @if (sizesObj.Count > 0) {
+                            foreach (var k in sizesObj.Keys) {
+                                <td style="vertical-align: middle;"><input type="number" id="txtAcikSize_@k" class="form-control form-control-sm acik-adet-input-row" data-size="@k" value="0" oninput="calculateAcik()" style="min-width: 75px; padding: 4px;; text-align: center; font-weight: bold;" /></td>
+                            }
+                        } else {
+                            <td style="vertical-align: middle;">-</td>
+                        }
+                        <td style="vertical-align: middle;"><input type="number" id="txtAcikTotal" class="form-control form-control-sm" readonly style="min-width: 95px; padding: 4px;; text-align: center; background: #dcfce7; font-weight: bold; color: #166534;" /></td>
+                        <td style="vertical-align: middle;"><input type="number" id="txtAcikMarkerLength" class="form-control form-control-sm" value="0" step="0.01" oninput="calculateAcik()" style="min-width: 95px; padding: 4px;; text-align: center; font-weight: bold;" /></td>
+                        <td style="vertical-align: middle;"><input type="number" id="txtAcikUnitMeterage" class="form-control form-control-sm" readonly style="min-width: 95px; padding: 4px;; text-align: center; background: #dcfce7; font-weight: bold; color: #166534;" /></td>
+                        <td style="vertical-align: middle;"><input type="date" id="txtAcikDate" class="form-control form-control-sm" value="@DateTime.Now.ToString("yyyy-MM-dd")" style="min-width: 115px; font-weight: bold;" /></td>
+                        <td style="vertical-align: middle; text-align: center;">
+                            <div style="display: flex; gap: 4px; justify-content: center;">
+                                <button class="btn btn-success btn-sm" onclick="saveAcikRow()" title="Kaydet"><i class="fa-solid fa-check"></i></button>
+                                <button class="btn btn-secondary btn-sm" onclick="$('#cuttingEntryAcik').hide();" title="İptal"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+                <tfoot style="background: #f1f5f9; font-weight: bold;">
+                    <tr>
+                        <td colspan="@(6 + Math.Max(1, sizesObj.Count))" style="text-align: right; vertical-align: middle; color: #475569; padding-right: 20px;">AÇIK ADET TOPLAMI:</td>
+                        <td id="acikTotalCut" style="font-size: 1.2rem; color: #0f172a; vertical-align: middle; text-align: center;">0</td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 40px; margin-bottom: 15px;">
+                <div>
+                    <h5 style="margin: 0 0 8px 0; color: #334155; font-weight: 700;">Asorti Kesim Tablosu</h5>
+                    <div style="font-size: 0.85rem; color: #15803d; display: flex; flex-wrap: wrap; align-items: center;">
+                        <strong style="margin-right: 8px;"><i class="fa-solid fa-layer-group" style="margin-right: 4px;"></i> Sipariş Asorti Dağılımı:</strong>
+                        @if (asortiObj.Any()) {
+                            foreach(var kvp in asortiObj) {
+                                <span style="display: inline-block; background: #dcfce7; padding: 2px 8px; border-radius: 12px; margin-right: 6px; font-weight: 600; border: 1px solid #bbf7d0;">@kvp.Key: @kvp.Value</span>
+                            }
+                            <span style="display: inline-block; margin-left: 8px; padding-left: 12px; border-left: 1px solid #bbf7d0; font-weight: 700; color: #166534;">
+                                1 Asorti: @asortiTotal Adet | Lot Sayısı: @Model.AsortiCount | Toplam: @(asortiTotal * Model.AsortiCount) Adet
+                            </span>
+                        } else {
+                            <span style="font-style: italic;">Yok</span>
+                        }
+                    </div>
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="toggleCutForm('Asorti')" style="margin-bottom: 2px;"><i class="fa-solid fa-plus" style="margin-right: 4px;"></i> Asorti Kesim Ekle</button>
+            </div>
+            <table class="table table-bordered" id="tblCuttingAsorti">
+                <thead style="background: #f8fafc; text-align: center;">
+                    <tr>
+                        <th rowspan="2" style="vertical-align: middle;">Kesim No</th>
+                        <th rowspan="2" style="vertical-align: middle;">Kat Sayısı</th>
+                        <th colspan="@Math.Max(1, asortiObj.Count)">Bedenler</th>
+                        <th rowspan="2" style="vertical-align: middle;">Çıkan Adet</th>
+                        <th rowspan="2" style="vertical-align: middle;">Pastal Boyu</th>
+                        <th rowspan="2" style="vertical-align: middle;">Birim Metraj</th>
+                        <th rowspan="2" style="vertical-align: middle;">Tarih</th>
+                        <th rowspan="2" style="vertical-align: middle;">İşlem</th>
+                    </tr>
+                    <tr>
+                        @if (asortiObj.Count > 0) {
+                            foreach (var k in asortiObj.Keys) {
+                                <th>@k</th>
+                            }
+                        } else {
+                            <th>-</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody id="cuttingBodyAsorti">
+                </tbody>
+                <tbody id="cuttingEntryAsorti" style="display: none; background: #f0fdf4; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);">
+                    <tr>
+                        <td style="vertical-align: middle; text-align: center;"><span style="font-size: 0.75rem; color: #166534; font-weight: 800; text-transform: uppercase;">YENİ KAYIT</span></td>
+                        <td style="vertical-align: middle;"><input type="number" id="txtAsortiMultiplier" class="form-control form-control-sm" value="1" oninput="calculateAsorti()" style="min-width: 80px; padding: 4px;; text-align: center; font-weight: bold;" /></td>
+                        @if (asortiObj.Count > 0) {
+                            foreach (var kvp in asortiObj) {
+                                <td style="vertical-align: middle;"><input type="number" id="txtAsortiSize_@kvp.Key" class="form-control form-control-sm asorti-input-row" data-size="@kvp.Key" data-asortivalue="@kvp.Value" value="@kvp.Value" readonly style="min-width: 75px; padding: 4px;; text-align: center; font-weight: bold; background: #f1f5f9; cursor: not-allowed;" /></td>
+                            }
+                        } else {
+                            <td style="vertical-align: middle;">-</td>
+                        }
+                        <td style="vertical-align: middle;"><input type="number" id="txtAsortiTotal" class="form-control form-control-sm" readonly style="min-width: 95px; padding: 4px;; text-align: center; background: #dcfce7; font-weight: bold; color: #166534;" /></td>
+                        <td style="vertical-align: middle;"><input type="number" id="txtAsortiMarkerLength" class="form-control form-control-sm" value="0" step="0.01" oninput="calculateAsorti()" style="min-width: 95px; padding: 4px;; text-align: center; font-weight: bold;" /></td>
+                        <td style="vertical-align: middle;"><input type="number" id="txtAsortiUnitMeterage" class="form-control form-control-sm" readonly style="min-width: 95px; padding: 4px;; text-align: center; background: #dcfce7; font-weight: bold; color: #166534;" /></td>
+                        <td style="vertical-align: middle;"><input type="date" id="txtAsortiDate" class="form-control form-control-sm" value="@DateTime.Now.ToString("yyyy-MM-dd")" style="min-width: 115px; font-weight: bold;" /></td>
+                        <td style="vertical-align: middle; text-align: center;">
+                            <div style="display: flex; gap: 4px; justify-content: center;">
+                                <button class="btn btn-success btn-sm" onclick="saveAsortiRow()" title="Kaydet"><i class="fa-solid fa-check"></i></button>
+                                <button class="btn btn-secondary btn-sm" onclick="$('#cuttingEntryAsorti').hide();" title="İptal"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+                <tfoot style="background: #f1f5f9; font-weight: bold;">
+                    <tr>
+                        <td colspan="@(6 + Math.Max(1, asortiObj.Count))" style="text-align: right; vertical-align: middle; color: #475569; padding-right: 20px;">ASORTİ TOPLAMI:</td>
+                        <td id="asortiTotalCut" style="font-size: 1.2rem; color: #0f172a; vertical-align: middle; text-align: center;">0</td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <div style="background: #e2e8f0; padding: 15px 20px; border-radius: 8px; margin-bottom: 30px; margin-top: 20px; text-align: right; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);">
+                <span style="font-size: 1.1rem; color: #334155; font-weight: bold; margin-right: 15px;">GENEL TOPLAM KESİM ADEDİ:</span>
+                <span id="grandTotalCut" style="font-size: 1.5rem; color: #0f172a; font-weight: 900;">0</span>
+            </div>
+
+            <!-- KESİM KARŞILAŞTIRMA RAPORU -->
+            <div id="cuttingComparisonReport" style="margin-bottom: 30px; border: 2px solid #e2e8f0; border-radius: 12px; overflow: hidden; display: none;">
+                <div style="background: linear-gradient(135deg, #0f766e, #14b8a6); padding: 14px 20px; display: flex; align-items: center; gap: 10px;">
+                    <i class="fa-solid fa-chart-column" style="color: #fff; font-size: 1.1rem;"></i>
+                    <span style="font-weight: 700; color: #fff; font-size: 1.05rem;">Planlanan vs Gerçekleşen Kesim Karşılaştırma Raporu</span>
+                </div>
+                <div style="padding: 20px; background: #f0fdfa;">
+                    <div id="cuttingComparisonContent"></div>
+                </div>
+            </div>
+
+            <div class="text-end" style="display: flex; justify-content: flex-end; gap: 8px;">
+                <button class="btn btn-outline-success" onclick="saveCutting()"><i class="fa-solid fa-save"></i> Günlük Kesimleri Kaydet</button>
+                <button class="btn btn-success" onclick="finishCutting()"><i class="fa-solid fa-check-double"></i> Tüm Kesimi Bitir ve Tamamla</button>
+                <button class="btn btn-primary" onclick="saveCutting(); switchTab('packing')">Kaydet ve Devam Et <i class="fa-solid fa-arrow-right" style="margin-left: 4px;"></i></button>
+            </div>
+        </div>
+
+        <!-- ÇEKİ LİSTESİ TAB -->
+        <style media="print">
+            @@page {
+                margin: 0; /* Removes default browser headers and footers */
+            }
+            body {
+                margin: 0.5cm; /* Adds back some margin to prevent content cutoff */
+            }
+            body * {
+                visibility: hidden;
+            }
+            #printArea, #printArea * {
+                visibility: visible;
+            }
+            #printArea {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            /* Hide empty or editable background colors for cleaner print */
+            [contenteditable="true"] {
+                background-color: transparent !important;
+                border: 1px solid black !important;
+            }
+            /* Prevent other tabs and layout wrappers from taking up space and creating blank pages */
+            .tab-content > .tab-pane:not(#packing) {
+                display: none !important;
+            }
+            .tab-content, .main-panel, .content-wrapper, .wrapper {
+                min-height: 0 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+        </style>
+        <div class="tab-pane" id="packing">
+            <div id="printArea" style="background: white; padding: 20px; color: black; font-family: Arial, sans-serif;">
+                <!-- Başlık ve Logolar -->
+                <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 20px;">
+                    <div style="text-align: right;">
+                        <img src="data:image/svg+xml;utf8,%3Csvg%20width%3D%22300%22%20height%3D%2270%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Ctext%20x%3D%220%22%20y%3D%2240%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2242%22%20fill%3D%22%230055A5%22%20letter-spacing%3D%22-1.5%22%3ELC%20WAIKIKI%3C%2Ftext%3E%3Ctext%20x%3D%2255%22%20y%3D%2260%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-weight%3D%22600%22%20font-size%3D%2216%22%20fill%3D%22%23555555%22%20letter-spacing%3D%22-0.5%22%3Eiyi%20giyinmek%20herkesin%20hakk%C4%B1%3C%2Ftext%3E%3C%2Fsvg%3E" alt="LCW Logo" style="height: 60px;" />
+                    </div>
+                </div>
+                <h3 style="text-align: center; font-weight: bold; margin-bottom: 40px;">LC WAIKIKI ÜRETİCİ ÇEKİ LİSTESİ</h3>
+                
+                <!-- Üst Bilgi Tablosu -->
+                <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
+                    <table style="border-collapse: collapse; width: 40%;">
+                        <tr><td style="border: 1px solid black; padding: 4px 8px; font-weight: bold; width: 40%;">MÜMESSİL</td><td style="border: 1px solid black; padding: 4px 8px;">KANUNİ TEKSTİL</td></tr>
+                        <tr><td style="border: 1px solid black; padding: 4px 8px; font-weight: bold;">ÜRETİCİ ADI</td><td style="border: 1px solid black; padding: 4px 8px;">SADE GİYİM</td></tr>
+                        <tr><td style="border: 1px solid black; padding: 4px 8px; font-weight: bold;">INSPECTION TALEP NO</td><td style="border: 1px solid black; padding: 4px 8px;"></td></tr>
+                    </table>
+                    
+                    <table style="border-collapse: collapse; width: 30%; text-align: center;">
+                        <tr><td style="border: 1px solid black; padding: 4px 8px; font-weight: bold;">INSPECTION TARİHİ</td></tr>
+                        <tr><td style="border: 1px solid black; padding: 4px 8px;">@DateTime.Now.ToString("dd.MM.yyyy")</td></tr>
+                    </table>
+                </div>
+
+                <!-- A SORTİLİ BÖLÜMÜ -->
+                @{
+                    string asortiSpecialCode = !string.IsNullOrEmpty(Model.AsortiSpecialCode) ? Model.AsortiSpecialCode : (!string.IsNullOrEmpty(Model.OptionCode) ? Model.OptionCode : "");
+                    string openSpecialCode = !string.IsNullOrEmpty(Model.OpenSpecialCode) ? Model.OpenSpecialCode : (!string.IsNullOrEmpty(Model.OptionCode) ? Model.OptionCode : "");
+                }
+                <h5 style="text-align: center; font-weight: bold; margin-bottom: 5px;">A SORTİLİ</h5>
+                <table style="border-collapse: collapse; width: 100%; text-align: center; font-size: 0.9rem; margin-bottom: 30px;">
+                    <thead>
+                        <tr style="background: #f0f0f0;">
+                            <th style="border: 1px solid black; padding: 8px;">SİPARİŞ NUMARASI</th>
+                            <th style="border: 1px solid black; padding: 8px;">MERC ALT GURUBU</th>
+                            <th style="border: 1px solid black; padding: 8px;">ÖZEL KOD</th>
+                            <th style="border: 1px solid black; padding: 8px;">RENK ADI</th>
+                            <th style="border: 1px solid black; padding: 8px;">MODEL ADI</th>
+                            <th style="border: 1px solid black; padding: 8px;">TOPLAM KOLİ</th>
+                            <th style="border: 1px solid black; padding: 8px;">LOT ADETİ</th>
+                            <th style="border: 1px solid black; padding: 8px;">LOT İÇİ ADETİ</th>
+                            <th style="border: 1px solid black; padding: 8px;">KOLİ İÇİ LOT ADETİ</th>
+                            <th style="border: 1px solid black; padding: 8px;">ADET</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@Model.OrderCode</td>
+                            <td style="border: 1px solid black; padding: 8px; font-weight: bold;">BUB</td>
+                            <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@asortiSpecialCode</td>
+                            <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@Model.Color</td>
+                            <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@Model.ModelName</td>
+                            <td style="border: 1px solid black; padding: 8px; background-color: #fefce8; cursor: text;" contenteditable="true" title="Manuel düzenleyebilirsiniz"></td>
+                            <td style="border: 1px solid black; padding: 8px;">@packingQty</td>
+                            <td style="border: 1px solid black; padding: 8px; background-color: #fefce8; cursor: text;" contenteditable="true" title="Manuel düzenleyebilirsiniz"></td>
+                            <td style="border: 1px solid black; padding: 8px; background-color: #fefce8; cursor: text;" contenteditable="true" title="Manuel düzenleyebilirsiniz"></td>
+                            <td style="border: 1px solid black; padding: 8px;">@packingQty</td>
+                        </tr>
+                        <tr><td colspan="10" style="border: 1px solid black; padding: 20px;"></td></tr>
+                        <tr>
+                            <td colspan="5" style="border: 1px solid black; padding: 8px; text-align: right; font-weight: bold;">TOPLAM</td>
+                            <td style="border: 1px solid black; padding: 8px; font-weight: bold; background-color: #fefce8; cursor: text;" contenteditable="true" title="Manuel düzenleyebilirsiniz"></td>
+                            <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@packingQty</td>
+                            <td colspan="2" style="border: 1px solid black; padding: 8px;"></td>
+                            <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@packingQty</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- AÇIK ADET BÖLÜMÜ -->
+                <h5 style="font-weight: bold; margin-bottom: 5px;">AÇIK ADET</h5>
+                <table style="border-collapse: collapse; width: 100%; text-align: center; font-size: 0.9rem; margin-bottom: 50px;">
+                    <thead>
+                        <tr style="background: #f0f0f0;">
+                            <th style="border: 1px solid black; padding: 8px;">SİPARİŞ NUMARASI</th>
+                            <th style="border: 1px solid black; padding: 8px;">MERC ALT GURUBU</th>
+                            <th style="border: 1px solid black; padding: 8px;">ÖZEL KOD</th>
+                            <th style="border: 1px solid black; padding: 8px;">RENK ADI</th>
+                            <th style="border: 1px solid black; padding: 8px;">MODEL ADI</th>
+                            <th style="border: 1px solid black; padding: 8px;">RENK KODU</th>
+                            <th style="border: 1px solid black; padding: 8px;">KOLİ SAYISI</th>
+                            <th style="border: 1px solid black; padding: 8px;">BEDEN-YAŞ</th>
+                            <th style="border: 1px solid black; padding: 8px;">KOLİ İÇİ ADET</th>
+                            <th style="border: 1px solid black; padding: 8px;">TOPLAM</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            var packingSizesObj = new Dictionary<string, string>();
+                            if (!string.IsNullOrEmpty(Model.SizeDistributionJson)) {
+                                try { packingSizesObj = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(Model.SizeDistributionJson) ?? new Dictionary<string, string>(); } catch {}
+                            }
+                            
+                            if (packingSizesObj.Count == 0) {
+                                if (Model.SizeS > 0) packingSizesObj.Add("S", Model.SizeS.ToString());
+                                if (Model.SizeM > 0) packingSizesObj.Add("M", Model.SizeM.ToString());
+                                if (Model.SizeL > 0) packingSizesObj.Add("L", Model.SizeL.ToString());
+                                if (Model.SizeXL > 0) packingSizesObj.Add("XL", Model.SizeXL.ToString());
+                                if (Model.Size2XL > 0) packingSizesObj.Add("2XL", Model.Size2XL.ToString());
+                                if (Model.Size3XL > 0) packingSizesObj.Add("3XL", Model.Size3XL.ToString());
+                            }
+                            
+                            int rowSpan = packingSizesObj.Count > 0 ? packingSizesObj.Count : 1;
+                            bool isFirst = true;
+                            int toplamAcikAdet = 0;
+                        }
+                        
+                        @if (packingSizesObj.Count > 0) {
+                            foreach(var kvp in packingSizesObj) {
+                                int sAdet = 0;
+                                int.TryParse(kvp.Value, out sAdet);
+                                toplamAcikAdet += sAdet;
+                                
+                                <tr>
+                                    @if(isFirst) {
+                                        <td rowspan="@rowSpan" style="border: 1px solid black; padding: 8px; font-weight: bold;">@Model.OrderCode</td>
+                                        <td rowspan="@rowSpan" style="border: 1px solid black; padding: 8px; font-weight: bold;">BUB</td>
+                                        <td rowspan="@rowSpan" style="border: 1px solid black; padding: 8px; font-weight: bold;">@openSpecialCode</td>
+                                        <td rowspan="@rowSpan" style="border: 1px solid black; padding: 8px; font-weight: bold;">@Model.Color</td>
+                                        <td rowspan="@rowSpan" style="border: 1px solid black; padding: 8px; font-weight: bold;">@Model.ModelName</td>
+                                        <td rowspan="@rowSpan" style="border: 1px solid black; padding: 8px; font-weight: bold;"></td>
+                                        <td rowspan="@rowSpan" style="border: 1px solid black; padding: 8px; font-weight: bold; background-color: #fefce8; cursor: text;" contenteditable="true" title="Manuel düzenleyebilirsiniz"></td>
+                                        isFirst = false;
+                                    }
+                                    <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@kvp.Key</td>
+                                    <td style="border: 1px solid black; padding: 8px; background-color: #fefce8; cursor: text;" contenteditable="true" title="Manuel düzenleyebilirsiniz"></td>
+                                    <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@(sAdet > 0 ? sAdet.ToString("N0") : "")</td>
+                                </tr>
+                            }
+                        } else {
+                            <tr>
+                                <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@Model.OrderCode</td>
+                                <td style="border: 1px solid black; padding: 8px; font-weight: bold;">BUB</td>
+                                <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@openSpecialCode</td>
+                                <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@Model.Color</td>
+                                <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@Model.ModelName</td>
+                                <td style="border: 1px solid black; padding: 8px;"></td>
+                                <td style="border: 1px solid black; padding: 8px; background-color: #fefce8; cursor: text;" contenteditable="true" title="Manuel düzenleyebilirsiniz"></td>
+                                <td style="border: 1px solid black; padding: 8px; font-weight: bold;">-</td>
+                                <td style="border: 1px solid black; padding: 8px; background-color: #fefce8; cursor: text;" contenteditable="true" title="Manuel düzenleyebilirsiniz"></td>
+                                <td style="border: 1px solid black; padding: 8px; font-weight: bold;">-</td>
+                            </tr>
+                        }
+                        <tr>
+                            <td colspan="6" style="border: 1px solid black;"></td>
+                            <td colspan="2" style="border: 1px solid black; padding: 8px; text-align: right; font-weight: bold;">TOPLAM ADET</td>
+                            <td colspan="2" style="border: 1px solid black; padding: 8px; font-weight: bold;">@(toplamAcikAdet > 0 ? toplamAcikAdet.ToString("N0") : "")</td>
+                        </tr>
+                        <tr>
+                            <td colspan="6" style="border: 1px solid black;"></td>
+                            <td colspan="2" style="border: 1px solid black; padding: 8px; text-align: right; font-weight: bold;">TOPLAM KOLİ SAYISI</td>
+                            <td colspan="2" style="border: 1px solid black; padding: 8px; font-weight: bold; background-color: #fefce8; cursor: text;" contenteditable="true" title="Manuel düzenleyebilirsiniz"></td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div style="margin-top: 50px;">
+                    <p style="border-top: 1px solid black; display: inline-block; padding-top: 5px;">ÜRETİCİ SORUMLUSU / İMZA</p>
+                </div>
+            </div>
+            <div class="text-end mt-3 mb-2">
+                <button class="btn btn-primary" onclick="switchTab('reports')">Kaydet ve Devam Et <i class="fa-solid fa-arrow-right" style="margin-left: 8px;"></i></button>
+            </div>
+        </div>
+        @await Html.PartialAsync("_FileClosing", Model)
+
+
+
+        <!-- TAKVİM VE PLANLAMA TAB -->
+        <div class="tab-pane" id="timeline">
+            <h4 style="margin-bottom: 24px; color: #0f172a; font-weight: 700; font-size: 1.25rem;"><i class="fa-solid fa-calendar-check" style="color: var(--primary-color);"></i> Zaman Çizelgesi ve Takvim Takibi</h4>
+            
+            <!-- Yatay Timeline Konteyner -->
+            @{
+                var timelineItems = new List<dynamic>();
+                
+                void AddTimelineItem(string id, string type, string title, string icon, string color, string planDateStr, string actualDateStr) {
+                    DateTime? planDate = null;
+                    if (!string.IsNullOrEmpty(planDateStr) && DateTime.TryParse(planDateStr, out DateTime dt1)) planDate = dt1;
+                    
+                    DateTime? actualDate = null;
+                    if (!string.IsNullOrEmpty(actualDateStr) && DateTime.TryParse(actualDateStr, out DateTime dt2)) actualDate = dt2;
+
+                    bool isDelayed = false;
+                    int delayDays = 0;
+                    int earlyDays = 0;
+
+                    if (actualDate == null && planDate.HasValue && planDate.Value.Date < DateTime.Now.Date) {
+                        isDelayed = true;
+                        delayDays = (int)(DateTime.Now.Date - planDate.Value.Date).TotalDays;
+                    } else if (actualDate.HasValue && planDate.HasValue && actualDate.Value.Date > planDate.Value.Date) {
+                        isDelayed = true;
+                        delayDays = (int)(actualDate.Value.Date - planDate.Value.Date).TotalDays;
+                    } else if (actualDate.HasValue && planDate.HasValue && actualDate.Value.Date < planDate.Value.Date) {
+                        earlyDays = (int)(planDate.Value.Date - actualDate.Value.Date).TotalDays;
+                    }
+                    
+                    timelineItems.Add(new {
+                        Id = id, Type = type, Title = title, Icon = icon, Color = color, PlanDate = planDate, ActualDate = actualDate, IsDelayed = isDelayed, DelayDays = delayDays, EarlyDays = earlyDays
+                    });
+                }
+                
+                var pDict = new Dictionary<string, string>();
+                if (!string.IsNullOrEmpty(Model.ProductionJson)) { try { pDict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(Model.ProductionJson); } catch {} }
+                var sDict = new Dictionary<string, string>();
+                if (!string.IsNullOrEmpty(Model.SampleTestJson)) { try { sDict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(Model.SampleTestJson); } catch {} }
+                
+                string GetPD(string k) => pDict.ContainsKey(k) ? pDict[k] : "";
+                string GetSD(string k) => sDict.ContainsKey(k) ? sDict[k] : "";
+
+                // Numune
+                AddTimelineItem("sample_kumas_ytesti", "sample", "Kumaş Y-Testi Onayı", "fa-vial", "#8b5cf6", GetSD("sample_kumas_ytesti"), GetSD("sample_kumas_ytesti_actual"));
+                AddTimelineItem("sample_tuse_renk", "sample", "K-Tuşe Renk Onayı", "fa-palette", "#8b5cf6", GetSD("sample_tuse_renk"), GetSD("sample_tuse_renk_actual"));
+                AddTimelineItem("sample_dugme_renk", "sample", "Düğme Renk Kalite", "fa-circle-dot", "#8b5cf6", GetSD("sample_dugme_renk"), GetSD("sample_dugme_renk_actual"));
+                AddTimelineItem("sample_pp_onay", "sample", "PP Onay", "fa-shirt", "#8b5cf6", GetSD("sample_pp_onay"), GetSD("sample_pp_onay_actual"));
+
+                // Üretim
+                AddTimelineItem("prod_kesim_baslangic", "prod", "Kesim Başlangıç", "fa-scissors", "#3b82f6", GetPD("prod_kesim_baslangic"), GetPD("prod_kesim_baslangic_actual"));
+                AddTimelineItem("prod_kesim_bitis", "prod", "Kesim Bitiş", "fa-check-double", "#3b82f6", GetPD("prod_kesim_bitis"), GetPD("prod_kesim_bitis_actual"));
+                
+                AddTimelineItem("prod_dikim_baslangic", "prod", "Dikim Başlangıç", "fa-mitten", "#ec4899", GetPD("prod_dikim_baslangic"), GetPD("prod_dikim_baslangic_actual"));
+                AddTimelineItem("prod_dikim_bitis", "prod", "Dikim Bitiş", "fa-check-double", "#ec4899", GetPD("prod_dikim_bitis"), GetPD("prod_dikim_bitis_actual"));
+                
+                AddTimelineItem("prod_paket_baslangic", "prod", "Paket Başlangıç", "fa-box", "#f59e0b", GetPD("prod_paket_baslangic"), GetPD("prod_paket_baslangic_actual"));
+                AddTimelineItem("prod_paket_bitis", "prod", "Paket Bitiş", "fa-check-double", "#f59e0b", GetPD("prod_paket_bitis"), GetPD("prod_paket_bitis_actual"));
+
+                // Lojistik
+                AddTimelineItem("prod_gs_gidisi", "prod", "GS Gidişi", "fa-plane-departure", "#10b981", GetPD("prod_gs_gidisi"), GetPD("prod_gs_gidisi_actual"));
+                AddTimelineItem("prod_yola_cikis", "prod", "Yola Çıkış", "fa-truck-fast", "#10b981", GetPD("prod_yola_cikis"), GetPD("prod_yola_cikis_actual"));
+                AddTimelineItem("prod_depo_varis", "prod", "Depo Varış", "fa-warehouse", "#10b981", GetPD("prod_depo_varis"), GetPD("prod_depo_varis_actual"));
+                
+                string termin = GetPD("prod_knn_revize_termin");
+                if (string.IsNullOrEmpty(termin)) termin = GetPD("prod_suanki_termin");
+                if (string.IsNullOrEmpty(termin) && Model.PlannedPackagingEndDate.HasValue) termin = Model.PlannedPackagingEndDate.Value.ToString("yyyy-MM-dd");
+                AddTimelineItem("termin_tarihi", "prod", "Termin Hedefi", "fa-flag-checkered", "#ef4444", termin, GetPD("termin_tarihi_actual"));
+            }
+
+            <div class="horizontal-timeline-wrapper" style="overflow-x: auto; padding: 20px 10px; margin-bottom: 30px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; position: relative;">
+                <div style="display: flex; gap: 30px; min-width: max-content; position: relative; padding-top: 30px; padding-bottom: 20px;">
+                    <!-- Arka plan çizgisi -->
+                    <div style="position: absolute; height: 4px; background-color: #cbd5e1; top: 50px; left: 0; right: 0; border-radius: 2px; z-index: 0;"></div>
+                    
+                    @foreach(var item in timelineItems)
+                    {
+                        string cardBg = item.IsDelayed ? "#fef2f2" : (item.ActualDate != null ? "#f0fdf4" : "#ffffff");
+                        string cardBorder = item.IsDelayed ? "#fecaca" : (item.ActualDate != null ? "#bbf7d0" : "#e2e8f0");
+                        string statusIcon = item.ActualDate != null ? "<i class='fa-solid fa-circle-check' style='color:#16a34a;'></i>" : (item.IsDelayed ? "<i class='fa-solid fa-circle-exclamation' style='color:#dc2626;'></i>" : "<i class='fa-solid fa-clock' style='color:#94a3b8;'></i>");
+                        
+                        <div style="position: relative; width: 260px; display: flex; flex-direction: column; align-items: center; z-index: 1;">
+                            
+                            <!-- Yuvarlak İkon -->
+                            <div style="width: 44px; height: 44px; background-color: @item.Color; border: 4px solid white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 16px; position: relative; z-index: 2;">
+                                <i class="fa-solid @item.Icon" style="color: white; font-size: 1.1rem;"></i>
+                            </div>
+
+                            <!-- Kart -->
+                            <div style="background: @cardBg; border: 1px solid @cardBorder; border-radius: 10px; padding: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); width: 100%; position: relative; @(item.Id == "sample_kumas_ytesti" ? "cursor: pointer; transition: transform 0.2s;" : "")" 
+                                 @(item.Id == "sample_kumas_ytesti" ? "onclick=toggleTalosSection()" : "") 
+                                 onmouseover="@(item.Id == "sample_kumas_ytesti" ? "this.style.transform='scale(1.03)'" : "")" 
+                                 onmouseout="@(item.Id == "sample_kumas_ytesti" ? "this.style.transform='scale(1)'" : "")">
+                                <!-- Etiketler -->
+                                <div style="position: absolute; top: -12px; right: 10px;">
+                                    @if (item.IsDelayed)
+                                    {
+                                        <span style="background: #ef4444; color: white; font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 12px; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);">@item.DelayDays GÜN GECİKTİ</span>
+                                    }
+                                    else if (item.EarlyDays > 0 && item.ActualDate != null)
+                                    {
+                                        <span style="background: #10b981; color: white; font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 12px; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);">@item.EarlyDays GÜN ERKEN</span>
+                                    }
+                                    else if (item.ActualDate != null && item.DelayDays == 0 && item.EarlyDays == 0)
+                                    {
+                                        <span style="background: #3b82f6; color: white; font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 12px; box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);">ZAMANINDA</span>
+                                    }
+                                </div>
+
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; margin-top: 4px;">
+                                    <h5 style="margin: 0; font-weight: 700; color: #1e293b; font-size: 0.95rem;">@item.Title</h5>
+                                    <span style="font-size: 1rem;">@Html.Raw(statusIcon)</span>
+                                </div>
+                                
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #475569;">
+                                        <span><strong>Planlanan:</strong></span>
+                                        <span>@(item.PlanDate?.ToString("dd.MM.yyyy") ?? "-")</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #475569; align-items: center;">
+                                        <span><strong>Gerçekleşen:</strong></span>
+                                        <span>@(item.ActualDate?.ToString("dd.MM.yyyy") ?? "-")</span>
+                                    </div>
+                                    @if(item.ActualDate == null)
+                                    {
+                                        string btnText = "Tamamlandı";
+                                        if (item.Id.EndsWith("_baslangic")) btnText = "Başladı";
+                                        else if (item.Id.EndsWith("_bitis")) btnText = "Bitti";
+                                        
+                                        <button class="btn btn-sm btn-outline-success w-100 mt-2" style="font-size: 0.8rem; font-weight: 600;" onclick="markTimelineCompleted('@item.Id', '@item.Type')"><i class="fa-solid fa-check"></i> @btnText Olarak İşaretle</button>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- KUMAŞ TESTLERİ (TALOS) ALANI (ZAMAN ÇİZELGESİ ALTINDA) -->
+            @{
+                var talosData = new Dictionary<string, string>();
+                if (!string.IsNullOrEmpty(Model.TalosTestJson))
+                {
+                    try { talosData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(Model.TalosTestJson) ?? new Dictionary<string, string>(); } catch {}
+                }
+
+                string GetT(string k) => talosData.ContainsKey(k) ? talosData[k] : "";
+
+                bool step1 = GetT("talos_step1") == "true" || GetT("talos_numune_status") == "EVET";
+                bool step2 = GetT("talos_step2") == "true" || GetT("talos_lab_status") == "EVET";
+                bool step3 = GetT("talos_step3") == "true" || (GetT("talos_test_result_status") != "" && GetT("talos_test_result_status") != "BEKLENIYOR");
+                
+                // Step 4: Kalır değer var mı?
+                bool step4 = GetT("talos_step4") == "true" || GetT("talos_kalir_val_status") == "VAR_KALIR";
+                string kalirDegerTxt = GetT("talos_kalir_deger_txt");
+                if (string.IsNullOrEmpty(kalirDegerTxt)) kalirDegerTxt = GetT("talos_kalir_test_details");
+
+                // Step 5: Kalır değerlere onay alındı mı?
+                bool step5 = GetT("talos_step5") == "true" || GetT("talos_kalir_approval_status") == "EVET_OK";
+                string islemNedir = GetT("talos_islem_nedir");
+                if (string.IsNullOrEmpty(islemNedir)) islemNedir = GetT("talos_action_notes");
+
+                string overallBadgeClass = "bg-warning text-dark";
+                string overallBadgeText = "İŞLEM BEKLİYOR / DEVAM EDİYOR";
+                
+                if (step5 || (step3 && !step4)) {
+                    overallBadgeClass = "bg-success text-white";
+                    overallBadgeText = "OK - ONAYLANDI";
+                } else if (step4 && !step5) {
+                    overallBadgeClass = "bg-danger text-white";
+                    overallBadgeText = "KALIR DEĞER ONAYSIZ - AKSIYON GEREKLİ";
+                }
+            }
+
+            <div id="talos_section_container" style="display: none; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; padding: 24px; margin-top: 30px; margin-bottom: 35px;">
+                
+                <!-- Başlık ve Genel Durum Özeti -->
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 16px; margin-bottom: 20px;">
+                    <div>
+                        <h4 style="margin: 0; font-weight: 800; color: #1e3a8a; font-size: 1.15rem; display: flex; align-items: center; gap: 10px;">
+                            <i class="fa-solid fa-vial-circle-check" style="color: #2563eb; font-size: 1.3rem;"></i> LCW Kumaş Testleri (TALOS) Onay Tablosu
+                        </h4>
+                        <p style="margin: 4px 0 0 0; color: #64748b; font-size: 0.85rem;">Test onay adımlarını işaretleyiniz ve kaydı güncelleyiniz.</p>
+                    </div>
+                    <div>
+                        <span class="badge @overallBadgeClass" style="font-size: 0.88rem; padding: 8px 16px; border-radius: 20px; font-weight: 700;" id="badgeTalosOverall">
+                            @overallBadgeText
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Düzenli Onay Tablosu -->
+                <form id="formTalosTest" onsubmit="return false;">
+                    <div style="border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; background: #ffffff;">
+                        <table class="table table-hover align-middle" style="margin-bottom: 0;">
+                            <thead style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                                <tr>
+                                    <th style="width: 50px; text-align: center; color: #475569; font-weight: 700; font-size: 0.8rem; padding: 12px;">#</th>
+                                    <th style="color: #475569; font-weight: 700; font-size: 0.8rem; padding: 12px 16px;">ONAY AŞAMASI (SORU)</th>
+                                    <th style="width: 240px; text-align: center; color: #475569; font-weight: 700; font-size: 0.8rem; padding: 12px 16px;">İŞARETLEME / DURUM</th>
+                                    <th style="width: 240px; text-align: right; color: #475569; font-weight: 700; font-size: 0.8rem; padding: 12px 20px;">DURUM ETİKETİ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- 1. Adım -->
+                                <tr id="wrapper_step1" style="background: @(step1 ? "#f0fdf4" : "transparent"); transition: background 0.2s;">
+                                    <td style="text-align: center; padding: 14px 12px;">
+                                        <span style="background: #eff6ff; color: #2563eb; font-weight: 700; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem;">1</span>
+                                    </td>
+                                    <td style="padding: 14px 16px;">
+                                        <label class="form-check-label" for="talos_step1" style="font-size: 0.95rem; font-weight: 700; color: #1e293b; cursor: pointer; display: block;">
+                                            Kumaşçıdan numune alındı mı?
+                                        </label>
+                                    </td>
+                                    <td style="text-align: center; padding: 14px 16px;">
+                                        <div class="form-check d-inline-block" style="margin: 0;">
+                                            <input class="form-check-input" type="checkbox" id="talos_step1" @(step1 ? "checked" : "") style="width: 22px; height: 22px; cursor: pointer;" onchange="updateTalosUI()">
+                                        </div>
+                                    </td>
+                                    <td style="text-align: right; padding: 14px 20px;">
+                                        <span class="badge @(step1 ? "bg-success text-white" : "bg-secondary text-white")" style="font-size: 0.85rem; padding: 6px 14px; border-radius: 12px;" id="badge_step1">
+                                            @(step1 ? "✓ Alındı" : "Alınmadı")
+                                        </span>
+                                    </td>
+                                </tr>
+
+                                <!-- 2. Adım -->
+                                <tr id="wrapper_step2" style="background: @(step2 ? "#f0fdf4" : "transparent"); transition: background 0.2s;">
+                                    <td style="text-align: center; padding: 14px 12px;">
+                                        <span style="background: #eff6ff; color: #2563eb; font-weight: 700; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem;">2</span>
+                                    </td>
+                                    <td style="padding: 14px 16px;">
+                                        <label class="form-check-label" for="talos_step2" style="font-size: 0.95rem; font-weight: 700; color: #1e293b; cursor: pointer; display: block;">
+                                            Kumaş laboratuvara gitti mi?
+                                        </label>
+                                    </td>
+                                    <td style="text-align: center; padding: 14px 16px;">
+                                        <div class="form-check d-inline-block" style="margin: 0;">
+                                            <input class="form-check-input" type="checkbox" id="talos_step2" @(step2 ? "checked" : "") style="width: 22px; height: 22px; cursor: pointer;" onchange="updateTalosUI()">
+                                        </div>
+                                    </td>
+                                    <td style="text-align: right; padding: 14px 20px;">
+                                        <span class="badge @(step2 ? "bg-success text-white" : "bg-secondary text-white")" style="font-size: 0.85rem; padding: 6px 14px; border-radius: 12px;" id="badge_step2">
+                                            @(step2 ? "✓ Gitti" : "Gitmedi")
+                                        </span>
+                                    </td>
+                                </tr>
+
+                                <!-- 3. Adım -->
+                                <tr id="wrapper_step3" style="background: @(step3 ? "#f0fdf4" : "transparent"); transition: background 0.2s;">
+                                    <td style="text-align: center; padding: 14px 12px;">
+                                        <span style="background: #eff6ff; color: #2563eb; font-weight: 700; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem;">3</span>
+                                    </td>
+                                    <td style="padding: 14px 16px;">
+                                        <label class="form-check-label" for="talos_step3" style="font-size: 0.95rem; font-weight: 700; color: #1e293b; cursor: pointer; display: block;">
+                                            Test sonuçları geldi mi?
+                                        </label>
+                                    </td>
+                                    <td style="text-align: center; padding: 14px 16px;">
+                                        <div class="form-check d-inline-block" style="margin: 0;">
+                                            <input class="form-check-input" type="checkbox" id="talos_step3" @(step3 ? "checked" : "") style="width: 22px; height: 22px; cursor: pointer;" onchange="updateTalosUI()">
+                                        </div>
+                                    </td>
+                                    <td style="text-align: right; padding: 14px 20px;">
+                                        <span class="badge @(step3 ? "bg-success text-white" : "bg-secondary text-white")" style="font-size: 0.85rem; padding: 6px 14px; border-radius: 12px;" id="badge_step3">
+                                            @(step3 ? "✓ Geldi" : "Gelmedi")
+                                        </span>
+                                    </td>
+                                </tr>
+
+                                <!-- 4. Adım: "KALIR" DEĞER VAR MI? (2 Buton: Var / Yok) -->
+                                <tr id="wrapper_step4" style="background: @(step4 ? "#fef2f2" : "transparent"); transition: background 0.2s;">
+                                    <td style="text-align: center; padding: 14px 12px;">
+                                        <span style="background: #fef2f2; color: #dc2626; font-weight: 700; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem;">4</span>
+                                    </td>
+                                    <td style="padding: 14px 16px;">
+                                        <label style="font-size: 0.95rem; font-weight: 700; color: #1e293b; display: block;">
+                                            "Kalır" değer var mı?
+                                        </label>
+                                    </td>
+                                    <td style="text-align: center; padding: 14px 16px;">
+                                        <div style="display: inline-flex; gap: 12px; justify-content: center; align-items: center;">
+                                            <label style="cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 0.88rem; padding: 4px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: #ffffff;">
+                                                <input type="radio" name="talos_step4_radio" id="talos_step4_no" value="no" @(!step4 ? "checked" : "") onchange="updateTalosUI()" style="width: 16px; height: 16px; cursor: pointer;"> Yok
+                                            </label>
+                                            <label style="cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 0.88rem; padding: 4px 12px; border-radius: 6px; border: 1px solid #fca5a5; background: #ffffff; color: #dc2626;">
+                                                <input type="radio" name="talos_step4_radio" id="talos_step4_yes" value="yes" @(step4 ? "checked" : "") onchange="updateTalosUI()" style="width: 16px; height: 16px; cursor: pointer;"> Var
+                                            </label>
+                                        </div>
+                                    </td>
+                                    <td style="text-align: right; padding: 14px 20px;">
+                                        <span class="badge @(step4 ? "bg-danger text-white" : "bg-success text-white")" style="font-size: 0.85rem; padding: 6px 14px; border-radius: 12px;" id="badge_step4">
+                                            @(step4 ? "⚠ Kalır Değer Var" : "✓ Yok (Tüm Testler Geçti)")
+                                        </span>
+                                    </td>
+                                </tr>
+
+                                <!-- Hangi Değer Kalır Çıktı (4. Adımda "Var" Seçildiğinde Gösterilir) -->
+                                <tr id="tr_kalir_deger_txt" style="display: @(step4 ? "table-row" : "none"); background: #fff5f5;">
+                                    <td colspan="4" style="padding: 12px 20px; border-top: 1px dashed #fca5a5;">
+                                        <div style="display: flex; align-items: center; gap: 12px;">
+                                            <label class="form-label text-danger font-weight-bold" style="font-size: 0.88rem; margin: 0; white-space: nowrap;">
+                                                <i class="fa-solid fa-pen-to-square"></i> Hangi Değer / Test "Kalır" Çıktı?
+                                            </label>
+                                            <input type="text" class="form-control border-danger" id="talos_kalir_deger_txt" placeholder="Örn. Yıkama çekmezliği %6 çıktı, Sürtünme haslığı 2-3..." value="@kalirDegerTxt" style="font-size: 0.88rem;" />
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <!-- 5. Adım: "KALIR" DEĞERLERE ONAY ALINDI MI? (Sadece Kalır Değer Var Seçildiğinde Görünür) -->
+                                <tr id="wrapper_step5" style="display: @(step4 ? "table-row" : "none"); background: @(step5 ? "#f0fdf4" : "#fffbe6"); transition: background 0.2s;">
+                                    <td style="text-align: center; padding: 14px 12px;">
+                                        <span style="background: #eff6ff; color: #2563eb; font-weight: 700; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem;">5</span>
+                                    </td>
+                                    <td style="padding: 14px 16px;">
+                                        <label style="font-size: 0.95rem; font-weight: 700; color: #1e293b; display: block;">
+                                            "Kalır" değerlere onay alındı mı?
+                                        </label>
+                                    </td>
+                                    <td style="text-align: center; padding: 14px 16px;">
+                                        <div style="display: inline-flex; gap: 12px; justify-content: center; align-items: center;">
+                                            <label style="cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 0.88rem; padding: 4px 12px; border-radius: 6px; border: 1px solid #86efac; background: #ffffff; color: #166534;">
+                                                <input type="radio" name="talos_step5_radio" id="talos_step5_yes" value="yes" @(step5 ? "checked" : "") onchange="updateTalosUI()" style="width: 16px; height: 16px; cursor: pointer;"> Evet (OK)
+                                            </label>
+                                            <label style="cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 0.88rem; padding: 4px 12px; border-radius: 6px; border: 1px solid #fca5a5; background: #ffffff; color: #dc2626;">
+                                                <input type="radio" name="talos_step5_radio" id="talos_step5_no" value="no" @(!step5 && step4 ? "checked" : "") onchange="updateTalosUI()" style="width: 16px; height: 16px; cursor: pointer;"> Hayır
+                                            </label>
+                                        </div>
+                                    </td>
+                                    <td style="text-align: right; padding: 14px 20px;">
+                                        <span class="badge @(step5 ? "bg-success text-white" : "bg-warning text-dark")" style="font-size: 0.85rem; padding: 6px 14px; border-radius: 12px;" id="badge_step5">
+                                            @(step5 ? "✓ OK (Onay Alındı)" : "Onay Alınmadı")
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Onay Alınmadıysa Hangi Değerler Kaldı / Yapılan İşlem Nedir? -->
+                        <div id="div_islem_nedir" style="display: @(step4 && !step5 ? "block" : "none"); background: #fff5f5; border-top: 1px solid #feb2b2; padding: 16px 20px;">
+                            <label class="form-label text-danger font-weight-bold" style="font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
+                                <i class="fa-solid fa-circle-exclamation"></i> Onay Alınmadıysa Hangi Değerler Kaldı / Yapılacak İşlem Nedir?
+                            </label>
+                            <textarea class="form-control border-danger" id="talos_islem_nedir" rows="2" placeholder="Hangi değerler kaldı ve uygulanacak işlem / aksiyon detayını yazınız..." style="font-size: 0.88rem;">@islemNedir</textarea>
+                        </div>
+                    </div>
+
+                    <!-- Kaydet Butonu -->
+                    <div class="text-end mt-3">
+                        <button class="btn btn-primary" onclick="saveTalosTestForm()" style="padding: 8px 24px; font-weight: 700;">
+                            <i class="fa-solid fa-floppy-disk" style="margin-right: 6px;"></i> TALOS Onaylarını Kaydet
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+
+            <!-- Takvim Performans Raporu -->
+            <h5 style="margin-top: 40px; margin-bottom: 16px; color: #0f172a; font-weight: 700;"><i class="fa-solid fa-chart-line" style="color: var(--primary-color);"></i> Takvim Performans Raporu</h5>
+            <div style="background: white; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                <table class="table table-hover" style="margin-bottom: 0;">
+                    <thead style="background: #f8fafc;">
+                        <tr>
+                            <th style="color: #475569; font-weight: 600; font-size: 0.85rem; padding: 12px 16px;">AŞAMA ADI</th>
+                            <th style="color: #475569; font-weight: 600; font-size: 0.85rem; padding: 12px 16px;">PLANLANAN</th>
+                            <th style="color: #475569; font-weight: 600; font-size: 0.85rem; padding: 12px 16px;">GERÇEKLEŞEN</th>
+                            <th style="color: #475569; font-weight: 600; font-size: 0.85rem; padding: 12px 16px;">DURUM</th>
+                            <th style="color: #475569; font-weight: 600; font-size: 0.85rem; padding: 12px 16px;">GECİKME / ERKEN</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            int totalDelayDays = 0;
+                            int totalEarlyDays = 0;
+                        }
+                        @foreach(var item in timelineItems)
+                        {
+                            if (item.IsDelayed) totalDelayDays += item.DelayDays;
+                            if (item.EarlyDays > 0) totalEarlyDays += item.EarlyDays;
+
+                            string statusColor = item.IsDelayed ? "#ef4444" : (item.EarlyDays > 0 ? "#10b981" : (item.ActualDate != null ? "#3b82f6" : "#64748b"));
+                            string statusText = item.IsDelayed ? "Gecikti" : (item.EarlyDays > 0 ? "Erken Bitti" : (item.ActualDate != null ? "Zamanında Bitti" : "Bekliyor"));
+                            
+                            string detailText = "-";
+                            if (item.IsDelayed) detailText = $"{item.DelayDays} Gün Gecikti";
+                            else if (item.EarlyDays > 0) detailText = $"{item.EarlyDays} Gün Erken";
+                            else if (item.ActualDate != null) detailText = "Zamanında";
+
+                            <tr>
+                                <td style="padding: 12px 16px; font-weight: 600; color: #1e293b;">@item.Title</td>
+                                <td style="padding: 12px 16px; color: #475569;">@(item.PlanDate?.ToString("dd.MM.yyyy") ?? "-")</td>
+                                <td style="padding: 12px 16px; color: #475569;">@(item.ActualDate?.ToString("dd.MM.yyyy") ?? "-")</td>
+                                <td style="padding: 12px 16px;">
+                                    <span style="display: inline-flex; align-items: center; gap: 6px; color: @statusColor; font-weight: 600; font-size: 0.85rem;">
+                                        <i class="fa-solid fa-circle" style="font-size: 0.5rem;"></i> @statusText
+                                    </span>
+                                </td>
+                                <td style="padding: 12px 16px; font-weight: 700; color: @statusColor; font-size: 0.9rem;">
+                                    @detailText
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot style="background: #f1f5f9;">
+                        <tr>
+                            <td colspan="4" style="padding: 16px; text-align: right; font-weight: 700; color: #0f172a; font-size: 0.95rem;">TOPLAM NET GECİKME:</td>
+                            <td style="padding: 16px; font-weight: 800; font-size: 1.1rem; color: @(totalDelayDays - totalEarlyDays > 0 ? "#ef4444" : "#10b981")">
+                                @{
+                                    int netDelay = totalDelayDays - totalEarlyDays;
+                                    if (netDelay > 0) {
+                                        <text>@netDelay Gün Gecikme</text>
+                                    } else if (netDelay < 0) {
+                                        <text>@Math.Abs(netDelay) Gün Kazanım</text>
+                                    } else {
+                                        <text>Tam Zamanında</text>
+                                    }
+                                }
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const orderId = @Model.Id;
+        
+        let dispatchItems = @Html.Raw(string.IsNullOrEmpty(Model.MaterialDispatchJson) ? "[]" : Model.MaterialDispatchJson);
+        let cuttingItems = @Html.Raw(string.IsNullOrEmpty(Model.CuttingProcessJson) ? "[]" : Model.CuttingProcessJson);
+        let plannedCuttingItems = @Html.Raw(string.IsNullOrEmpty(Model.PlannedCuttingJson) ? "[]" : Model.PlannedCuttingJson);
+        let targetSizes = @Html.Raw(string.IsNullOrEmpty(Model.SizeDistributionJson) ? "{}" : Model.SizeDistributionJson);
+        let targetSizesAsorti = @Html.Raw(string.IsNullOrEmpty(Model.AsortiDistributionJson) ? "{}" : Model.AsortiDistributionJson);
+        const asortiCount = @Model.AsortiCount;
+
+        function getTotalCutForSize(sizeName, cutType) {
+            let total = 0;
+            cuttingItems.forEach(item => {
+                if (item.CutType === cutType && item.Sizes && item.Sizes[sizeName]) {
+                    total += parseFloat(item.Sizes[sizeName]) || 0;
+                }
+            });
+            return total;
+        }
+
+        $(document).ready(function() {
+            renderCuttingTable();
+            renderPlannedCuttingComparison();
+            
+            // Initial comparison calculation
+            $('input[id^="actual_qty_"]').each(function() {
+                var funcStr = $(this).attr('oninput');
+                if (funcStr) {
+                    eval(funcStr);
+                }
+            });
+
+            // Restore active tab from hash
+            if (window.location.hash) {
+                var tabId = window.location.hash.substring(1);
+                if ($('#' + tabId + '-tab').length) {
+                    switchTab(tabId);
+                }
+            }
+        });
+
+        // --- TAB SWITCH LOGIC ---
+        function switchTab(tabId) {
+            $('.nav-link').removeClass('active');
+            $('.tab-pane').removeClass('active');
+            
+            $('#' + tabId + '-tab').addClass('active');
+            $('#' + tabId).addClass('active');
+        }
+
+        // --- TALOS KUMAŞ TESTLERİ LOGIC ---
+        function toggleTalosSection() {
+            $('#talos_section_container').slideToggle();
+        }
+
+        function updateTalosUI() {
+            var step1 = $('#talos_step1').is(':checked');
+            var step2 = $('#talos_step2').is(':checked');
+            var step3 = $('#talos_step3').is(':checked');
+            var step4 = $('input[name="talos_step4_radio"]:checked').val() === 'yes';
+            var step5 = $('input[name="talos_step5_radio"]:checked').val() === 'yes';
+
+            // Step 1 UI
+            $('#wrapper_step1').css({ 'background': step1 ? "#f0fdf4" : "transparent" });
+            $('#badge_step1').attr('class', step1 ? 'badge bg-success text-white' : 'badge bg-secondary text-white').text(step1 ? '✓ Alındı' : 'Alınmadı');
+
+            // Step 2 UI
+            $('#wrapper_step2').css({ 'background': step2 ? "#f0fdf4" : "transparent" });
+            $('#badge_step2').attr('class', step2 ? 'badge bg-success text-white' : 'badge bg-secondary text-white').text(step2 ? '✓ Gitti' : 'Gitmedi');
+
+            // Step 3 UI
+            $('#wrapper_step3').css({ 'background': step3 ? "#f0fdf4" : "transparent" });
+            $('#badge_step3').attr('class', step3 ? 'badge bg-success text-white' : 'badge bg-secondary text-white').text(step3 ? '✓ Geldi' : 'Gelmedi');
+
+            // Step 4 UI & Step 5 Visibility Logic
+            $('#wrapper_step4').css({ 'background': step4 ? "#fef2f2" : "transparent" });
+            $('#badge_step4').attr('class', step4 ? 'badge bg-danger text-white' : 'badge bg-success text-white').text(step4 ? '⚠ Kalır Değer Var' : '✓ Yok (Tüm Testler Geçti)');
+
+            if (step4) {
+                // Kalır Değer Var ise: Metin kutusunu ve 5. Adımı Göster
+                $('#tr_kalir_deger_txt').show();
+                $('#wrapper_step5').show();
+
+                $('#wrapper_step5').css({ 'background': step5 ? "#f0fdf4" : "#fffbe6" });
+                $('#badge_step5').attr('class', step5 ? 'badge bg-success text-white' : 'badge bg-warning text-dark').text(step5 ? '✓ OK (Onay Alındı)' : 'Onay Alınmadı');
+
+                if (!step5) {
+                    $('#div_islem_nedir').slideDown();
+                } else {
+                    $('#div_islem_nedir').slideUp();
+                }
+            } else {
+                // Kalır Değer Yok ise: Metin kutusunu, 5. Adımı ve İşlem Nedir kutusunu GİZLE!
+                $('#tr_kalir_deger_txt').hide();
+                $('#wrapper_step5').hide();
+                $('#div_islem_nedir').hide();
+            }
+
+            // Overall Badge
+            if (!step4 && step3) {
+                $('#badgeTalosOverall').attr('class', 'badge bg-success text-white').text('OK - ONAYLANDI');
+            } else if (step4 && step5) {
+                $('#badgeTalosOverall').attr('class', 'badge bg-success text-white').text('OK - ONAY ALINDI');
+            } else if (step4 && !step5) {
+                $('#badgeTalosOverall').attr('class', 'badge bg-danger text-white').text('KALIR DEĞER ONAYSIZ - AKSIYON GEREKLİ');
+            } else {
+                $('#badgeTalosOverall').attr('class', 'badge bg-warning text-dark').text('İŞLEM BEKLİYOR / DEVAM EDİYOR');
+            }
+        }
+
+        function saveTalosTestForm() {
+            var data = {
+                talos_step1: $('#talos_step1').is(':checked') ? "true" : "false",
+                talos_step2: $('#talos_step2').is(':checked') ? "true" : "false",
+                talos_step3: $('#talos_step3').is(':checked') ? "true" : "false",
+                talos_step4: $('input[name="talos_step4_radio"]:checked').val() === 'yes' ? "true" : "false",
+                talos_kalir_deger_txt: $('#talos_kalir_deger_txt').val(),
+                talos_step5: $('input[name="talos_step5_radio"]:checked').val() === 'yes' ? "true" : "false",
+                talos_islem_nedir: $('#talos_islem_nedir').val()
+            };
+
+            var jsonStr = JSON.stringify(data);
+
+            $.ajax({
+                url: '/ProcessTracking/SaveTalosTest',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ Id: orderId, TalosTestJson: jsonStr }),
+                success: function(res) {
+                    if(res.success) {
+                        showToast("TALOS test onayları kaydedildi.", "success");
+                        setTimeout(function() {
+                            window.location.hash = "timeline";
+                            location.reload();
+                        }, 800);
+                    } else {
+                        showToast("Hata: " + res.message, "danger");
+                    }
+                },
+                error: function() {
+                    showToast("Kayıt sırasında sunucu hatası oluştu.", "danger");
+                }
+            });
+        }
+
+        // --- COMPARISON LOGIC ---
+        function updateComparison(materialId, plannedQty) {
+            const actualInput = $('#actual_qty_' + materialId);
+            const availableStock = parseFloat(actualInput.val()) || 0;
+            const compSpan = $('#comp_' + materialId);
+            const isChecked = $('#chk_mat_' + materialId).is(':checked');
+            
+            if (isChecked) {
+                compSpan.text("TAHSİS EDİLDİ").css({ 'background': '#dcfce7', 'color': '#166534' });
+            } else if (availableStock >= plannedQty) {
+                compSpan.text("STOK YETERLİ").css({ 'background': '#dcfce7', 'color': '#166534' });
+            } else {
+                const eksik = plannedQty - availableStock;
+                compSpan.text("YETERSİZ STOK (-" + eksik.toLocaleString('tr-TR', { maximumFractionDigits: 2 }) + ")").css({ 'background': '#fee2e2', 'color': '#991b1b' });
+            }
+        }
+
+        // --- TAB 1: SATIN ALMA ONAYI ---
+        function updateMaterialApproval(materialId) {
+            const isChecked = $('#chk_mat_' + materialId).is(':checked');
+            const plannedQtyStr = $('#chk_mat_' + materialId).attr('data-planned') || "0";
+            
+            const availableStock = parseFloat($('#actual_qty_' + materialId).val()) || 0;
+            const plannedQty = parseFloat(plannedQtyStr.replace(',', '.')) || 0;
+
+            if (isChecked && availableStock < plannedQty) {
+                showToast("Yetersiz stok. Lütfen önce alış faturası ile depoya giriş yapınız.", "danger");
+                $('#chk_mat_' + materialId).prop('checked', false);
+                return;
+            }
+            
+            // Update wrapper div styling
+            $('#div_mat_' + materialId)
+                .css('background', isChecked ? "#dcfce7" : "#fffbeb")
+                .css('border-color', isChecked ? "#bbf7d0" : "#fef08a");
+                
+            // Update row background color dynamically
+            $('#chk_mat_' + materialId).closest('tr').css('background', isChecked ? "#f0fdf4" : "transparent");
+            
+            // Backend'e gerceklesen miktar olarak "planlanan miktarı" gonderiyoruz, cunku tamami tahsis edilecek.
+            $.post('/ProcessTracking/UpdateMaterialApproval', { materialId: materialId, actualQuantityStr: plannedQtyStr, isApproved: isChecked }, function(res) {
+                if(res.success) {
+                    showToast(isChecked ? "Siparişe stok tahsis edildi." : "Tahsis iptal edildi ve stok iade edildi.", "success");
+                    if (isChecked) {
+                        $('#actual_qty_' + materialId).val((availableStock - plannedQty).toString());
+                    } else {
+                        $('#actual_qty_' + materialId).val((availableStock + plannedQty).toString());
+                    }
+                    updateComparison(materialId, plannedQty);
+                } else {
+                    showToast("Hata: " + res.message, "danger");
+                    $('#chk_mat_' + materialId).prop('checked', !isChecked);
+                    $('#div_mat_' + materialId)
+                        .css('background', !isChecked ? "#dcfce7" : "#fffbeb")
+                        .css('border-color', !isChecked ? "#bbf7d0" : "#fef08a");
+                    $('#chk_mat_' + materialId).closest('tr').css('background', !isChecked ? "#f0fdf4" : "transparent");
+                    updateComparison(materialId, plannedQty);
+                    
+                    if ($('#varyant_select_' + materialId).length) {
+                        $('#varyant_select_' + materialId).prop('disabled', !isChecked);
+                    }
+                }
+            });
+        }
+
+        // --- TIMELINE ---
+        function markTimelineCompleted(id, type) {
+            $.post('/ProcessTracking/MarkTimelineCompleted', { orderId: orderId, key: id, type: type }, function(res) {
+                if(res.success) {
+                    showToast("Aşama tamamlandı olarak işaretlendi.", "success");
+                    setTimeout(function() { 
+                        if (id === 'prod_kesim_baslangic') {
+                            window.location.hash = "cutting";
+                        } else {
+                            window.location.hash = "timeline";
+                        }
+                        location.reload(); 
+                    }, 1000);
+                } else {
+                    showToast("Hata: " + res.message, "danger");
+                }
+            });
+        }
+
+        // --- TAB 2: MALZEME SEVK (Cari Satış Onayı) ---
+        function updateDispatchApproval(hareketId) {
+            const isChecked = $('#chk_disp_' + hareketId).is(':checked');
+            
+            // Update wrapper div styling
+            $('#div_disp_' + hareketId)
+                .css('background', isChecked ? "#dcfce7" : "#fffbeb")
+                .css('border-color', isChecked ? "#bbf7d0" : "#fef08a");
+                
+            // Update row background color dynamically
+            $('#chk_disp_' + hareketId).closest('tr').css('background', isChecked ? "#f0fdf4" : "transparent");
+            
+            $.post('/ProcessTracking/UpdateDispatchApproval', { hareketId: hareketId, isApproved: isChecked }, function(res) {
+                if(res.success) {
+                    showToast("Sevk onayı güncellendi.", "success");
+                } else {
+                    showToast("Hata: " + res.message, "danger");
+                }
+            });
+        }
+
+        // --- TAB 3: KESİM SÜRECİ ---
+        function toggleCutForm(type) {
+            if (type === 'AcikAdet') {
+                $('#cuttingEntryAcik').show();
+                calculateAcik();
+                setTimeout(function() { $('#txtAcikMultiplier').focus(); }, 100);
+            } else {
+                $('#cuttingEntryAsorti').show();
+                calculateAsorti();
+                setTimeout(function() { $('#txtAsortiMultiplier').focus(); }, 100);
+            }
+        }
+        
+        function calculateAcik() {
+            const multiplier = parseFloat($('#txtAcikMultiplier').val()) || 1;
+            const markerLength = parseFloat($('#txtAcikMarkerLength').val()) || 0;
+            
+            let totalQty = 0;
+            $('.acik-adet-input-row').each(function() {
+                const val = parseFloat($(this).val()) || 0;
+                totalQty += (val * multiplier);
+            });
+            
+            $('#txtAcikTotal').val(totalQty);
+            if (totalQty > 0) {
+                $('#txtAcikUnitMeterage').val(((markerLength * multiplier) / totalQty).toFixed(2));
+            } else {
+                $('#txtAcikUnitMeterage').val('0');
+            }
+        }
+
+        function calculateAsorti() {
+            const multiplier = parseFloat($('#txtAsortiMultiplier').val()) || 1;
+            const markerLength = parseFloat($('#txtAsortiMarkerLength').val()) || 0;
+            
+            let totalQty = 0;
+            $('.asorti-input-row').each(function() {
+                const asortiValue = parseFloat($(this).data('asortivalue')) || 0;
+                const calculatedValue = asortiValue * multiplier;
+                $(this).val(calculatedValue); 
+                totalQty += calculatedValue;
+            });
+            
+            $('#txtAsortiTotal').val(totalQty);
+            if (totalQty > 0) {
+                $('#txtAsortiUnitMeterage').val(((markerLength * multiplier) / totalQty).toFixed(2));
+            } else {
+                $('#txtAsortiUnitMeterage').val('0');
+            }
+        }
+        
+        function saveAcikRow() {
+            const date = $('#txtAcikDate').val();
+            const multiplier = parseFloat($('#txtAcikMultiplier').val()) || 1;
+            const markerLength = parseFloat($('#txtAcikMarkerLength').val()) || 0;
+            const totalQty = parseFloat($('#txtAcikTotal').val()) || 0;
+            const unitMeterage = parseFloat($('#txtAcikUnitMeterage').val()) || 0;
+
+            if (totalQty <= 0) {
+                showToast("Lütfen geçerli bir kesim değeri giriniz (toplam adet > 0 olmalı).", "warning");
+                return;
+            }
+
+            const sizes = {};
+            let validationError = "";
+            $('.acik-adet-input-row').each(function() {
+                const sizeName = $(this).data('size');
+                const val = parseFloat($(this).val()) || 0;
+                const calculatedValue = val * multiplier;
+                if(calculatedValue > 0) {
+                    const targetQty = parseFloat(targetSizes[sizeName]) || 0;
+                    const alreadyCut = getTotalCutForSize(sizeName, 'Açık Adet');
+                    if ((alreadyCut + calculatedValue) > targetQty) {
+                        validationError = `Hata: '${sizeName}' bedeni için sipariş hedefini aşıyorsunuz! (Hedef: ${targetQty}, Toplam Kesilecek: ${alreadyCut + calculatedValue})`;
+                    }
+                    sizes[sizeName] = calculatedValue;
+                }
+            });
+            
+            if (validationError) {
+                showToast(validationError, "warning");
+                return;
+            }
+            
+            _addCutToGlobalAndRender('Açık Adet', date, multiplier, sizes, totalQty, markerLength, unitMeterage);
+            
+            // Reset
+            $('.acik-adet-input-row').val('0');
+            $('#txtAcikMultiplier').val('1');
+            $('#cuttingEntryAcik').hide();
+            calculateAcik();
+        }
+
+        function saveAsortiRow() {
+            const date = $('#txtAsortiDate').val();
+            const multiplier = parseFloat($('#txtAsortiMultiplier').val()) || 1;
+            const markerLength = parseFloat($('#txtAsortiMarkerLength').val()) || 0;
+            const totalQty = parseFloat($('#txtAsortiTotal').val()) || 0;
+            const unitMeterage = parseFloat($('#txtAsortiUnitMeterage').val()) || 0;
+
+            if (totalQty <= 0) {
+                showToast("Lütfen geçerli bir kesim değeri giriniz (toplam adet > 0 olmalı).", "warning");
+                return;
+            }
+
+            const sizes = {};
+            let validationError = "";
+            $('.asorti-input-row').each(function() {
+                const sizeName = $(this).data('size');
+                const asortiValue = parseFloat($(this).data('asortivalue')) || 0;
+                const val = asortiValue * multiplier;
+                if(val > 0) {
+                    const targetQty = (parseFloat(targetSizesAsorti[sizeName]) || 0) * asortiCount;
+                    const alreadyCut = getTotalCutForSize(sizeName, 'Asorti');
+                    if ((alreadyCut + val) > targetQty) {
+                        validationError = `Hata: '${sizeName}' bedeni için sipariş hedefini aşıyorsunuz! (Hedef: ${targetQty}, Toplam Kesilecek: ${alreadyCut + val})`;
+                    }
+                    sizes[sizeName] = val;
+                }
+            });
+            
+            if (validationError) {
+                showToast(validationError, "warning");
+                return;
+            }
+            
+            _addCutToGlobalAndRender('Asorti', date, multiplier, sizes, totalQty, markerLength, unitMeterage);
+            
+            // Reset
+            $('#txtAsortiMultiplier').val('1');
+            $('#cuttingEntryAsorti').hide();
+            calculateAsorti();
+        }
+
+        function _addCutToGlobalAndRender(cutType, date, multiplier, sizes, totalQty, markerLength, unitMeterage) {
+            const newCutName = "Kesim " + (cuttingItems.length + 1);
+
+            cuttingItems.push({
+                CutName: newCutName,
+                CutType: cutType,
+                Date: date,
+                Multiplier: multiplier,
+                Sizes: sizes,
+                TotalQuantity: totalQty,
+                MarkerLength: markerLength,
+                UnitMeterage: unitMeterage
+            });
+
+            renderCuttingTable();
+        }
+
+        function removeCuttingItem(index) {
+            cuttingItems.splice(index, 1);
+            
+            // Numaraları Yeniden Sırala
+            cuttingItems.forEach((item, idx) => {
+                item.CutName = "Kesim " + (idx + 1);
+            });
+            
+            renderCuttingTable();
+        }
+
+        function renderPlannedCuttingComparison() {
+            // === BÖLÜM 1: Planlanan Kesim Tablosunu Render Et ===
+            if (!plannedCuttingItems || plannedCuttingItems.length === 0) {
+                $('#plannedCuttingTablesContainer').html('<p style="color: #94a3b8; font-style: italic; margin: 0;"><i class="fa-solid fa-info-circle" style="margin-right: 6px;"></i>Henüz üretim planlamasında kesim planlanmamış.</p>');
+                $('#cuttingComparisonReport').hide();
+                return;
+            }
+
+            // Planlanan kesimleri türlerine göre ayır
+            let plannedAcikItems = plannedCuttingItems.filter(i => i.CutType !== 'Asorti');
+            let plannedAsortiItems = plannedCuttingItems.filter(i => i.CutType === 'Asorti');
+
+            function buildPlannedTable(items, sizesArr, title, icon) {
+                if (items.length === 0) return '';
+                let allSizes = sizesArr && sizesArr.length > 0 ? sizesArr : [];
+                // Also collect sizes from items
+                items.forEach(item => {
+                    if (item.Sizes) {
+                        Object.keys(item.Sizes).forEach(s => {
+                            if (allSizes.indexOf(s) === -1) allSizes.push(s);
+                        });
+                    }
+                });
+                if (allSizes.length === 0) return '';
+
+                let html = '<div style="margin-bottom: 20px;">';
+                html += '<h6 style="margin: 0 0 10px 0; color: #1e40af; font-weight: 700; font-size: 0.95rem;"><i class="' + icon + '" style="margin-right: 6px;"></i>' + title + '</h6>';
+                html += '<div style="overflow-x: auto;"><table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; border: 1px solid #dbeafe;">';
+                
+                // Header
+                html += '<thead><tr style="background: #dbeafe;">';
+                html += '<th style="padding: 8px 10px; text-align: center; font-weight: 700; color: #1e40af; border: 1px solid #bfdbfe; font-size: 0.75rem;">KESİM</th>';
+                html += '<th style="padding: 8px 10px; text-align: center; font-weight: 700; color: #1e40af; border: 1px solid #bfdbfe; font-size: 0.75rem;">KAT SAYISI</th>';
+                allSizes.forEach(s => {
+                    html += '<th style="padding: 8px 10px; text-align: center; font-weight: 700; color: #1e40af; border: 1px solid #bfdbfe; font-size: 0.75rem;">' + s + '</th>';
+                });
+                html += '<th style="padding: 8px 10px; text-align: center; font-weight: 700; color: #1e40af; border: 1px solid #bfdbfe; font-size: 0.75rem;">TOPLAM</th>';
+                html += '<th style="padding: 8px 10px; text-align: center; font-weight: 700; color: #1e40af; border: 1px solid #bfdbfe; font-size: 0.75rem;">PASTAL BOYU</th>';
+                html += '<th style="padding: 8px 10px; text-align: center; font-weight: 700; color: #1e40af; border: 1px solid #bfdbfe; font-size: 0.75rem;">TARİH</th>';
+                html += '</tr></thead><tbody>';
+
+                let grandPlanned = 0;
+                items.forEach((item, idx) => {
+                    let cutName = item.CutName || ('Kesim ' + (idx + 1));
+                    let qty = parseFloat(item.TotalQuantity) || 0;
+                    let markerLen = parseFloat(item.MarkerLength || item.PastalBoyu) || 0;
+                    let markerLenStr = markerLen > 0 ? markerLen.toFixed(2) + ' m' : '-';
+                    grandPlanned += qty;
+                    html += '<tr style="background: #eff6ff;">';
+                    html += '<td style="padding: 6px 10px; text-align: center; font-weight: 700; color: #1e40af; border: 1px solid #dbeafe;">' + cutName + '</td>';
+                    html += '<td style="padding: 6px 10px; text-align: center; color: #334155; border: 1px solid #dbeafe;">' + (item.Multiplier || 1) + '</td>';
+                    allSizes.forEach(s => {
+                        let val = item.Sizes && item.Sizes[s] ? parseFloat(item.Sizes[s]) : 0;
+                        let multiplier = item.Multiplier && item.Multiplier > 0 ? item.Multiplier : 1;
+                        let displayVal = val / multiplier;
+                        if (displayVal % 1 !== 0) displayVal = displayVal.toFixed(2);
+                        html += '<td style="padding: 6px 10px; text-align: center; color: #334155; border: 1px solid #dbeafe;">' + displayVal + '</td>';
+                    });
+                    html += '<td style="padding: 6px 10px; text-align: center; font-weight: 700; color: #1e40af; border: 1px solid #dbeafe;">' + qty + '</td>';
+                    html += '<td style="padding: 6px 10px; text-align: center; font-weight: 600; color: #0369a1; border: 1px solid #dbeafe;">' + markerLenStr + '</td>';
+                    html += '<td style="padding: 6px 10px; text-align: center; color: #64748b; border: 1px solid #dbeafe; font-size: 0.8rem;">' + (item.Date || '-') + '</td>';
+                    html += '</tr>';
+                });
+
+                // Toplam satırı
+                html += '<tr style="background: #bfdbfe;">';
+                html += '<td colspan="2" style="padding: 8px 10px; text-align: right; font-weight: 800; color: #1e40af; border: 1px solid #93c5fd;">TOPLAM</td>';
+                allSizes.forEach(s => {
+                    let sizeTotal = 0;
+                    items.forEach(item => {
+                        let val = parseFloat(item.Sizes && item.Sizes[s] ? item.Sizes[s] : 0) || 0;
+                        let multiplier = item.Multiplier && item.Multiplier > 0 ? item.Multiplier : 1;
+                        sizeTotal += val / multiplier;
+                    });
+                    let displayTotal = sizeTotal % 1 !== 0 ? sizeTotal.toFixed(2) : sizeTotal;
+                    html += '<td style="padding: 8px 10px; text-align: center; font-weight: 700; color: #1e40af; border: 1px solid #93c5fd;">' + displayTotal + '</td>';
+                });
+                html += '<td style="padding: 8px 10px; text-align: center; font-weight: 800; color: #1e40af; border: 1px solid #93c5fd; font-size: 1rem;">' + grandPlanned + '</td>';
+                html += '<td style="border: 1px solid #93c5fd;"></td>';
+                html += '<td style="border: 1px solid #93c5fd;"></td>';
+                html += '</tr>';
+
+                html += '</tbody></table></div></div>';
+                return html;
+            }
+
+            let tablesHtml = '';
+            tablesHtml += buildPlannedTable(plannedAcikItems, acikSizesArr, 'Açık Adet Planlanan Kesimler', 'fa-solid fa-shirt');
+            tablesHtml += buildPlannedTable(plannedAsortiItems, asortiSizesArr, 'Asorti Planlanan Kesimler', 'fa-solid fa-layer-group');
+            
+            if (tablesHtml === '') {
+                tablesHtml = '<p style="color: #94a3b8; font-style: italic; margin: 0;"><i class="fa-solid fa-info-circle" style="margin-right: 6px;"></i>Henüz üretim planlamasında kesim planlanmamış.</p>';
+            }
+            $('#plannedCuttingTablesContainer').html(tablesHtml);
+
+            // === BÖLÜM 2: Kesim Bazında Karşılaştırma Raporu ===
+            let actualAcikItems = cuttingItems.filter(i => i.CutType !== 'Asorti');
+            let actualAsortiItems = cuttingItems.filter(i => i.CutType === 'Asorti');
+
+            // Hem planlanan hem de gerçekleşen varsa raporu göster
+            if (cuttingItems.length === 0) {
+                $('#cuttingComparisonReport').hide();
+                return;
+            }
+            $('#cuttingComparisonReport').show();
+
+            function buildPerCutComparison(pItems, aItems, sizesArr, title, icon) {
+                let maxLen = Math.max(pItems.length, aItems.length);
+                if (maxLen === 0) return '';
+                
+                let allSizes = sizesArr && sizesArr.length > 0 ? [...sizesArr] : [];
+                [...pItems, ...aItems].forEach(item => {
+                    if (item.Sizes) {
+                        Object.keys(item.Sizes).forEach(s => {
+                            if (allSizes.indexOf(s) === -1) allSizes.push(s);
+                        });
+                    }
+                });
+                if (allSizes.length === 0) return '';
+
+                let totalPlannedAll = 0, totalActualAll = 0;
+                let totalPlannedPerSize = {}, totalActualPerSize = {};
+                allSizes.forEach(s => { totalPlannedPerSize[s] = 0; totalActualPerSize[s] = 0; });
+                
+                for (let i = 0; i < maxLen; i++) {
+                    let pItem = pItems[i];
+                    let aItem = aItems[i];
+                    if (pItem) {
+                        totalPlannedAll += (parseFloat(pItem.TotalQuantity) || 0);
+                        allSizes.forEach(s => { if (pItem.Sizes && pItem.Sizes[s]) totalPlannedPerSize[s] += parseFloat(pItem.Sizes[s]); });
+                    }
+                    if (aItem) {
+                        totalActualAll += (parseFloat(aItem.TotalQuantity) || 0);
+                        allSizes.forEach(s => { if (aItem.Sizes && aItem.Sizes[s]) totalActualPerSize[s] += parseFloat(aItem.Sizes[s]); });
+                    }
+                }
+
+                let efficiency = totalPlannedAll > 0 ? Math.round((totalActualAll / totalPlannedAll) * 100) : (totalActualAll > 0 ? 100 : 0);
+                
+                let uid = title.replace(/[^a-zA-Z0-9]/g, '');
+                if (!window.toggleCutDetail) {
+                    window.toggleCutDetail = function(uid, index) {
+                        $('.cut-detail-card-' + uid).hide();
+                        $('#detail-' + uid + '-cut-' + index).fadeIn(200);
+                        
+                        $('.cut-chart-item-' + uid).css({'opacity': '0.5', 'transform': 'scale(0.95)'});
+                        $('#chart-' + uid + '-cut-' + index).css({'opacity': '1', 'transform': 'scale(1.05)'});
+                    };
+                }
+
+                let html = '<style>.cut-chart-item-' + uid + ' { transition: all 0.2s ease-in-out; } .cut-chart-item-' + uid + ':hover { opacity: 1 !important; transform: scale(1.05); }</style>';
+                html += '<div style="margin-bottom: 40px;">';
+                html += '<h6 style="margin: 0 0 16px 0; color: #0f766e; font-weight: 800; font-size: 1.1rem;"><i class="' + icon + '" style="margin-right: 8px;"></i>' + title + '</h6>';
+
+                // 1. TOP SUMMARY CARDS
+                html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">';
+                
+                html += '<div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">';
+                html += '<div><div style="font-size: 0.7rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">TOPLAM PLANLANAN</div>';
+                html += '<div style="font-size: 1.5rem; font-weight: 800; color: #1e293b;">' + totalPlannedAll + ' <span style="font-size: 0.8rem; color: #94a3b8; font-weight: 500;">Adet</span></div></div>';
+                html += '<div style="width: 48px; height: 48px; border-radius: 50%; background: #f1f5f9; display: flex; align-items: center; justify-content: center; color: #475569; font-size: 1.2rem;"><i class="fa-regular fa-calendar-check"></i></div>';
+                html += '</div>';
+
+                html += '<div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">';
+                html += '<div><div style="font-size: 0.7rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">TOPLAM GERÇEKLEŞEN</div>';
+                html += '<div style="font-size: 1.5rem; font-weight: 800; color: #16a34a;">' + totalActualAll + ' <span style="font-size: 0.8rem; color: #94a3b8; font-weight: 500;">Adet</span></div></div>';
+                html += '<div style="width: 48px; height: 48px; border-radius: 50%; background: #dcfce7; display: flex; align-items: center; justify-content: center; color: #16a34a; font-size: 1.2rem;"><i class="fa-regular fa-circle-check"></i></div>';
+                html += '</div>';
+
+                html += '<div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">';
+                html += '<div><div style="font-size: 0.7rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">VERİMLİLİK ORANI</div>';
+                html += '<div style="font-size: 1.5rem; font-weight: 800; color: #0f766e;">%' + efficiency + ' <i class="fa-solid fa-arrow-trend-up" style="font-size: 1rem; margin-left: 4px;"></i></div></div>';
+                html += '<div style="width: 48px; height: 48px; border-radius: 50%; background: #ccfbf1; display: flex; align-items: center; justify-content: center; color: #0d9488; font-size: 1.2rem;"><i class="fa-solid fa-gauge-high"></i></div>';
+                html += '</div>';
+
+                html += '</div>';
+
+                // 2. CIRCULAR CHARTS
+                html += '<div style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; margin-bottom: 24px; background: white;">';
+                html += '<div style="background: #0f766e; padding: 12px 16px; color: white; font-weight: 700; font-size: 0.9rem;"><i class="fa-solid fa-chart-pie" style="margin-right: 8px;"></i>Kesim Bazlı Analiz</div>';
+                html += '<div style="padding: 24px; display: flex; gap: 40px; overflow-x: auto; justify-content: center;">';
+                
+                for (let i = 0; i < maxLen; i++) {
+                    let pTotal = pItems[i] ? (parseFloat(pItems[i].TotalQuantity) || 0) : 0;
+                    let aTotal = aItems[i] ? (parseFloat(aItems[i].TotalQuantity) || 0) : 0;
+                    let percent = pTotal > 0 ? Math.min(100, Math.round((aTotal / pTotal) * 100)) : (aTotal > 0 ? 100 : 0);
+                    let color = percent === 100 ? '#0f766e' : (percent >= 80 ? '#0284c7' : (percent > 0 ? '#f59e0b' : '#e2e8f0'));
+                    let conic = `conic-gradient(${color} ${percent}%, #f1f5f9 0)`;
+                    
+                    let isFirst = i === 0;
+                    let opacity = isFirst ? '1' : '0.5';
+                    let transform = isFirst ? 'scale(1.05)' : 'scale(0.95)';
+                    
+                    html += `<div id="chart-${uid}-cut-${i}" class="cut-chart-item-${uid}" onclick="toggleCutDetail('${uid}', ${i})" style="display: flex; flex-direction: column; align-items: center; cursor: pointer; opacity: ${opacity}; transform: ${transform};">`;
+                    html += `<div style="width: 100px; height: 100px; border-radius: 50%; background: ${conic}; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; position: relative; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">`;
+                    html += '<div style="width: 80px; height: 80px; border-radius: 50%; background: white; display: flex; flex-direction: column; align-items: center; justify-content: center;">';
+                    html += `<span style="font-size: 1.1rem; font-weight: 800; color: ${color};">%${percent}</span>`;
+                    html += `<span style="font-size: 0.65rem; font-weight: 600; color: #64748b; margin-top: -2px;">${aTotal}/${pTotal}</span>`;
+                    html += '</div></div>';
+                    html += `<div style="font-size: 0.9rem; font-weight: 700; color: #334155;">Kesim ${i+1}</div>`;
+                    html += '</div>';
+                }
+                html += '</div></div>';
+
+                // 3. OPERASYON DETAYLARI
+                html += '<div style="margin-bottom: 16px;"><span style="font-size: 0.95rem; font-weight: 700; color: #475569;"><i class="fa-solid fa-list-check" style="margin-right: 8px;"></i>Operasyon Detayları</span></div>';
+                
+                html += '<div style="display: flex; flex-direction: column; gap: 16px;">';
+                for (let i = 0; i < maxLen; i++) {
+                    let pItem = pItems[i] || null;
+                    let aItem = aItems[i] || null;
+                    let pTotal = pItem ? (parseFloat(pItem.TotalQuantity) || 0) : 0;
+                    let aTotal = aItem ? (parseFloat(aItem.TotalQuantity) || 0) : 0;
+                    let diff = aTotal - pTotal;
+                    
+                    let statusBadge = '';
+                    if (diff === 0 && pTotal > 0) statusBadge = '<span style="background: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;">Tamamlandı</span>';
+                    else if (diff > 0) statusBadge = '<span style="background: #e0e7ff; color: #3730a3; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;">Fazla Kesim</span>';
+                    else statusBadge = '<span style="background: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;">Eksik</span>';
+
+                    if (!pItem) statusBadge = '<span style="background: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;">Plan Dışı</span>';
+                    if (!aItem) statusBadge = '<span style="background: #f1f5f9; color: #475569; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;">Bekliyor</span>';
+
+                    let displayStyle = i === 0 ? 'block' : 'none';
+                    html += `<div id="detail-${uid}-cut-${i}" class="cut-detail-card-${uid}" style="display: ${displayStyle}; background: white; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">`;
+                    html += `<div style="background: #f8fafc; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0;">`;
+                    html += `<div style="font-weight: 800; color: #0f766e; font-size: 1rem;"><i class="fa-solid fa-scissors" style="margin-right: 8px;"></i>Kesim ${i+1}</div>`;
+                    html += `<div>${statusBadge}</div>`;
+                    html += '</div>';
+
+                    html += '<div style="overflow-x: auto; padding: 16px;">';
+                    html += '<table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">';
+                    
+                    // Header
+                    html += '<thead><tr>';
+                    html += '<th style="padding: 0 10px 12px 10px; text-align: left; font-weight: 700; color: #94a3b8; font-size: 0.7rem; text-transform: uppercase; border-bottom: 2px solid #f1f5f9; width: 140px;">DURUM</th>';
+                    allSizes.forEach(s => {
+                        html += `<th style="padding: 0 10px 12px 10px; text-align: center; font-weight: 700; color: #64748b; font-size: 0.75rem; border-bottom: 2px solid #f1f5f9;">${s}</th>`;
+                    });
+                    html += '<th style="padding: 0 10px 12px 10px; text-align: center; font-weight: 800; color: #475569; font-size: 0.75rem; border-bottom: 2px solid #f1f5f9;">TOPLAM</th>';
+                    html += '</tr></thead><tbody>';
+
+                    // Planlanan
+                    html += '<tr>';
+                    html += '<td style="padding: 12px 10px; font-weight: 700; color: #4f46e5; border-bottom: 1px solid #f8fafc; font-size: 0.8rem;"><i class="fa-solid fa-clipboard-check" style="margin-right: 6px; font-size: 0.7rem; color: #818cf8;"></i>Planlanan</td>';
+                    allSizes.forEach(s => {
+                        let val = pItem && pItem.Sizes && pItem.Sizes[s] ? parseFloat(pItem.Sizes[s]) : 0;
+                        html += `<td style="padding: 12px 10px; text-align: center; font-weight: 700; color: #4f46e5; border-bottom: 1px solid #f8fafc;">${val > 0 ? val : '-'}</td>`;
+                    });
+                    html += `<td style="padding: 12px 10px; text-align: center; font-weight: 800; color: #4f46e5; border-bottom: 1px solid #f8fafc; font-size: 0.95rem;">${pTotal > 0 ? pTotal : '-'}</td>`;
+                    html += '</tr>';
+
+                    // Gerçekleşen
+                    html += '<tr>';
+                    html += '<td style="padding: 12px 10px; font-weight: 700; color: #059669; border-bottom: 1px solid #f8fafc; font-size: 0.8rem;"><i class="fa-solid fa-scissors" style="margin-right: 6px; font-size: 0.7rem; color: #34d399;"></i>Gerçekleşen</td>';
+                    allSizes.forEach(s => {
+                        let val = aItem && aItem.Sizes && aItem.Sizes[s] ? parseFloat(aItem.Sizes[s]) : 0;
+                        html += `<td style="padding: 12px 10px; text-align: center; font-weight: 700; color: #059669; border-bottom: 1px solid #f8fafc;">${val > 0 ? val : '-'}</td>`;
+                    });
+                    html += `<td style="padding: 12px 10px; text-align: center; font-weight: 800; color: #059669; border-bottom: 1px solid #f8fafc; font-size: 0.95rem;">${aTotal > 0 ? aTotal : '-'}</td>`;
+                    html += '</tr>';
+
+                    // Fark
+                    html += '<tr>';
+                    html += '<td style="padding: 12px 10px; font-weight: 600; color: #64748b; font-size: 0.8rem;"><i class="fa-solid fa-arrows-left-right" style="margin-right: 6px; font-size: 0.7rem; color: #cbd5e1;"></i>Fark</td>';
+                    allSizes.forEach(s => {
+                        let pVal = pItem && pItem.Sizes && pItem.Sizes[s] ? parseFloat(pItem.Sizes[s]) : 0;
+                        let aVal = aItem && aItem.Sizes && aItem.Sizes[s] ? parseFloat(aItem.Sizes[s]) : 0;
+                        let sDiff = aVal - pVal;
+                        let display = sDiff === 0 ? '—' : (sDiff > 0 ? '+' + sDiff : sDiff);
+                        let color = sDiff === 0 ? '#94a3b8' : '#1e293b';
+                        html += `<td style="padding: 12px 10px; text-align: center; font-weight: 600; color: ${color};">${display}</td>`;
+                    });
+                    let tDiff = aTotal - pTotal;
+                    let tDisplay = tDiff === 0 ? '—' : (tDiff > 0 ? '+' + tDiff : tDiff);
+                    let tColor = tDiff === 0 ? '#94a3b8' : '#0f172a';
+                    html += `<td style="padding: 12px 10px; text-align: center; font-weight: 800; color: ${tColor};">${tDisplay}</td>`;
+                    html += '</tr>';
+
+                    html += '</tbody></table></div></div>';
+                }
+                html += '</div></div>';
+                return html;
+            }
+
+            let reportHtml = '';
+            if (plannedAcikItems.length > 0 || actualAcikItems.length > 0) {
+                reportHtml += buildPerCutComparison(plannedAcikItems, actualAcikItems, acikSizesArr, 'Açık Adet — Kesim Bazında Karşılaştırma', 'fa-solid fa-shirt');
+            }
+            if (plannedAsortiItems.length > 0 || actualAsortiItems.length > 0) {
+                reportHtml += buildPerCutComparison(plannedAsortiItems, actualAsortiItems, asortiSizesArr, 'Asorti — Kesim Bazında Karşılaştırma', 'fa-solid fa-layer-group');
+            }
+            
+            $('#cuttingComparisonContent').html(reportHtml);
+        }
+
+        function renderCuttingTable() {
+            let htmlAcik = '';
+            let htmlAsorti = '';
+            let acikTotal = 0;
+            let asortiTotal = 0;
+            let grandTotal = 0;
+            
+            cuttingItems.forEach((item, index) => {
+                let cutName = item.CutName || `Kesim ${index + 1}`;
+                let cutTypeLabel = item.CutType || 'Açık Adet';
+                let isAsorti = cutTypeLabel === 'Asorti';
+                let sizesArr = isAsorti ? (typeof asortiSizesArr !== 'undefined' ? asortiSizesArr : []) : (typeof acikSizesArr !== 'undefined' ? acikSizesArr : []);
+                
+                let sizesHtml = '';
+                if (sizesArr && sizesArr.length > 0) {
+                    sizesArr.forEach(s => {
+                        let val = item.Sizes && item.Sizes[s] ? item.Sizes[s] : 0;
+                        let displayVal = val;
+                        if (item.Multiplier && item.Multiplier > 0) {
+                            displayVal = val / item.Multiplier;
+                        }
+                        if (displayVal % 1 !== 0) {
+                            displayVal = displayVal.toFixed(2);
+                        }
+                        sizesHtml += `<td style="vertical-align: middle; text-align: center; color: #475569; font-weight: 500;">${displayVal}</td>`;
+                    });
+                } else {
+                    sizesHtml = `<td style="vertical-align: middle; text-align: center; color: #475569;">-</td>`;
+                }
+                
+                let qty = item.TotalQuantity || 0;
+                grandTotal += qty;
+                
+                let rowHtml = `
+                    <tr style="background: white; text-align: center;">
+                        <td style="font-weight: 700; color: #1e293b; vertical-align: middle;">${cutName}</td>
+                        <td style="vertical-align: middle;">${item.Multiplier}</td>
+                        ${sizesHtml}
+                        <td style="vertical-align: middle;"><strong style="color: #0f172a; font-size: 1.1rem;">${qty}</strong></td>
+                        <td style="vertical-align: middle;">${item.MarkerLength}</td>
+                        <td style="vertical-align: middle;">${item.UnitMeterage}</td>
+                        <td style="vertical-align: middle;">${item.Date}</td>
+                        <td style="vertical-align: middle;"><button class="btn btn-sm btn-danger" onclick="removeCuttingItem(${index})"><i class="fa-solid fa-trash"></i></button></td>
+                    </tr>
+                `;
+                
+                if (isAsorti) {
+                    htmlAsorti += rowHtml;
+                    asortiTotal += qty;
+                } else {
+                    htmlAcik += rowHtml;
+                    acikTotal += qty;
+                }
+            });
+            
+            $('#cuttingBodyAcik').html(htmlAcik);
+            $('#acikTotalCut').text(acikTotal.toLocaleString('tr-TR'));
+            
+            $('#cuttingBodyAsorti').html(htmlAsorti);
+            $('#asortiTotalCut').text(asortiTotal.toLocaleString('tr-TR'));
+            
+            $('#grandTotalCut').text(grandTotal.toLocaleString('tr-TR'));
+
+            // Sipariş limit kontrolü
+            let orderQty = @plannedCutQty;
+            let remaining = orderQty - grandTotal;
+            if (remaining > 0) {
+                $('#divRemainingCut').css('color', '#166534').html(`Kalan İhtiyaç: <strong id="lblRemainingQty">${remaining}</strong> Adet`);
+                $('#btnEkleKesim').prop('disabled', false).removeClass('btn-secondary').addClass('btn-primary').html('<i class="fa-solid fa-plus" style="margin-right:4px;"></i> Kesim Ekle');
+            } else {
+                let excess = Math.abs(remaining);
+                let text = excess > 0 ? `Hedef Tamamlandı! (Fazla: ${excess} Adet)` : `Hedef Tamamlandı!`;
+                $('#divRemainingCut').css('color', '#15803d').html(`<i class="fa-solid fa-circle-check" style="margin-right: 5px;"></i> <strong>${text}</strong>`);
+                $('#btnEkleKesim').prop('disabled', true).removeClass('btn-primary').addClass('btn-secondary').html('<i class="fa-solid fa-lock" style="margin-right:4px;"></i> Kilitli');
+            }
+
+            renderPlannedCuttingComparison();
+        }
+
+        function saveCutting() {
+            $.ajax({
+                url: '/ProcessTracking/UpdateCuttingProcess',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ Id: orderId, CuttingProcessJson: JSON.stringify(cuttingItems) }),
+                success: function(res) {
+                    if(res.success) showToast("Günlük kesim bilgileri kaydedildi.", "success");
+                    else showToast("Hata: " + res.message, "danger");
+                }
+            });
+        }
+
+        function finishCutting() {
+            if(!confirm("Kesim süreci tamamen bitirilecek ve takvime işlenecektir. Onaylıyor musunuz?")) return;
+            
+            $.ajax({
+                url: '/ProcessTracking/UpdateCuttingProcess',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ Id: orderId, CuttingProcessJson: JSON.stringify(cuttingItems) }),
+                success: function(res) {
+                    if(res.success) {
+                        $.post('/ProcessTracking/MarkTimelineCompleted', { orderId: orderId, key: 'prod_kesim_bitis', type: 'prod' }, function(tlRes) {
+                            if(tlRes.success) {
+                                showToast("Kesim süreci başarıyla bitirildi ve takvime işlendi.", "success");
+                                setTimeout(function() { 
+                                    window.location.hash = "timeline";
+                                    location.reload(); 
+                                }, 1000);
+                            }
+                        });
+                    } else {
+                        showToast("Hata: " + res.message, "danger");
+                    }
+                }
+            });
+        }
+
+        function showToast(message, type) {
+            $("#floatingToast").remove();
+            var bgColor = type === "success" ? "#d1fae5" : "#fee2e2";
+            var textColor = type === "success" ? "#065f46" : "#991b1b";
+            var borderClr = type === "success" ? "rgba(52, 211, 153, 0.4)" : "rgba(248, 113, 113, 0.4)";
+            var icon = type === "success" ? "fa-solid fa-circle-check" : "fa-solid fa-circle-exclamation";
+            var toast = $('<div id="floatingToast" style="position: fixed; top: 20px; right: 20px; background-color: ' + bgColor + '; color: ' + textColor + '; border: 1px solid ' + borderClr + '; padding: 16px 24px; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); z-index: 9999; display: flex; align-items: center; gap: 10px; font-weight: 500; font-size: 0.95rem; min-width: 300px; transition: opacity 0.5s;">' +
+                '<i class="' + icon + '" style="font-size: 1.2rem;"></i>' +
+                '<span>' + message + '</span>' +
+                '</div>');
+            $("body").append(toast);
+            setTimeout(function () {
+                toast.css('opacity', '0');
+                setTimeout(function () { toast.remove(); }, 500);
+            }, 3000);
+        }
+
+        function processSevkExit() {
+            $.ajax({
+                url: '/ProcessTracking/ProcessSevkOnayStockExit',
+                type: 'POST',
+                data: { orderId: orderId },
+                success: function(res) {
+                    if (res.success) {
+                        showToast(res.message, "success");
+                        setTimeout(function() {
+                            switchTab('timeline');
+                            location.reload(); 
+                        }, 1500);
+                    } else {
+                        showToast("Hata: " + res.message, "danger");
+                    }
+                },
+                error: function() {
+                    showToast("İşlem sırasında bir hata oluştu.", "danger");
+                }
+            });
+        }
+
+        function printDispatchSlip() {
+            var dateStr = new Date().toLocaleDateString('tr-TR');
+            var timeStr = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+            
+            var printHtml = '<!DOCTYPE html>' +
+            '<' + 'html>' +
+            '<' + 'head>' +
+            '    <title>Malzeme Çıkış Fişi</title>' +
+            '    <style>' +
+            '        body { font-family: "Segoe UI", Arial, sans-serif; padding: 40px; color: #1e293b; }' +
+            '        .header { text-align: center; border-bottom: 2px solid #1e293b; padding-bottom: 15px; margin-bottom: 25px; }' +
+            '        h2 { margin: 0 0 5px 0; font-size: 24px; }' +
+            '        .sub-header { font-size: 16px; color: #475569; }' +
+            '        .info-box { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 15px; padding: 15px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; }' +
+            '        table { width: 100%; border-collapse: collapse; margin-top: 10px; }' +
+            '        th, td { border: 1px solid #cbd5e1; padding: 12px; text-align: left; font-size: 14px; }' +
+            '        th { background-color: #f1f5f9; font-weight: 700; color: #334155; }' +
+            '        .right { text-align: right; }' +
+            '        .footer { margin-top: 60px; display: flex; justify-content: space-between; font-size: 14px; }' +
+            '        .sign-box { width: 220px; border-top: 1px solid #334155; text-align: center; padding-top: 10px; font-weight: 600; }' +
+            '    </style>' +
+            '<' + '/head>' +
+            '<' + 'body>' +
+            '    <div class="header">' +
+            '        <h2>KNN DEPO - MALZEME ÇIKIŞ FİŞİ</h2>' +
+            '        <div class="sub-header">Sipariş No: <strong>@Model.OrderCode</strong></div>' +
+            '    </div>' +
+            '    <div class="info-box">' +
+            '        <div>' +
+            '            <strong>Müşteri:</strong> @Model.Customer <br/>' +
+            '            <strong>Model:</strong> @Model.ModelName <br/>' +
+            '            <strong>Planlanan Miktar:</strong> @Model.CalculatedQuantity' +
+            '        </div>' +
+            '        <div style="text-align: right;">' +
+            '            <strong>Tarih:</strong> ' + dateStr + ' <br/>' +
+            '            <strong>Saat:</strong> ' + timeStr +
+            '        </div>' +
+            '    </div>' +
+            '    <table>' +
+            '        <thead>' +
+            '            <tr>' +
+            '                <th>Malzeme / Stok Adı</th>' +
+            '                <th class="right" style="width: 150px;">Çıkan Miktar</th>' +
+            '            </tr>' +
+            '        </thead>' +
+            '        <tbody>';
+            
+            var itemsFound = false;
+            $('#purchase tbody tr').each(function() {
+                if ($(this).find('.badge').text().includes('STOK YETERLİ')) {
+                    itemsFound = true;
+                    var matName = $(this).find('td:eq(0)').text().trim();
+                    var qty = $(this).find('td:eq(1)').text().trim();
+                    printHtml += '<tr><td>' + matName + '</td><td class="right"><strong>' + qty + '</strong></td></tr>';
+                }
+            });
+
+            printHtml += '        <'+'/tbody>    <'+'/table>';
+            
+            if (!itemsFound) {
+                printHtml += '    <p style="text-align:center; margin-top: 30px; color: #dc2626; font-weight: bold;">Çıkış yapılacak (stoğu yeterli) malzeme bulunamadı.</p>';
+            }
+            
+            printHtml += '    <div class="footer">' +
+            '        <div class="sign-box">Depo Yetkilisi<br><span style="font-size: 12px; font-weight: normal; color: #64748b;">(İmza)</span></div>' +
+            '        <div class="sign-box">Teslim Alan<br><span style="font-size: 12px; font-weight: normal; color: #64748b;">(İmza)</span></div>' +
+            '    </div>' +
+            '<' + '/body>' +
+            '<' + '/html>';
+
+            var printWin = window.open('', '_blank', 'width=850,height=700');
+            printWin.document.open();
+            printWin.document.write(printHtml);
+            printWin.document.close();
+            setTimeout(function() { 
+                printWin.print(); 
+            }, 500);
+        }
+    </script>
+}

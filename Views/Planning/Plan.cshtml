@@ -1,0 +1,2140 @@
+@model UretimPlanlama.Models.Order
+@{
+    ViewData["Title"] = "Sipariş Planlama";
+    var allOrders = ViewBag.AllOrders as List<UretimPlanlama.Models.Order>;
+
+    var prodData = new System.Collections.Generic.Dictionary<string, string>();
+    if (!string.IsNullOrEmpty(Model.ProductionJson))
+    {
+        try {
+            prodData = System.Text.Json.JsonSerializer.Deserialize<System.Collections.Generic.Dictionary<string, string>>(Model.ProductionJson);
+        } catch {}
+    }
+    string GetProdVal(string key) => prodData != null && prodData.ContainsKey(key) ? prodData[key] : "";
+}
+
+<style>
+    .planning-layout {
+        display: flex;
+        gap: 20px;
+        align-items: stretch;
+        min-height: calc(100vh - 80px);
+    }
+    
+    .sidebar-orders {
+        width: 300px;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        overflow: hidden;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        position: sticky;
+        top: 10px;
+        max-height: calc(100vh - 20px);
+    }
+    
+    .sidebar-header {
+        padding: 16px;
+        border-bottom: 1px solid var(--border-color);
+        background: #f8fafc;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 600;
+        color: var(--text-main);
+    }
+    
+    .order-list-item {
+        padding: 16px;
+        border-bottom: 1px solid var(--border-color);
+        cursor: pointer;
+        transition: background-color 0.2s;
+        text-decoration: none;
+        display: block;
+        color: inherit;
+    }
+    
+    .order-list-item:hover {
+        background-color: #f1f5f9;
+    }
+    
+    .order-list-item.active {
+        border-left: 4px solid var(--primary-color);
+        background-color: #f0f9ff;
+    }
+    
+    .main-planning {
+        flex-grow: 1;
+        min-width: 0;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        padding: 24px;
+    }
+    
+    .plan-tabs {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    
+    .plan-tab {
+        flex: 1;
+        background: #f8fafc;
+        border: 2px solid transparent;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .plan-tab:hover {
+        background: #f1f5f9;
+    }
+    
+    .plan-tab.active {
+        border-color: var(--primary-color);
+        background: #f0f9ff;
+    }
+    
+    .plan-tab i {
+        font-size: 1.5rem;
+        color: #64748b;
+    }
+    
+    .plan-tab.active i {
+        color: var(--primary-color);
+    }
+    
+    .plan-tab-title {
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: var(--text-main);
+    }
+    
+    .plan-tab-status {
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+    
+    .status-complete { color: #16a34a; }
+    .status-progress { color: #d97706; }
+    .status-notstarted { color: #64748b; }
+    
+    .tab-content {
+        display: none;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+    
+    .content-section {
+        background: #fff;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .section-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-main);
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .data-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+    }
+    
+    .data-item {
+        background: #f8fafc;
+        padding: 12px;
+        border-radius: 6px;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .data-label {
+        font-size: 0.75rem;
+        color: #64748b;
+        margin-bottom: 4px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .data-value {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+    
+    .input-field {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        font-size: 0.9rem;
+    }
+    
+    .table-details {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 16px;
+    }
+    
+    .table-details th {
+        background: #f8fafc;
+        padding: 12px;
+        text-align: left;
+        font-size: 0.8rem;
+        color: #64748b;
+        font-weight: 600;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    
+    .table-details td {
+        padding: 12px;
+        border-bottom: 1px solid #e2e8f0;
+        font-size: 0.9rem;
+    }
+</style>
+
+<div class="planning-layout">
+    <!-- Sağ İçerik: Planlama Detayı -->
+    @if (Model != null && Model.Id > 0)
+    {
+        <div class="main-planning">
+            <div style="margin-bottom: 20px;">
+                <a href="/Planning" style="text-decoration: none; color: #0369a1; font-weight: 600; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: #f1f5f9; border-radius: 6px; border: 1px solid #e2e8f0; transition: all 0.2s;">
+                    <i class="fa-solid fa-arrow-left"></i> Planlama Listesine Dön
+                </a>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <div>
+                <span style="font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase;">PLANLAMA DETAYI</span>
+                <div style="display: flex; align-items: baseline; gap: 8px; margin-top: 4px; user-select: none;">
+                    <h2 style="margin: 0; color: #0f172a; padding-bottom: 2px;">@Model.OrderCode</h2>
+                </div>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <a href="/Planning/ExportToExcel" class="btn-planner" style="background: #16a34a; border-color: #16a34a; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 5px;"><i class="fa-solid fa-file-excel"></i> Excel</a>
+            </div>
+        </div>
+
+        <!-- Sipariş Detayları Kartı (Daima Açık) -->
+        <div id="orderDetailsCard" style="margin-bottom: 16px; background: white; border-radius: 10px; box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; padding: 12px 16px;">
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; margin-bottom: 10px;">
+                <span style="font-weight: 700; color: #0f172a; font-size: 0.9rem;"><i class="fa-solid fa-box-open" style="color: #0ea5e9; margin-right: 6px;"></i>Sipariş Özellikleri</span>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px;">
+                <div style="background: #f8fafc; padding: 8px 10px; border-radius: 6px;">
+                    <div style="font-size: 0.65rem; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px;">MODEL</div>
+                    <div style="font-weight: 600; color: #0f172a; font-size: 0.8rem;">@Model.ModelName</div>
+                </div>
+                <div style="background: #f8fafc; padding: 8px 10px; border-radius: 6px;">
+                    <div style="font-size: 0.65rem; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px;">RENK</div>
+                    <div style="font-weight: 600; color: #0f172a; font-size: 0.8rem;">@Model.Color</div>
+                </div>
+                <div style="background: #f8fafc; padding: 8px 10px; border-radius: 6px;">
+                    <div style="font-size: 0.65rem; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px;">MÜŞTERİ</div>
+                    <div style="font-weight: 600; color: #0f172a; font-size: 0.8rem;">@Model.Customer</div>
+                </div>
+                <div style="background: #fdf4ff; padding: 8px 10px; border-radius: 6px; border: 1px solid #fae8ff;">
+                    <div style="font-size: 0.65rem; color: #a21caf; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px;">ATÖLYE</div>
+                    <div style="font-weight: 600; color: #701a75; font-size: 0.8rem;">
+                        @{
+                            var atolyeInfo = GetProdVal("prod_dikim_atolyesi");
+                            if (string.IsNullOrEmpty(atolyeInfo)) { atolyeInfo = Model.SewingWorkshop ?? Model.ProductionPlace; }
+                            <text>@(string.IsNullOrEmpty(atolyeInfo) ? "-" : atolyeInfo)</text>
+                        }
+                    </div>
+                </div>
+                <div style="background: #f8fafc; padding: 8px 10px; border-radius: 6px;">
+                    <div style="font-size: 0.65rem; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px;">ADET</div>
+                    <div style="font-weight: 600; color: #0f172a; font-size: 0.8rem;">@Model.CalculatedQuantity.ToString("N0")</div>
+                </div>
+                <div style="background: #f0f9ff; padding: 8px 10px; border-radius: 6px; border: 1px solid #e0f2fe;">
+                    <div style="font-size: 0.65rem; color: #0284c7; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px;">TERMİN TARİHİ</div>
+                    <div style="font-weight: 600; color: #0c4a6e; font-size: 0.8rem;">@(Model.PlannedPackagingEndDate.HasValue ? Model.PlannedPackagingEndDate.Value.ToString("dd.MM.yyyy") : "-")</div>
+                </div>
+                <div style="background: #fdf2f8; padding: 8px 10px; border-radius: 6px; border: 1px solid #fce7f3;">
+                    <div style="font-size: 0.65rem; color: #db2777; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px;">REVİZE TERMİN</div>
+                    <div style="font-weight: 600; color: #9d174d; font-size: 0.8rem;">
+                        @{
+                            var revizeTermin = Model.RevisedInspectionDate.HasValue 
+                                ? Model.RevisedInspectionDate.Value.ToString("dd.MM.yyyy") 
+                                : "";
+                            
+                            if (string.IsNullOrEmpty(revizeTermin))
+                            {
+                                var revizeTerminStr = GetProdVal("prod_knn_revize_termin");
+                                if (!string.IsNullOrEmpty(revizeTerminStr))
+                                {
+                                    if (DateTime.TryParse(revizeTerminStr, out DateTime dtRevize))
+                                    {
+                                        revizeTermin = dtRevize.ToString("dd.MM.yyyy");
+                                    }
+                                    else if (DateTime.TryParseExact(revizeTerminStr, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out DateTime revizeTerminExact))
+                                    {
+                                        revizeTermin = revizeTerminExact.ToString("dd.MM.yyyy");
+                                    }
+                                    else
+                                    {
+                                        revizeTermin = revizeTerminStr;
+                                    }
+                                }
+                            }
+                            
+                            <text>@(string.IsNullOrEmpty(revizeTermin) ? "-" : revizeTermin)</text>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @{
+            var activeTab = TempData["ActiveTab"]?.ToString() ?? "numune";
+        }
+
+        <!-- Aşama Kartları -->
+        <div class="plan-tabs">
+            <div class="plan-tab @(activeTab == "numune" ? "active" : "")" onclick="switchTab('numune', this)">
+                <i class="fa-solid fa-clipboard-check"></i>
+                <div class="plan-tab-title">1. NUMUNE/TEST PLANLAMA</div>
+                @if (Model.IsSampleTestCompleted) {
+                    <div class="plan-tab-status status-complete">%100 TAMAM</div>
+                } else {
+                    <div class="plan-tab-status status-notstarted">BEKLİYOR</div>
+                }
+            </div>
+            <div class="plan-tab @(activeTab == "satinalma" ? "active" : "")" onclick="switchTab('satinalma', this)">
+                <i class="fa-solid fa-cart-shopping"></i>
+                <div class="plan-tab-title">2. SATIN ALMA PLANLAMA</div>
+                @if (Model.IsPurchasingCompleted) {
+                    <div class="plan-tab-status status-complete">%100 TAMAM</div>
+                } else {
+                    <div class="plan-tab-status status-notstarted">BEKLİYOR</div>
+                }
+            </div>
+            <div class="plan-tab @(activeTab == "uretim" ? "active" : "")" onclick="switchTab('uretim', this)">
+                <i class="fa-solid fa-industry"></i>
+                <div class="plan-tab-title">3. ÜRETİM PLANLAMA</div>
+                @if (Model.IsProductionCompleted) {
+                    <div class="plan-tab-status status-complete">%100 TAMAM</div>
+                } else {
+                    <div class="plan-tab-status status-notstarted">BEKLİYOR</div>
+                }
+            </div>
+        </div>
+
+        <!-- Sekme 1: Numune/Test -->
+        <div id="tab-numune" class="tab-content @(activeTab == "numune" ? "active" : "")">
+            <form id="sample-form" action="/Planning/UpdateSampleTestPlan" method="post">
+                <input type="hidden" name="Id" value="@Model.Id" />
+                <h3 style="font-size: 1.1rem; margin-bottom: 16px; color: #1e293b;">Numune ve Test Planlama Detayları</h3>
+                
+                @{
+                    var sampleData = new System.Collections.Generic.Dictionary<string, string>();
+                    if (!string.IsNullOrEmpty(Model.SampleTestJson))
+                    {
+                        try {
+                            sampleData = System.Text.Json.JsonSerializer.Deserialize<System.Collections.Generic.Dictionary<string, string>>(Model.SampleTestJson);
+                        } catch {}
+                    }
+                    string GetSampleVal(string key) => sampleData.ContainsKey(key) ? sampleData[key] : "";
+                }
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+                    <!-- Ana Kumaş Kartı -->
+                    <div class="content-section">
+                        <div class="section-title">
+                            <i class="fa-solid fa-layer-group"></i> Ana Kumaş
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 16px;">
+                            <div>
+                                <div class="data-label">NUMUNE KUMAŞ Y-TESTİ</div>
+                                <input type="date" name="sample_kumas_ytesti" class="input-field" value="@GetSampleVal("sample_kumas_ytesti")" />
+                            </div>
+                            <div>
+                                <div class="data-label">K-TUŞE RENK ONAYI test vr tarihi</div>
+                                <input type="date" name="sample_tuse_renk" class="input-field" value="@GetSampleVal("sample_tuse_renk")" />
+                            </div>
+                            <div>
+                                <div class="data-label">KUMAŞ KARIŞIMI</div>
+                                <input type="text" name="sample_kumas_karisim" class="input-field" placeholder="Örn: %80 Pamuk %20 Polyester" value="@GetSampleVal("sample_kumas_karisim")" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Düğme Kartı -->
+                    <div class="content-section">
+                        <div class="section-title">
+                            <i class="fa-solid fa-circle-dot"></i> Düğme
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 16px;">
+                            <div>
+                                <div class="data-label">DÜĞME RENK KALİTE ONAY</div>
+                                <input type="date" name="sample_dugme_renk" class="input-field" value="@GetSampleVal("sample_dugme_renk")" />
+                            </div>
+                            <div>
+                                <div class="data-label">DÜĞME TESTİ</div>
+                                <input type="date" name="sample_dugme_test" class="input-field" value="@GetSampleVal("sample_dugme_test")" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FIT / PPS Numunesi Kartı -->
+                    <div class="content-section">
+                        <div class="section-title">
+                            <i class="fa-solid fa-shirt"></i> FIT / PPS Numunesi
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 16px;">
+                            <div>
+                                <div class="data-label">PP ONAY (Üretim öncesi en kritik onay)</div>
+                                <input type="date" name="sample_pp_onay" class="input-field" value="@GetSampleVal("sample_pp_onay")" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+                    <label style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #0f172a;">
+                        <input type="checkbox" name="IsSampleTestCompleted" value="true" @(Model.IsSampleTestCompleted ? "checked" : "") /> 
+                        <span style="color: #16a34a;"><i class="fa-solid fa-check-circle"></i> Numune Planlama Tamamlandı</span>
+                    </label>
+                    <button type="submit" class="btn-planner" style="background: var(--primary-color); color: white; border: none; padding: 10px 24px; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-save"></i> Numune/Test Planını Kaydet</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Sekme 2: Satın Alma (MRP) -->
+        <div id="tab-satinalma" class="tab-content @(activeTab == "satinalma" ? "active" : "")">
+            <form id="purchasing-form" action="/Planning/UpdatePurchasingPlan" method="post">
+                <input type="hidden" name="Id" value="@Model.Id" />
+                <input type="hidden" name="pur_has_missing_materials" id="pur_has_missing_materials" value="false" />
+                <h3 style="font-size: 1.1rem; margin-bottom: 16px; color: #1e293b;">Kumaş ve Aksesuar Planlaması (MRP) <span style="font-size: 0.85rem; color: #64748b; font-weight: normal;"></span></h3>
+            
+            @{
+                var purData = new System.Collections.Generic.Dictionary<string, string>();
+                if (!string.IsNullOrEmpty(Model.PurchasingMaterialsJson))
+                {
+                    try {
+                        purData = System.Text.Json.JsonSerializer.Deserialize<System.Collections.Generic.Dictionary<string, string>>(Model.PurchasingMaterialsJson);
+                    } catch {}
+                }
+                string GetPurVal(string key, string def = "") => purData.ContainsKey(key) ? purData[key] : def;
+
+                string ExtractFromOzellikler(string json, string keyContains) {
+                    if (string.IsNullOrEmpty(json)) return null;
+                    try {
+                        using var doc = System.Text.Json.JsonDocument.Parse(json);
+                        if (doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Array) {
+                            foreach(var prop in doc.RootElement.EnumerateArray()) {
+                                if (prop.TryGetProperty("Key", out var k) && prop.TryGetProperty("Value", out var v)) {
+                                    var keyStr = k.GetString();
+                                    if (keyStr != null && keyStr.Contains(keyContains, StringComparison.OrdinalIgnoreCase)) {
+                                        return v.GetString();
+                                    }
+                                }
+                            }
+                        } else if (doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object) {
+                            foreach(var prop in doc.RootElement.EnumerateObject()) {
+                                if (prop.Name.Contains(keyContains, StringComparison.OrdinalIgnoreCase)) {
+                                    return prop.Value.GetString();
+                                }
+                            }
+                        }
+                    } catch {}
+                    return null;
+                }
+                
+                // Renkleri bul (pur_color_RENKADI_... patterninden)
+                var colors = purData.Keys
+                    .Where(k => k.StartsWith("pur_color_"))
+                    .Select(k => k.Split('_')[2])
+                    .Distinct()
+                    .ToList();
+                    
+                if (!colors.Any()) {
+                    if (!string.IsNullOrEmpty(Model.Color)) {
+                        colors.Add(Model.Color);
+                    } else {
+                        colors.Add("GENEL");
+                    }
+                }
+                
+                var stokKartlari = (List<UretimPlanlama.Models.StokKarti>)ViewBag.StokKartlari ?? new List<UretimPlanlama.Models.StokKarti>();
+                var kumasMaterials = new List<dynamic>();
+                var basicMaterials = new List<dynamic>();
+                var labelMaterials = new List<dynamic>();
+                var interlinings = new List<dynamic>();
+                
+                if (Model.OrderMaterials != null && Model.OrderMaterials.Any()) {
+                    foreach (var mat in Model.OrderMaterials) {
+                        var stok = stokKartlari.FirstOrDefault(x => x.Id == mat.StokKartiId);
+                        if (stok != null) {
+                            var miktar = mat.Miktar.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                            var key = "stk_" + stok.Id.ToString() + "_" + mat.Id.ToString();
+                            var m = new { Name = stok.StokAdi, DefaultUnit = miktar, Key = key, Stok = stok, OrderOzelliklerJson = mat.OzelliklerJson, Aciklama = mat.Aciklama };
+                            
+                            var cat = (stok.Kategori ?? "").Trim().ToUpperInvariant();
+                            if (cat == "KUMAŞ" || cat == "KUMAS") kumasMaterials.Add(m);
+                            else if (cat == "ETİKET" || cat == "ETIKET") labelMaterials.Add(m);
+                            else if (cat == "TELA") interlinings.Add(m);
+                            else basicMaterials.Add(m); // "Malzeme" ve diğer her şey
+                        }
+                    }
+                }
+                
+                string firstFabricMeterageStr = "1";
+                if (kumasMaterials.Any()) {
+                    var kMat = kumasMaterials.First();
+                    string dynKumasMetraj = ExtractFromOzellikler(kMat.OrderOzelliklerJson, "METRAJ");
+                    firstFabricMeterageStr = !string.IsNullOrEmpty(dynKumasMetraj) ? dynKumasMetraj : kMat.DefaultUnit;
+                }
+
+                var openSizes = new Dictionary<string, int>();
+                if (!string.IsNullOrEmpty(Model.SizeDistributionJson)) {
+                    try { openSizes = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, int>>(Model.SizeDistributionJson) ?? new Dictionary<string, int>(); } catch {}
+                }
+                var asortiSizes = new Dictionary<string, int>();
+                if (!string.IsNullOrEmpty(Model.AsortiDistributionJson)) {
+                    try { asortiSizes = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, int>>(Model.AsortiDistributionJson) ?? new Dictionary<string, int>(); } catch {}
+                }
+                int asortiCount = Model.AsortiCount;
+
+                var finalSizes = new Dictionary<string, int>();
+                foreach(var kvp in openSizes) {
+                    if(!finalSizes.ContainsKey(kvp.Key)) finalSizes[kvp.Key] = 0;
+                    finalSizes[kvp.Key] += kvp.Value;
+                }
+                foreach(var kvp in asortiSizes) {
+                    if(!finalSizes.ContainsKey(kvp.Key)) finalSizes[kvp.Key] = 0;
+                    finalSizes[kvp.Key] += (kvp.Value * asortiCount);
+                }
+            }
+
+            <input type="hidden" name="ActualFabricMeterage" value="@Model.ActualFabricMeterage" />
+            <input type="hidden" name="ActualFabricQty" value="@Model.ActualFabricQty" />
+            <input type="hidden" name="AccessoryCompletionDate" value="@(Model.AccessoryCompletionDate?.ToString("yyyy-MM-dd"))" />
+            <input type="hidden" name="PurchasingMaterialsJson" id="PurchasingMaterialsJson" value="@Model.PurchasingMaterialsJson" />
+
+            <style>
+                .color-tabs { display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
+                .color-tab { padding: 10px 20px; background: #f1f5f9; border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; font-weight: 600; color: #475569; transition: all 0.2s; white-space: nowrap; }
+                .color-tab:hover { background: #e2e8f0; }
+                .color-tab.active { background: #0ea5e9; color: white; border-color: #0284c7; box-shadow: 0 4px 6px -1px rgba(14, 165, 233, 0.2); }
+                .color-tab-add { padding: 10px 16px; background: white; border: 1px dashed #94a3b8; border-radius: 8px; cursor: pointer; font-weight: 600; color: #64748b; transition: all 0.2s; }
+                .color-tab-add:hover { background: #f8fafc; border-color: #64748b; color: #0f172a; }
+                .color-pane { display: none; }
+                .color-pane.active { display: block; }
+            </style>
+
+            @if (colors.Count > 1 || (colors.Count == 1 && colors[0] != "GENEL")) {
+            <div class="color-tabs" id="colorTabsContainer">
+                @foreach(var c in colors) {
+                    <div class="color-tab @(c == colors.First() ? "active" : "")" data-color="@c">@c</div>
+                }
+            </div>
+            }
+
+            <div id="colorPanesContainer">
+                @foreach(var c in colors) {
+                    <div class="color-pane @(c == colors.First() ? "active" : "")" id="pane-@c">
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                            <!-- Kumaş Tedarik Bilgileri Kartı -->
+                            <div class="content-section" style="margin-bottom: 0;">
+                                <div class="section-title">
+                                    <i class="fa-solid fa-truck-fast"></i> @(c != "GENEL" ? c + " " : "")Kumaş Tedarik Bilgileri
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                    <div style="grid-column: span 2;">
+                                        <div class="data-label">KUMAŞÇI</div>
+                                        <select name="pur_color_@(c)_kumasci" class="input-field" style="width: 100%;">
+                                            <option value="">-- Seçiniz --</option>
+                                            @if(ViewBag.Fabricators != null) {
+                                                var defaultFab = GetPurVal($"pur_color_{c}_kumasci");
+                                                if (string.IsNullOrEmpty(defaultFab) && (c == Model.Color || c == "GENEL")) {
+                                                    defaultFab = Model.FabricSupplier;
+                                                }
+                                                foreach(var f in (IEnumerable<UretimPlanlama.Models.Fabricator>)ViewBag.Fabricators) {
+                                                    if(defaultFab == f.Name) {
+                                                        <option value="@f.Name" selected>@f.Name</option>
+                                                    } else {
+                                                        <option value="@f.Name">@f.Name</option>
+                                                    }
+                                                }
+                                            } else {
+                                                var val = GetPurVal($"pur_color_{c}_kumasci");
+                                                if (string.IsNullOrEmpty(val) && (c == Model.Color || c == "GENEL")) {
+                                                    val = Model.FabricSupplier;
+                                                }
+                                                if(!string.IsNullOrEmpty(val)) {
+                                                    <option value="@val" selected>@val</option>
+                                                }
+                                            }
+                                        </select>
+                                    </div>
+                                    <div style="grid-column: span 2;"><div class="data-label">KUMAŞ SEVK (ANLAŞILAN)</div><input type="date" name="pur_color_@(c)_kumas_sevk" class="input-field" value="@GetPurVal($"pur_color_{c}_kumas_sevk")" /></div>
+                                </div>
+                            </div>
+
+                            <!-- Aksesuar Tarihleri Kartı -->
+                            <div class="content-section" style="margin-bottom: 0;">
+                                <div class="section-title">
+                                    <i class="fa-solid fa-calendar-days"></i> @(c != "GENEL" ? c + " " : "")Aksesuar Geliş Tarihleri
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                    <div><div class="data-label">DÜĞME-GELİŞİ</div><input type="date" name="pur_color_@(c)_dugme_gelisi" class="input-field" value="@GetPurVal($"pur_color_{c}_dugme_gelisi")" /></div>
+                                    <div><div class="data-label">DÜĞME DİKİŞ İPİ</div><input type="date" name="pur_color_@(c)_dugme_dikis_ipi" class="input-field" value="@GetPurVal($"pur_color_{c}_dugme_dikis_ipi")" /></div>
+                                    <div><div class="data-label">ETİKET-GELİŞİ</div><input type="date" name="pur_color_@(c)_etiket_gelisi" class="input-field" value="@GetPurVal($"pur_color_{c}_etiket_gelisi")" /></div>
+                                    <div><div class="data-label">FİYAT KART-GELİŞİ</div><input type="date" name="pur_color_@(c)_fiyat_kart_gelisi" class="input-field" value="@GetPurVal($"pur_color_{c}_fiyat_kart_gelisi")" /></div>
+                                    <div><div class="data-label">YIKAMA-İÇ GELİŞ</div><input type="date" name="pur_color_@(c)_yikama_ic_gelis" class="input-field" value="@GetPurVal($"pur_color_{c}_yikama_ic_gelis")" /></div>
+                                </div>
+                            </div>
+
+                            <!-- Ana Kumaş Kartı -->
+                            <div class="content-section" style="margin-bottom: 0; background: #fafafa; border: 1px solid #e2e8f0; grid-column: span 2;">
+                                <div class="section-title">
+                                    <i class="fa-solid fa-layer-group"></i> @(c != "GENEL" ? c + " " : "")Kumaş Metraj Hesabı
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr; gap: 16px;">
+                                    <div style="margin-top: 10px; overflow-x: auto;">
+                                        <table class="table-details" style="margin-top:0; min-width: 600px;">
+                                            <thead>
+                                                <tr>
+                                                    <th>CİNSİ</th>
+                                                    <th style="text-align: center;">SİPARİŞ / ÇIKACAK ADET</th>
+                                                    <th style="text-align: center;">BİRİM METRAJ (M)</th>
+                                                    <th style="text-align: center;">TOPLAM KUMAŞ METRAJI</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr style="background-color: #fef08a;">
+                                                    <td style="font-weight: bold;">İHTİYAÇ OLAN KUMAŞ</td>
+                                                    <td><input type="text" name="pur_color_@(c)_siparis_adeti" class="input-field mrp-input mrp-siparis-adeti mrp-calc-source-adet" value="@GetPurVal($"pur_color_{c}_siparis_adeti", Model.Quantity.ToString())" style="width: 100%; padding: 6px; font-weight: bold; color: #b45309; text-align: center; background-color: #fdf6e3; cursor: not-allowed;" readonly tabindex="-1" /></td>
+                                                    <td><input type="text" name="pur_color_@(c)_istenen_metraj" class="input-field mrp-input mrp-istenen-metraj mrp-calc-source-metraj" value="@firstFabricMeterageStr" style="width: 100%; padding: 6px; text-align: center; background-color: #fdf6e3; cursor: not-allowed;" readonly tabindex="-1" /></td>
+                                                    <td><input type="text" name="pur_color_@(c)_istenen_kumas_miktar" class="input-field mrp-input mrp-istenen-kumas-miktar mrp-calc-source-kumas" value="@GetPurVal($"pur_color_{c}_istenen_kumas_miktar", "0")" style="width: 100%; padding: 6px; font-weight: bold; color: #b45309; text-align: center; background-color: #fdf6e3; cursor: not-allowed;" readonly tabindex="-1" /></td>
+                                                </tr>
+                                                <tr style="background-color: #e0e7ff;">
+                                                    <td style="font-weight: bold;">İSTENEN KUMAŞ</td>
+                                                    <td><input type="text" name="pur_color_@(c)_beden_cikacak" class="input-field mrp-input mrp-beden-cikacak mrp-calc-source-adet" value="@GetPurVal($"pur_color_{c}_beden_cikacak", "0")" style="width: 100%; padding: 6px; font-weight: bold; color: #1e40af; text-align: center;" /></td>
+                                                    <td><input type="text" name="pur_color_@(c)_beden_metraj" class="input-field mrp-input mrp-beden-metraj mrp-calc-source-metraj" value="@GetPurVal($"pur_color_{c}_beden_metraj", firstFabricMeterageStr)" style="width: 100%; padding: 6px; text-align: center;"/></td>
+                                                    <td><input type="text" name="pur_color_@(c)_beden_miktar" class="input-field mrp-input mrp-beden-miktar mrp-calc-source-kumas" value="@GetPurVal($"pur_color_{c}_beden_miktar", "0")" style="width: 100%; padding: 6px; font-weight: bold; color: #1e40af; text-align: center;"/></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- Malzeme İhtiyaç Tablosu -->
+                        <div class="content-section" style="padding: 0; overflow-x: auto;">
+                            <div class="section-title" style="padding: 16px 16px 0 16px;">
+                                <i class="fa-solid fa-table-list"></i> @(c != "GENEL" ? c + " " : "")Malzeme İhtiyaç Tablosu
+                            </div>
+                            <table class="table-details mrp-table">
+                                <thead>
+                                    <tr>
+                                        <th>CİNSİ</th>
+                                        <th style="width: 100px;">SİPARİŞ ADETİ</th>
+                                        <th style="width: 80px;">BİRİM</th>
+                                        <th style="width: 100px;">TOPLAM</th>
+                                        <th style="width: 80px;">FİRE (%)</th>
+                                        <th style="width: 90px; background:#e2e8f0;">FİRE ADETİ</th>
+                                        <th style="width: 100px; background:#fef08a;">İSTENEN</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (!basicMaterials.Any()) {
+                                        <tr><td colspan="7" style="text-align: center; color: #64748b; padding: 20px;">Model detayında seçilmiş malzeme yok.</td></tr>
+                                    } else {
+                                        foreach (var item in basicMaterials) {
+                                            string dynFire = ExtractFromOzellikler(item.OrderOzelliklerJson, "FİRE") ?? ExtractFromOzellikler(item.OrderOzelliklerJson, "FIRE");
+                                            string defaultFire = !string.IsNullOrEmpty(dynFire) ? dynFire : (Model.WastageRate.HasValue ? Model.WastageRate.Value.ToString("0.##") : "0");
+                                            string dynBirim = ExtractFromOzellikler(item.OrderOzelliklerJson, "BİRİM") ?? ExtractFromOzellikler(item.OrderOzelliklerJson, "BIRIM");
+                                            string unitVal = GetPurVal($"pur_color_{c}_birim_{item.Key}", !string.IsNullOrEmpty(dynBirim) ? dynBirim : item.DefaultUnit);
+                                            string fireVal = GetPurVal($"pur_color_{c}_fire_{item.Key}", defaultFire);
+                                            string dynBoyut = ExtractFromOzellikler(item.OrderOzelliklerJson, "BOYUT") ?? ExtractFromOzellikler(item.OrderOzelliklerJson, "EBAT") ?? ExtractFromOzellikler(item.OrderOzelliklerJson, "BÜYÜKLÜK") ?? ExtractFromOzellikler(item.OrderOzelliklerJson, "BOY");
+                                            string extraInfo = !string.IsNullOrEmpty(dynBoyut) ? dynBoyut : item.Aciklama;
+                                            string displayName = !string.IsNullOrEmpty(extraInfo) ? $"{item.Name} ({extraInfo})" : item.Name;
+
+                                            <tr class="mrp-row">
+                                                <td style="font-weight: 600;">@displayName</td>
+                                                <td class="row-is-adeti" style="text-align: right; color: #64748b; font-weight: 600;">0</td>
+                                                <td><input type="text" name="pur_color_@(c)_birim_@item.Key" class="input-field mrp-input row-birim" value="@unitVal" style="width: 100%; padding: 4px;" /></td>
+                                                <td class="row-toplam" style="text-align: right; font-weight: 600; color: #0f172a;">0</td>
+                                                <td><input type="text" name="pur_color_@(c)_fire_@item.Key" class="input-field mrp-input row-fire" value="@fireVal" style="width: 100%; padding: 4px;" /></td>
+                                                <td class="row-fazla" style="text-align: right; background:#e2e8f0; color: #0f172a; font-weight: 600;">0</td>
+                                                <td class="row-istenen" style="text-align: right; font-weight: 700; color: #b45309; background:#fef08a;">0</td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Bedenli Etiketler İhtiyaç Tablosu -->
+                        <div class="content-section" style="padding: 0; overflow-x: auto; margin-top: 16px;">
+                            <div class="section-title" style="padding: 16px 16px 0 16px;">
+                                <i class="fa-solid fa-tags"></i> @(c != "GENEL" ? c + " " : "")Bedenli Etiketler İhtiyaç Tablosu
+                            </div>
+                            <table class="table-details mrp-label-table">
+                                <thead>
+                                    <tr>
+                                        <th>CİNSİ</th>
+                                        @foreach(var size in finalSizes.Keys) {
+                                            <th style="width: 70px; text-align: center; background:#e0f2fe; color:#0284c7;">@size</th>
+                                        }
+                                        <th style="width: 80px; text-align: center;">FİRE (%)</th>
+                                        <th style="width: 120px; background:#fef08a; text-align: center;">İHTİYAÇ (TOPLAM)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (labelMaterials.Any()) {
+                                        <tr style="background:#f1f5f9;" class="label-param-row">
+                                            <td style="font-weight:bold;">ASORTİ ORANLARI</td>
+                                            @foreach(var sizeKvp in finalSizes) {
+                                                int asortiO = asortiSizes.ContainsKey(sizeKvp.Key) ? asortiSizes[sizeKvp.Key] : 0;
+                                                string val = GetPurVal($"pur_color_{c}_label_asorti_oran_{sizeKvp.Key}", asortiO.ToString());
+                                                <td><input type="text" name="pur_color_@(c)_label_asorti_oran_@sizeKvp.Key" class="input-field mrp-input label-asorti-oran" data-size="@sizeKvp.Key" value="@val" style="width:100%; padding:4px; text-align:center;" /></td>
+                                            }
+                                            <td></td>
+                                            <td class="label-asorti-oran-toplam" style="text-align:right; font-weight:bold;">0</td>
+                                        </tr>
+                                        <tr style="background:#f1f5f9;" class="label-param-row">
+                                            <td style="font-weight:bold;">AÇIK ADET</td>
+                                            @foreach(var sizeKvp in finalSizes) {
+                                                int openQ = openSizes.ContainsKey(sizeKvp.Key) ? openSizes[sizeKvp.Key] : 0;
+                                                string val = GetPurVal($"pur_color_{c}_label_acik_adet_{sizeKvp.Key}", openQ.ToString());
+                                                <td><input type="text" name="pur_color_@(c)_label_acik_adet_@sizeKvp.Key" class="input-field mrp-input label-acik-adet" data-size="@sizeKvp.Key" value="@val" style="width:100%; padding:4px; text-align:center;" /></td>
+                                            }
+                                            <td></td>
+                                            <td class="label-acik-adet-toplam" style="text-align:right; font-weight:bold;">0</td>
+                                        </tr>
+
+                                        <tr style="background:#f0fdf4;" class="label-param-row">
+                                            <td style="font-weight:bold; color:#16a34a;">ASORTİ SAYISI</td>
+                                            <td colspan="@(finalSizes.Count + 2)" class="label-kalan-adet-val" style="text-align:right; font-weight:bold; color:#16a34a; padding-right:12px;">0</td>
+                                        </tr>
+                                        <tr style="background:#f0fdf4;" class="label-param-row">
+                                            <td style="font-weight:bold; color:#16a34a;">YENİ LOT SAYISI</td>
+                                            <td colspan="@(finalSizes.Count + 2)" class="label-yeni-lot-val" style="text-align:right; font-weight:bold; color:#16a34a; padding-right:12px;">0</td>
+                                        </tr>
+                                        <tr style="background:#e2e8f0;" class="label-param-row">
+                                            <td style="font-weight:bold; text-align:right;">TOPLAM:</td>
+                                            @foreach(var sizeKvp in finalSizes) {
+                                                <td class="label-toplam-beden" data-size="@sizeKvp.Key" style="text-align:center; font-weight:bold; color:#1e40af;">0</td>
+                                            }
+                                            <td></td>
+                                            <td class="label-genel-toplam" style="text-align:right; font-weight:bold; color:#b45309;">0</td>
+                                        </tr>
+                                        foreach (var item in labelMaterials) {
+                                            string dynFire = ExtractFromOzellikler(item.OrderOzelliklerJson, "FİRE") ?? ExtractFromOzellikler(item.OrderOzelliklerJson, "FIRE");
+                                            string fireVal = GetPurVal($"pur_color_{c}_label_fire_{item.Key}", !string.IsNullOrEmpty(dynFire) ? dynFire : "0");
+                                            <tr class="mrp-label-row">
+                                                <td style="font-weight: 600;">@item.Name</td>
+                                                @foreach(var sizeKvp in finalSizes) {
+                                                    <td class="row-label-size-qty" data-size="@sizeKvp.Key" style="text-align: center; color: #475569; font-weight: 700; background:#f8fafc;">0</td>
+                                                }
+                                                <td><input type="text" name="pur_color_@(c)_label_fire_@item.Key" class="input-field mrp-input row-label-fire" value="@fireVal" style="width: 100%; padding: 4px; text-align: center;" /></td>
+                                                <td class="row-label-toplam" style="text-align: right; font-weight: 700; color: #b45309; background:#fef08a;">0</td>
+                                            </tr>
+                                        }
+                                    } else {
+                                        <tr><td colspan="@(3 + finalSizes.Count)" style="text-align: center; color: #64748b; padding: 20px;">Model detayında seçilmiş etiket yok.</td></tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Astar Tela İhtiyaç Tablosu -->
+                        <div class="content-section" style="padding: 0; overflow-x: auto; margin-top: 16px;">
+                            <div class="section-title" style="padding: 16px 16px 0 16px;">
+                                <i class="fa-solid fa-layer-group"></i> @(c != "GENEL" ? c + " " : "")Astar Tela İhtiyacı
+                            </div>
+                            <table class="table-details interlining-table">
+                                <thead>
+                                    <tr>
+                                        <th>CİNSİ</th>
+                                        <th style="width: 100px;">İŞ MİKTARI</th>
+                                        <th style="width: 100px;">BİRİM</th>
+                                        <th style="width: 150px;">GRAM</th>
+                                        <th style="width: 150px; text-align: center;">TELA İHTİYACI (RENK)</th>
+                                        <th style="width: 100px; background:#fef08a;">İHTİYAÇ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (!interlinings.Any()) {
+                                        <tr><td colspan="6" style="text-align: center; color: #64748b; padding: 20px;">Model detayında seçilmiş tela yok.</td></tr>
+                                    } else {
+                                        foreach (var item in interlinings) {
+                                            string dynBirim = ExtractFromOzellikler(item.OrderOzelliklerJson, "BİRİM") ?? ExtractFromOzellikler(item.OrderOzelliklerJson, "BIRIM");
+                                            string dynGram = ExtractFromOzellikler(item.OrderOzelliklerJson, "GRAM");
+                                            string dynRenk = ExtractFromOzellikler(item.OrderOzelliklerJson, "RENK");
+
+                                            string unitVal = GetPurVal($"pur_color_{c}_tela_birim_{item.Key}", !string.IsNullOrEmpty(dynBirim) ? dynBirim : item.DefaultUnit);
+                                            string tipiVal = GetPurVal($"pur_color_{c}_tela_tipi_{item.Key}", !string.IsNullOrEmpty(dynGram) ? dynGram : "");
+                                            string renkVal = GetPurVal($"pur_color_{c}_tela_renk_{item.Key}", !string.IsNullOrEmpty(dynRenk) ? dynRenk : "");
+                                            <tr class="interlining-row">
+                                                <td style="font-weight: 600;">@item.Name</td>
+                                                <td class="row-is-miktari" style="text-align: right; color: #64748b; font-weight: 600;">0</td>
+                                                <td><input type="text" name="pur_color_@(c)_tela_birim_@item.Key" class="input-field interlining-input row-tela-birim" value="@unitVal" style="width: 100%; padding: 4px; text-align: center;" /></td>
+                                                <td><input type="text" name="pur_color_@(c)_tela_tipi_@item.Key" class="input-field" value="@tipiVal" placeholder="Örn: 1.75'lik" style="width: 100%; padding: 4px;" /></td>
+                                                <td><input type="text" name="pur_color_@(c)_tela_renk_@item.Key" class="input-field" value="@renkVal" placeholder="Renk" style="width: 100%; padding: 4px;" /></td>
+                                                <td class="row-ihtiyac" style="text-align: right; font-weight: 700; color: #b45309; background:#fef08a;">0</td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-top: 20px; align-items: center;">
+                <label style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #0f172a;">
+                    <input type="checkbox" name="IsPurchasingCompleted" value="true" @(Model.IsPurchasingCompleted ? "checked" : "") /> 
+                    <span style="color: #16a34a;"><i class="fa-solid fa-check-circle"></i> Satın Alma Planlama Tamamlandı</span>
+                </label>
+                <button type="submit" class="btn-planner" style="background: #1d4ed8; color: white; border: none; padding: 10px 24px; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-save"></i> Satın Alma Planını Kaydet</button>
+            </div>
+            </form>
+        </div>
+
+        <!-- Sekme 3: Üretim -->
+        <div id="tab-uretim" class="tab-content @(activeTab == "uretim" ? "active" : "")">
+            <form id="production-form" action="/Planning/UpdateProductionPlan" method="post">
+                <input type="hidden" name="Id" value="@Model.Id" />
+                <h3 style="font-size: 1.1rem; margin-bottom: 16px; color: #1e293b;">Üretim Planlama Detayları</h3>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+                    <!-- Kesim ve Dikim Kartı -->
+                    <div class="content-section">
+                        <div class="section-title">
+                            <i class="fa-solid fa-scissors"></i> Kesim ve Dikim
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 16px;">
+                            <div>
+                                <div class="data-label">DİKİM ATÖLYESİ</div>
+                                <select name="prod_dikim_atolyesi" class="input-field">
+                                    <option value="">-- Atölye Seçin --</option>
+                                    @if (ViewBag.Workshops != null)
+                                    {
+                                        var prodDikim = GetProdVal("prod_dikim_atolyesi");
+                                        if (string.IsNullOrEmpty(prodDikim)) { prodDikim = Model.SewingWorkshop ?? Model.ProductionPlace; }
+                                        foreach (var w in (System.Collections.Generic.List<UretimPlanlama.Models.Workshop>)ViewBag.Workshops)
+                                        {
+                                            if (!string.IsNullOrEmpty(prodDikim) && prodDikim.Equals(w.Name, StringComparison.OrdinalIgnoreCase))
+                                            {
+                                                <option value="@w.Name" selected>@w.Name</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="@w.Name">@w.Name</option>
+                                            }
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <div>
+                                <div class="data-label">ÜRETİLECEK MİKTAR</div>
+                                <input type="text" class="input-field" value="@Model.CalculatedQuantity.ToString("N0")" disabled style="background:#f1f5f9; font-weight:600; color:#475569;" />
+                            </div>
+                            <div>
+                                <div class="data-label" style="display:flex; justify-content:space-between; align-items:center;">
+                                    <span>DİKİLECEK MİKTAR</span>
+                                    <label style="display:flex; align-items:center; gap:4px; font-size:0.75rem; color:#0f172a; cursor:pointer; text-transform:none; margin:0;">
+                                        <input type="checkbox" onchange="if(this.checked) { document.getElementById('prodDikimMiktari').value = '@Model.CalculatedQuantity'; } else { document.getElementById('prodDikimMiktari').value = ''; }" /> Tamamı
+                                    </label>
+                                </div>
+                                <input type="number" id="prodDikimMiktari" name="prod_dikim_miktari" class="input-field" value="@GetProdVal("prod_dikim_miktari")" placeholder="Örn: @Model.CalculatedQuantity" />
+                            </div>
+                            <div>
+                                <div class="data-label">KESİM BAŞLANGIÇ</div>
+                                <input type="date" name="prod_kesim_baslangic" class="input-field" value="@GetProdVal("prod_kesim_baslangic")" />
+                            </div>
+                            <div>
+                                <div class="data-label">KESİM BİTİŞ</div>
+                                <input type="date" name="prod_kesim_bitis" class="input-field" value="@GetProdVal("prod_kesim_bitis")" />
+                            </div>
+                            <div>
+                                <div class="data-label">DİKİM BAŞLANGIÇ</div>
+                                <input type="date" name="prod_dikim_baslangic" class="input-field" value="@GetProdVal("prod_dikim_baslangic")" />
+                            </div>
+                            <div>
+                                <div class="data-label">DİKİM BİTİŞ</div>
+                                <input type="date" name="prod_dikim_bitis" class="input-field" value="@GetProdVal("prod_dikim_bitis")" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Paket ve Lojistik Kartı -->
+                    <div class="content-section">
+                        <div class="section-title">
+                            <i class="fa-solid fa-box-open"></i> Paket ve Lojistik
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 16px;">
+                            <div>
+                                <div class="data-label">PAKET BAŞLANGIÇ</div>
+                                <input type="date" name="prod_paket_baslangic" class="input-field" value="@GetProdVal("prod_paket_baslangic")" />
+                            </div>
+                            <div>
+                                <div class="data-label">PAKET BİTİŞ</div>
+                                <input type="date" name="prod_paket_bitis" class="input-field" value="@GetProdVal("prod_paket_bitis")" />
+                            </div>
+                            <div>
+                                <div class="data-label">GS GİDİŞİ</div>
+                                <input type="date" name="prod_gs_gidisi" class="input-field" value="@GetProdVal("prod_gs_gidisi")" />
+                            </div>
+                            <div>
+                                <div class="data-label">YOLA ÇIKIŞ</div>
+                                <input type="date" name="prod_yola_cikis" class="input-field" value="@GetProdVal("prod_yola_cikis")" />
+                            </div>
+                            <div>
+                                <div class="data-label">DEPO VARIŞ</div>
+                                <input type="date" name="prod_depo_varis" class="input-field" value="@GetProdVal("prod_depo_varis")" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Termin Kartı -->
+                    <div class="content-section">
+                        <div class="section-title">
+                            <i class="fa-solid fa-calendar-check"></i> Termin Bilgileri
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 16px;">
+                            <div>
+                                <div class="data-label">ATÖLYE TERMİN TARİHİ</div>
+                                @{
+                                    var suAnkiTermin = GetProdVal("prod_suanki_termin");
+                                    if (string.IsNullOrEmpty(suAnkiTermin) && Model.PlannedPackagingEndDate.HasValue)
+                                    {
+                                        suAnkiTermin = Model.PlannedPackagingEndDate.Value.ToString("yyyy-MM-dd");
+                                    }
+                                }
+                                <input type="date" name="prod_suanki_termin" class="input-field" value="@suAnkiTermin" onchange="document.querySelector('input[name=\'prod_yola_cikis\']').value = this.value;" />
+                            </div>
+                            <div>
+                                <div class="data-label">KNN REVİZE TERMİN</div>
+                                @{
+                                    var revizeTerminInput = GetProdVal("prod_knn_revize_termin");
+                                    if (string.IsNullOrEmpty(revizeTerminInput) && Model.RevisedInspectionDate.HasValue)
+                                    {
+                                        revizeTerminInput = Model.RevisedInspectionDate.Value.ToString("yyyy-MM-dd");
+                                    }
+                                }
+                                <input type="date" name="prod_knn_revize_termin" class="input-field not-mandatory" value="@revizeTerminInput" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KESİM SÜRECİ TAB -->
+        <div style="margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 20px; max-width: 100%; overflow: hidden;">
+            @{
+                var sizesObj = new Dictionary<string, string>();
+                if (!string.IsNullOrEmpty(Model.SizeDistributionJson)) {
+                    try { 
+                        using (var doc = System.Text.Json.JsonDocument.Parse(Model.SizeDistributionJson)) {
+                            foreach(var prop in doc.RootElement.EnumerateObject()) {
+                                if (prop.Value.ValueKind == System.Text.Json.JsonValueKind.Number) sizesObj[prop.Name] = prop.Value.GetInt32().ToString();
+                                else if (prop.Value.ValueKind == System.Text.Json.JsonValueKind.String) sizesObj[prop.Name] = prop.Value.GetString() ?? "0";
+                            }
+                        }
+                    } catch {}
+                }
+                if (sizesObj.Count == 0) {
+                    if (Model.SizeS > 0) sizesObj.Add("S", Model.SizeS.ToString());
+                    if (Model.SizeM > 0) sizesObj.Add("M", Model.SizeM.ToString());
+                    if (Model.SizeL > 0) sizesObj.Add("L", Model.SizeL.ToString());
+                    if (Model.SizeXL > 0) sizesObj.Add("XL", Model.SizeXL.ToString());
+                    if (Model.Size2XL > 0) sizesObj.Add("2XL", Model.Size2XL.ToString());
+                    if (Model.Size3XL > 0) sizesObj.Add("3XL", Model.Size3XL.ToString());
+                }
+
+                var asortiObj = new Dictionary<string, string>();
+                if (!string.IsNullOrEmpty(Model.AsortiDistributionJson)) {
+                    try { 
+                        using (var doc = System.Text.Json.JsonDocument.Parse(Model.AsortiDistributionJson)) {
+                            foreach(var prop in doc.RootElement.EnumerateObject()) {
+                                if (prop.Value.ValueKind == System.Text.Json.JsonValueKind.Number) asortiObj[prop.Name] = prop.Value.GetInt32().ToString();
+                                else if (prop.Value.ValueKind == System.Text.Json.JsonValueKind.String) asortiObj[prop.Name] = prop.Value.GetString() ?? "0";
+                            }
+                        }
+                    } catch {}
+                }
+                if (asortiObj.Count == 0) {
+                    if (Model.AsortiSizeS > 0) asortiObj.Add("S", Model.AsortiSizeS.ToString());
+                    if (Model.AsortiSizeM > 0) asortiObj.Add("M", Model.AsortiSizeM.ToString());
+                    if (Model.AsortiSizeL > 0) asortiObj.Add("L", Model.AsortiSizeL.ToString());
+                    if (Model.AsortiSizeXL > 0) asortiObj.Add("XL", Model.AsortiSizeXL.ToString());
+                    if (Model.AsortiSize2XL > 0) asortiObj.Add("2XL", Model.AsortiSize2XL.ToString());
+                    if (Model.AsortiSize3XL > 0) asortiObj.Add("3XL", Model.AsortiSize3XL.ToString());
+                }
+
+                int acikAdetTotal = 0;
+                foreach(var v in sizesObj.Values) { if (int.TryParse(v, out int val)) acikAdetTotal += val; }
+                
+                int asortiTotal = 0;
+                foreach(var v in asortiObj.Values) { if (int.TryParse(v, out int val)) asortiTotal += val; }
+            }
+
+            <div style="margin-top: 30px; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">
+                <h4 style="margin: 0; color: #0f172a; font-weight: 700; font-size: 1.3rem; display: flex; align-items: center; gap: 10px;">
+                    <span style="display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: linear-gradient(135deg, #dcfce7, #bbf7d0); border-radius: 8px;">
+                        <i class="fa-solid fa-scissors" style="color: #16a34a; font-size: 1rem;"></i>
+                    </span>
+                    Kesim Planlaması
+                </h4>
+            </div>
+            
+            <!-- SİPARİŞ HEDEFİ BİLGİ ŞERİDİ -->
+            <div style="padding: 18px 24px; margin-bottom: 24px; background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 1px solid #bbf7d0; border-radius: 12px; box-shadow: 0 2px 8px rgba(22, 101, 52, 0.08);">
+                <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                    <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: center;">
+                        <div style="font-size: 1.2rem; color: #15803d; font-weight: 700;">
+                            <i class="fa-solid fa-bullseye" style="margin-right: 8px;"></i>Genel Toplam Hedef: <span style="font-size: 1.4rem;">@Model.CalculatedQuantity</span> Adet
+                        </div>
+                    </div>
+                    <div style="font-size: 1.1rem; color: #166534; text-align: right; background: rgba(255,255,255,0.7); padding: 8px 16px; border-radius: 8px;" id="planDivRemainingCut">
+                        Kalan İhtiyaç: <strong id="planLblRemainingQty" style="font-size: 1.3rem;">@Model.CalculatedQuantity</strong> Adet
+                    </div>
+                </div>
+            </div>
+
+
+
+            <!-- JS Array Definitions for Sizes -->
+            <script>
+                var acikSizesArr = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(sizesObj.Keys));
+                var asortiSizesArr = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(asortiObj.Keys));
+            </script>
+
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 24px; margin-bottom: 12px; flex-wrap: wrap; gap: 12px;">
+                <div>
+                    <h5 style="margin: 0 0 8px 0; color: #334155; font-weight: 700; font-size: 1rem;">Açık Adet Kesim Tablosu</h5>
+                    <div style="font-size: 0.82rem; color: #15803d; display: flex; flex-wrap: wrap; align-items: center; gap: 4px;">
+                        <strong style="margin-right: 6px;"><i class="fa-solid fa-shirt" style="margin-right: 4px;"></i> Sipariş Açık Adet Dağılımı:</strong>
+                        @if (sizesObj.Any()) {
+                            foreach(var kvp in sizesObj) {
+                                <span style="display: inline-block; background: #dcfce7; padding: 3px 10px; border-radius: 12px; margin-right: 4px; font-weight: 600; border: 1px solid #bbf7d0; font-size: 0.8rem;">@kvp.Key: @kvp.Value</span>
+                            }
+                            <span style="display: inline-block; margin-left: 8px; padding-left: 12px; border-left: 1px solid #bbf7d0; font-weight: 700; color: #166534;">
+                                Toplam: @acikAdetTotal Adet
+                            </span>
+                        } else {
+                            <span style="font-style: italic;">Yok</span>
+                        }
+                    </div>
+                </div>
+                <button type="button" class="btn btn-sm" onclick="planToggleCutForm('AcikAdet')" style="background: linear-gradient(135deg, #1d4ed8, #2563eb); color: white; border: none; padding: 6px 16px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; box-shadow: 0 2px 6px rgba(37,99,235,0.3); transition: all 0.2s;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 10px rgba(37,99,235,0.4)'" onmouseout="this.style.transform=''; this.style.boxShadow='0 2px 6px rgba(37,99,235,0.3)'"><i class="fa-solid fa-plus" style="margin-right: 6px;"></i> Açık Adet Kesim Ekle</button>
+            </div>
+            <div class="table-responsive" style="width: 100%; overflow-x: auto;">
+                <table class="table table-bordered w-100" id="planTblCuttingAcik" style="width: 100%; border-collapse: separate; border-spacing: 0; border-radius: 10px; overflow: hidden; border: 1px solid #e2e8f0; font-size: 0.88rem;">
+                    <thead style="background: linear-gradient(135deg, #f8fafc, #f1f5f9); text-align: center;">
+                        <tr>
+                            <th rowspan="2" class="sticky-kesim" style="vertical-align: middle; padding: 10px 12px; color: #334155; font-weight: 700; white-space: nowrap; min-width: 90px; position: sticky; left: 0; background: #f8fafc; z-index: 3; box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1);">Kesim No</th>
+                            <th rowspan="2" style="vertical-align: middle; padding: 10px 12px; color: #334155; font-weight: 700; white-space: nowrap; min-width: 80px;">Kat Sayısı</th>
+                            <th colspan="@Math.Max(1, sizesObj.Count)" style="padding: 10px 12px; color: #334155; font-weight: 700;">Bedenler</th>
+                            <th rowspan="2" style="vertical-align: middle; padding: 10px 12px; color: #334155; font-weight: 700; white-space: nowrap; min-width: 90px;">Çıkan Adet</th>
+                            <th rowspan="2" style="vertical-align: middle; padding: 10px 12px; color: #334155; font-weight: 700; white-space: nowrap; min-width: 90px;">Pastal Boyu</th>
+                            <th rowspan="2" style="vertical-align: middle; padding: 10px 12px; color: #334155; font-weight: 700; white-space: nowrap; min-width: 90px;">Birim Metraj</th>
+                            <th rowspan="2" style="vertical-align: middle; padding: 10px 12px; color: #334155; font-weight: 700; white-space: nowrap; min-width: 130px;">Tarih</th>
+                            <th rowspan="2" class="sticky-islem" style="vertical-align: middle; padding: 10px 12px; color: #334155; font-weight: 700; white-space: nowrap; min-width: 90px; position: sticky; right: 0; background: #f8fafc; z-index: 3; box-shadow: -2px 0 5px -2px rgba(0,0,0,0.1);">İşlem</th>
+                        </tr>
+                        <tr>
+                            @if (sizesObj.Count > 0) {
+                                foreach (var k in sizesObj.Keys) {
+                                    <th style="padding: 8px 10px; color: #475569; font-weight: 600; min-width: 70px;">@k</th>
+                                }
+                            } else {
+                                <th style="padding: 8px 10px;">-</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody id="planCuttingBodyAcik">
+                    </tbody>
+                    <tbody id="planCuttingEntryAcik" style="display: none; background: #f0fdf4; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);">
+                        <tr>
+                            <td class="sticky-kesim" style="vertical-align: middle; text-align: center; position: sticky; left: 0; background: #f0fdf4; z-index: 2; box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1);"><span style="font-size: 0.75rem; color: #166534; font-weight: 800; text-transform: uppercase;">YENİ KAYIT</span></td>
+                            <td style="vertical-align: middle;"><input type="number" id="planTxtAcikMultiplier" class="form-control form-control-sm" value="1" oninput="planCalculateAcik()" style="width: 100%; padding: 6px 4px; text-align: center; font-weight: bold; border-radius: 6px;" /></td>
+                            @if (sizesObj.Count > 0) {
+                                foreach (var k in sizesObj.Keys) {
+                                    <td style="vertical-align: middle;"><input type="number" id="planTxtAcikSize_@k" class="form-control form-control-sm acik-adet-input-row" data-size="@k" value="0" oninput="planCalculateAcik()" style="width: 100%; padding: 6px 4px; text-align: center; font-weight: bold; border-radius: 6px;" /></td>
+                                }
+                            } else {
+                                <td style="vertical-align: middle;">-</td>
+                            }
+                            <td style="vertical-align: middle;"><input type="number" id="planTxtAcikTotal" class="form-control form-control-sm" readonly style="width: 100%; padding: 6px 4px; text-align: center; background: #dcfce7; font-weight: bold; color: #166534; border-radius: 6px;" /></td>
+                            <td style="vertical-align: middle;"><input type="number" id="planTxtAcikMarkerLength" class="form-control form-control-sm" value="0" step="0.01" oninput="planCalculateAcik()" style="width: 100%; padding: 6px 4px; text-align: center; font-weight: bold; border-radius: 6px;" /></td>
+                            <td style="vertical-align: middle;"><input type="number" id="planTxtAcikUnitMeterage" class="form-control form-control-sm" readonly style="width: 100%; padding: 6px 4px; text-align: center; background: #dcfce7; font-weight: bold; color: #166534; border-radius: 6px;" /></td>
+                            <td style="vertical-align: middle;"><input type="date" id="planTxtAcikDate" class="form-control form-control-sm" value="@DateTime.Now.ToString("yyyy-MM-dd")" style="width: 100%; font-weight: bold; padding: 6px 4px; border-radius: 6px;" /></td>
+                            <td class="sticky-islem" style="vertical-align: middle; text-align: center; position: sticky; right: 0; background: #f0fdf4; z-index: 2; box-shadow: -2px 0 5px -2px rgba(0,0,0,0.1);">
+                                <div style="display: flex; gap: 4px; justify-content: center;">
+                                    <button type="button" class="btn btn-success btn-sm" onclick="planSaveAcikRow()" title="Kaydet" style="border-radius: 6px;"><i class="fa-solid fa-check"></i></button>
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="$('#planCuttingEntryAcik').hide();" title="İptal"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tfoot style="background: linear-gradient(135deg, #f1f5f9, #e2e8f0); font-weight: bold;">
+                        <tr>
+                            <td colspan="2" class="sticky-kesim" style="text-align: right; vertical-align: middle; color: #475569; padding: 12px 20px; font-size: 0.9rem; position: sticky; left: 0; background: #f1f5f9; z-index: 3; box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1);">AÇIK ADET TOPLAMI:</td>
+                            @if (sizesObj.Count > 0) {
+                                foreach (var k in sizesObj.Keys) {
+                                    <td id="planAcikTotalCutSize_@k" style="font-size: 1.05rem; color: #1e40af; vertical-align: middle; text-align: center; padding: 12px 8px;">0</td>
+                                }
+                            } else {
+                                <td>-</td>
+                            }
+                            <td id="planAcikTotalCut" style="font-size: 1.15rem; color: #0f172a; vertical-align: middle; text-align: center; padding: 12px 8px;">0</td>
+                            <td colspan="3"></td>
+                            <td class="sticky-islem" style="position: sticky; right: 0; background: #f1f5f9; z-index: 3; box-shadow: -2px 0 5px -2px rgba(0,0,0,0.1);"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 32px; margin-bottom: 12px; flex-wrap: wrap; gap: 12px;">
+                <div>
+                    <h5 style="margin: 0 0 8px 0; color: #334155; font-weight: 700; font-size: 1rem;">Asorti Kesim Tablosu</h5>
+                    <div style="font-size: 0.82rem; color: #15803d; display: flex; flex-wrap: wrap; align-items: center; gap: 4px;">
+                        <strong style="margin-right: 6px;"><i class="fa-solid fa-layer-group" style="margin-right: 4px;"></i> Sipariş Asorti Dağılımı:</strong>
+                        @if (asortiObj.Any()) {
+                            foreach(var kvp in asortiObj) {
+                                <span style="display: inline-block; background: #dcfce7; padding: 3px 10px; border-radius: 12px; margin-right: 4px; font-weight: 600; border: 1px solid #bbf7d0; font-size: 0.8rem;">@kvp.Key: @kvp.Value</span>
+                            }
+                            <span style="display: inline-block; margin-left: 8px; padding-left: 12px; border-left: 1px solid #bbf7d0; font-weight: 700; color: #166534;">
+                                @{
+                                    int dynamicLot = asortiTotal > 0 ? (int)Math.Floor((double)Model.CalculatedQuantity / asortiTotal) : 0;
+                                    int dynamicTotal = dynamicLot * asortiTotal;
+                                    int tekleme = Model.CalculatedQuantity - dynamicTotal;
+                                }
+                                1 Asorti: @asortiTotal Adet | Lot Sayısı: @dynamicLot | Asorti Toplam: @dynamicTotal Adet @(tekleme > 0 ? $" | Kalan (Tekleme): {tekleme} Adet" : "")
+                            </span>
+                        } else {
+                            <span style="font-style: italic;">Yok</span>
+                        }
+                    </div>
+                    @if (asortiObj.Any()) {
+                        int dynamicLot2 = asortiTotal > 0 ? (int)Math.Floor((double)Model.CalculatedQuantity / asortiTotal) : 0;
+                        int dynamicTotal2 = dynamicLot2 * asortiTotal;
+                        int tekleme2 = Model.CalculatedQuantity - dynamicTotal2;
+                        if (tekleme2 > 0)
+                        {
+                            <div style="margin-top: 10px; background: #fffbeb; border: 1px solid #fde68a; padding: 10px 16px; border-radius: 8px; display: flex; align-items: center; gap: 12px; width: 100%;">
+                                <div style="color: #b45309; font-size: 0.88rem; font-weight: 600; flex: 1;">
+                                    <i class="fa-solid fa-triangle-exclamation" style="margin-right: 4px; font-size: 1.1rem; vertical-align: middle;"></i>
+                                    Asorti dağılımından sonra <strong>@tekleme2 adet</strong> tekleme kaldı. Bu ürünleri açık adet olarak kesmek ister misiniz?
+                                </div>
+                                <button type="button" class="btn btn-sm" onclick="planToggleCutForm('AcikAdet'); document.getElementById('planTxtAcikMultiplier').focus(); window.scrollTo({ top: document.getElementById('planTblCuttingAcik').offsetTop - 100, behavior: 'smooth' });" style="background: #f59e0b; color: white; border: none; font-weight: bold; border-radius: 6px; padding: 6px 14px; white-space: nowrap; box-shadow: 0 2px 4px rgba(245,158,11,0.3);"><i class="fa-solid fa-arrow-up-right-from-square" style="margin-right: 4px;"></i> Açık Adet Kesim Ekle</button>
+                            </div>
+                        }
+                    }
+                </div>
+                <button type="button" class="btn btn-sm" onclick="planToggleCutForm('Asorti')" style="background: linear-gradient(135deg, #1d4ed8, #2563eb); color: white; border: none; padding: 6px 16px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; box-shadow: 0 2px 6px rgba(37,99,235,0.3); transition: all 0.2s; align-self: flex-start;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 10px rgba(37,99,235,0.4)'" onmouseout="this.style.transform=''; this.style.boxShadow='0 2px 6px rgba(37,99,235,0.3)'"><i class="fa-solid fa-plus" style="margin-right: 6px;"></i> Asorti Kesim Ekle</button>
+            </div>
+            <div class="table-responsive" style="width: 100%; overflow-x: auto;">
+                <table class="table table-bordered w-100" id="planTblCuttingAsorti" style="width: 100%; border-collapse: separate; border-spacing: 0; border-radius: 10px; overflow: hidden; border: 1px solid #e2e8f0; font-size: 0.88rem;">
+                    <thead style="background: linear-gradient(135deg, #f8fafc, #f1f5f9); text-align: center;">
+                        <tr>
+                            <th rowspan="2" class="sticky-kesim" style="vertical-align: middle; padding: 10px 12px; color: #334155; font-weight: 700; white-space: nowrap; min-width: 90px; position: sticky; left: 0; background: #f8fafc; z-index: 3; box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1);">Kesim No</th>
+                            <th rowspan="2" style="vertical-align: middle; padding: 10px 12px; color: #334155; font-weight: 700; white-space: nowrap; min-width: 80px;">Kat Sayısı</th>
+                            <th colspan="@Math.Max(1, asortiObj.Count)" style="padding: 10px 12px; color: #334155; font-weight: 700;">Bedenler</th>
+                            <th rowspan="2" style="vertical-align: middle; padding: 10px 12px; color: #334155; font-weight: 700; white-space: nowrap; min-width: 90px;">Çıkan Adet</th>
+                            <th rowspan="2" style="vertical-align: middle; padding: 10px 12px; color: #334155; font-weight: 700; white-space: nowrap; min-width: 90px;">Pastal Boyu</th>
+                            <th rowspan="2" style="vertical-align: middle; padding: 10px 12px; color: #334155; font-weight: 700; white-space: nowrap; min-width: 90px;">Birim Metraj</th>
+                            <th rowspan="2" style="vertical-align: middle; padding: 10px 12px; color: #334155; font-weight: 700; white-space: nowrap; min-width: 130px;">Tarih</th>
+                            <th rowspan="2" class="sticky-islem" style="vertical-align: middle; padding: 10px 12px; color: #334155; font-weight: 700; white-space: nowrap; min-width: 90px; position: sticky; right: 0; background: #f8fafc; z-index: 3; box-shadow: -2px 0 5px -2px rgba(0,0,0,0.1);">İşlem</th>
+                        </tr>
+                        <tr>
+                            @if (asortiObj.Count > 0) {
+                                foreach (var k in asortiObj.Keys) {
+                                    <th style="padding: 8px 10px; color: #475569; font-weight: 600; min-width: 70px;">@k</th>
+                                }
+                            } else {
+                                <th style="padding: 8px 10px;">-</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody id="planCuttingBodyAsorti">
+                    </tbody>
+                    <tbody id="planCuttingEntryAsorti" style="display: none; background: #f0fdf4; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);">
+                        <tr>
+                            <td class="sticky-kesim" style="vertical-align: middle; text-align: center; position: sticky; left: 0; background: #f0fdf4; z-index: 2; box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1);"><span style="font-size: 0.75rem; color: #166534; font-weight: 800; text-transform: uppercase;">YENİ KAYIT</span></td>
+                            <td style="vertical-align: middle;"><input type="number" id="planTxtAsortiMultiplier" class="form-control form-control-sm" value="1" oninput="planCalculateAsorti()" style="width: 100%; padding: 6px 4px; text-align: center; font-weight: bold; border-radius: 6px;" /></td>
+                            @if (asortiObj.Count > 0) {
+                                foreach (var kvp in asortiObj) {
+                                    <td style="vertical-align: middle;"><input type="number" id="planTxtAsortiSize_@kvp.Key" class="form-control form-control-sm asorti-input-row" data-size="@kvp.Key" data-asortivalue="@kvp.Value" value="@kvp.Value" readonly style="width: 100%; padding: 6px 4px; text-align: center; font-weight: bold; background: #f1f5f9; cursor: not-allowed; border-radius: 6px;" /></td>
+                                }
+                            } else {
+                                <td style="vertical-align: middle;">-</td>
+                            }
+                            <td style="vertical-align: middle;"><input type="number" id="planTxtAsortiTotal" class="form-control form-control-sm" readonly style="width: 100%; padding: 6px 4px; text-align: center; background: #dcfce7; font-weight: bold; color: #166534; border-radius: 6px;" /></td>
+                            <td style="vertical-align: middle;"><input type="number" id="planTxtAsortiMarkerLength" class="form-control form-control-sm" value="0" step="0.01" oninput="planCalculateAsorti()" style="width: 100%; padding: 6px 4px; text-align: center; font-weight: bold; border-radius: 6px;" /></td>
+                            <td style="vertical-align: middle;"><input type="number" id="planTxtAsortiUnitMeterage" class="form-control form-control-sm" readonly style="width: 100%; padding: 6px 4px; text-align: center; background: #dcfce7; font-weight: bold; color: #166534; border-radius: 6px;" /></td>
+                            <td style="vertical-align: middle;"><input type="date" id="planTxtAsortiDate" class="form-control form-control-sm" value="@DateTime.Now.ToString("yyyy-MM-dd")" style="width: 100%; font-weight: bold; padding: 6px 4px; border-radius: 6px;" /></td>
+                            <td class="sticky-islem" style="vertical-align: middle; text-align: center; position: sticky; right: 0; background: #f0fdf4; z-index: 2; box-shadow: -2px 0 5px -2px rgba(0,0,0,0.1);">
+                                <div style="display: flex; gap: 4px; justify-content: center;">
+                                    <button type="button" class="btn btn-success btn-sm" onclick="planSaveAsortiRow()" title="Kaydet" style="border-radius: 6px;"><i class="fa-solid fa-check"></i></button>
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="$('#planCuttingEntryAsorti').hide();" title="İptal"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tfoot style="background: linear-gradient(135deg, #f1f5f9, #e2e8f0); font-weight: bold;">
+                        <tr>
+                            <td colspan="2" class="sticky-kesim" style="text-align: right; vertical-align: middle; color: #475569; padding: 12px 20px; font-size: 0.9rem; position: sticky; left: 0; background: #f1f5f9; z-index: 3; box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1);">ASORTİ TOPLAMI:</td>
+                            @if (asortiObj.Count > 0) {
+                                foreach (var k in asortiObj.Keys) {
+                                    <td id="planAsortiTotalCutSize_@k" style="font-size: 1.05rem; color: #1e40af; vertical-align: middle; text-align: center; padding: 12px 8px;">0</td>
+                                }
+                            } else {
+                                <td>-</td>
+                            }
+                            <td id="planAsortiTotalCut" style="font-size: 1.15rem; color: #0f172a; vertical-align: middle; text-align: center; padding: 12px 8px;">0</td>
+                            <td colspan="3"></td>
+                            <td class="sticky-islem" style="position: sticky; right: 0; background: #f1f5f9; z-index: 3; box-shadow: -2px 0 5px -2px rgba(0,0,0,0.1);"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <div style="background: linear-gradient(135deg, #e2e8f0, #cbd5e1); padding: 16px 24px; border-radius: 10px; margin-bottom: 24px; margin-top: 24px; display: flex; justify-content: flex-end; align-items: center; gap: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+                <span style="font-size: 1rem; color: #334155; font-weight: 700;">GENEL TOPLAM KESİM ADEDİ:</span>
+                <span id="planGrandTotalCut" style="font-size: 1.5rem; color: #0f172a; font-weight: 900; background: white; padding: 4px 16px; border-radius: 8px; min-width: 60px; text-align: center;">0</span>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 20px;">
+                <button type="button" class="btn" onclick="planSaveCuttingData()" style="background: linear-gradient(135deg, #16a34a, #15803d); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; box-shadow: 0 2px 6px rgba(22,163,74,0.3); display: flex; align-items: center; gap: 8px; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(22,163,74,0.4)'" onmouseout="this.style.transform=''; this.style.boxShadow='0 2px 6px rgba(22,163,74,0.3)'"><i class="fa-solid fa-save"></i> Kesim Planını Kaydet</button>
+            </div>
+        </div>
+
+        
+<br/>
+<div style="display: flex; justify-content: space-between; margin-top: 20px; align-items: center;">
+                    <label style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #0f172a;">
+                        <input type="checkbox" name="IsProductionCompleted" value="true" @(Model.IsProductionCompleted ? "checked" : "") /> 
+                        <span style="color: #16a34a;"><i class="fa-solid fa-check-circle"></i> Üretim Planlama Tamamlandı</span>
+                    </label>
+                    <button type="submit" class="btn-planner" style="background: #1d4ed8; color: white; border: none; padding: 10px 24px; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-save"></i> Üretim Planını Kaydet</button>
+                </div>
+            </form>
+        </div>
+
+        </div>
+    }
+    else
+    {
+        <div class="main-planning" style="display: flex; justify-content: center; align-items: center; min-height: 400px;">
+            <div style="text-align: center; color: #64748b;">
+                <i class="fa-solid fa-hand-pointer" style="font-size: 3rem; margin-bottom: 16px; color: #cbd5e1;"></i>
+                <h3>Planlama Detayı İçin Sipariş Seçin</h3>
+                <p>Sol taraftaki listeden planlamasını görmek istediğiniz siparişi seçiniz.</p>
+            </div>
+        </div>
+    }
+</div>
+
+<script>
+    function switchTab(tabId, element) {
+        // Tüm sekmeleri inaktif yap
+        document.querySelectorAll('.plan-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        
+        // Seçileni aktif yap
+        element.classList.add('active');
+        document.getElementById('tab-' + tabId).classList.add('active');
+    }
+
+    // Sipariş arama ve filtreleme
+    var currentOrderFilter = 'all';
+
+    function setOrderFilter(mode) {
+        currentOrderFilter = mode;
+
+        // Buton stillerini güncelle
+        var btnAll = document.getElementById('filterAll');
+        var btnActive = document.getElementById('filterActive');
+        var btnPassive = document.getElementById('filterPassive');
+
+        // Tüm butonları pasif yap
+        [btnAll, btnActive, btnPassive].forEach(function(b) {
+            b.style.background = 'white';
+            b.style.borderColor = '#e2e8f0';
+            b.style.color = '#475569';
+        });
+
+        // Seçili butonu aktif yap
+        if (mode === 'all') {
+            btnAll.style.background = '#0369a1';
+            btnAll.style.borderColor = '#0369a1';
+            btnAll.style.color = 'white';
+        } else if (mode === 'active') {
+            btnActive.style.background = '#dcfce7';
+            btnActive.style.borderColor = '#16a34a';
+            btnActive.style.color = '#16a34a';
+        } else {
+            btnPassive.style.background = '#f1f5f9';
+            btnPassive.style.borderColor = '#94a3b8';
+            btnPassive.style.color = '#475569';
+        }
+
+        filterOrders();
+    }
+
+    function filterOrders() {
+        var searchEl = document.getElementById('orderSearch');
+        var searchTerm = searchEl ? searchEl.value.toLowerCase() : '';
+        var items = document.querySelectorAll('.order-list-item');
+
+        items.forEach(function(item) {
+            var text = item.textContent.toLowerCase();
+            var isActive = item.getAttribute('data-active') === 'true';
+            var matchesSearch = text.includes(searchTerm);
+            var matchesFilter = (currentOrderFilter === 'all') ||
+                                (currentOrderFilter === 'active' && isActive) ||
+                                (currentOrderFilter === 'passive' && !isActive);
+
+            item.style.display = (matchesSearch && matchesFilter) ? 'block' : 'none';
+        });
+    }
+
+    var orderSearchInput = document.getElementById('orderSearch');
+    if (orderSearchInput) {
+        orderSearchInput.addEventListener('keyup', filterOrders);
+    }
+
+    // Yardımcı Fonksiyon: Sayı çevirici (11.800,25 gibi Türkçe formatları destekler)
+    function parseTurkishFloat(str) {
+        if (!str) return 0;
+        // Eğer içinde hem nokta hem virgül varsa (örn: 11.800,25) -> noktaları sil, virgülü noktaya çevir
+        // Eğer sadece nokta varsa ve ondalık kısımsa veya binlik kısımsa -> duruma göre ele almak lazım.
+        // Güvenli yöntem: Tüm noktaları sil, sadece virgülü ondalık olarak kabul et. (11.800 -> 11800)
+        // Ancak kullanıcı bazen İngilizce formatta "11.8" girebilir.
+        // Şöyle yapalım: Son ayırıcıyı bulalım.
+        var s = str.trim();
+        if(s === "") return 0;
+        
+        // Eğer string'de virgül varsa, noktaları binlik ayracı sayıp silelim, virgülü ondalık yapalım.
+        if (s.indexOf(',') > -1) {
+            s = s.replace(/\./g, '').replace(',', '.');
+        } else {
+            // Eğer string'de nokta varsa ve birden fazlaysa veya 3 haneden sonraysa, bunu binlik yap.
+            // En iyisi Excel mantığı: Virgül ondalıktır. Nokta varsa binlik ayracıdır.
+            // Ama kullanıcı ondalık için nokta kullanıyorsa? (Örn 1.23)
+            // Noktadan sonra 2 hane veya 1 hane varsa genelde ondalıktır.
+            // Biz basitçe virgülü ondalık nokta yapalım. Noktaları silelim.
+            // Ancak kullanıcı "1.23" yazarsa bu 123 olur! 
+            // O yüzden nokta varsa ve virgül yoksa, noktanın sonuncu olduğu duruma bakalım.
+            var lastDot = s.lastIndexOf('.');
+            if (lastDot > -1) {
+                // Eğer 0. ile başlıyorsa kesin ondalıktır, veya noktadan sonra 1-2 hane varsa ondalıktır
+                if (s.startsWith('0.') || s.startsWith('-0.') || s.length - lastDot <= 3) {
+                    // Ondalık olarak bırak
+                } else {
+                    // Binlik ayracı olarak kabul et ve sil
+                    s = s.replace(/\./g, '');
+                }
+            }
+        }
+        return parseFloat(s) || 0;
+    }
+
+    // MRP Hesaplamaları
+function calculateMRP() {
+    var hasMissing = false;
+
+    document.querySelectorAll('.color-pane').forEach(function(pane) {
+        var siparisAdetiEl = pane.querySelector('.mrp-siparis-adeti');
+        if(!siparisAdetiEl) return;
+        
+        var siparisAdeti = parseTurkishFloat(siparisAdetiEl.value || "0");
+        var bedenMiktarEl = pane.querySelector('.mrp-beden-miktar');
+        var bedenMiktar = parseTurkishFloat(bedenMiktarEl ? bedenMiktarEl.value : "0");
+        var bedenCikacakEl = pane.querySelector('.mrp-beden-cikacak');
+        var bedenCikacak = parseTurkishFloat(bedenCikacakEl ? bedenCikacakEl.value : "0");
+        
+        var istenenMetrajEl = pane.querySelector('.mrp-istenen-metraj');
+        var istenenKumasMiktarEl = pane.querySelector('.mrp-istenen-kumas-miktar');
+        
+        // Ihtiyac Olan Kumas satirindaki degerler modelden sabit geldigi icin her zaman otomatik hesapla
+        if (istenenKumasMiktarEl && istenenMetrajEl) {
+            var istenenMetraj = parseTurkishFloat(istenenMetrajEl.value || "1");
+            istenenKumasMiktarEl.value = Math.round(siparisAdeti * istenenMetraj).toLocaleString('tr-TR');
+        }
+
+        var jobQty = bedenMiktar > 0 ? bedenCikacak : siparisAdeti;
+
+        pane.querySelectorAll('.mrp-row').forEach(function(row) {
+            var birimInput = row.querySelector('.row-birim');
+            var isAdetiEl = row.querySelector('.row-is-adeti');
+            var toplamEl = row.querySelector('.row-toplam');
+            var fireInput = row.querySelector('.row-fire');
+            var fazlaEl = row.querySelector('.row-fazla');
+            var istenenEl = row.querySelector('.row-istenen');
+            var gelenInput = row.querySelector('.row-gelen');
+            var artiEksiEl = row.querySelector('.row-arti-eksi');
+
+            var birim = parseTurkishFloat(birimInput ? birimInput.value : "0");
+            var fire = parseTurkishFloat(fireInput ? fireInput.value : "0");
+            var gelen = gelenInput ? parseTurkishFloat(gelenInput.value || "0") : 0;
+
+            if(isAdetiEl) isAdetiEl.innerText = Math.round(jobQty).toLocaleString('tr-TR');
+
+            var toplam = jobQty * birim;
+            if(toplamEl) toplamEl.innerText = Math.round(toplam).toLocaleString('tr-TR');
+
+            var fazla = Math.round(toplam * (fire / 100));
+            if(fazlaEl) fazlaEl.innerText = fazla.toLocaleString('tr-TR');
+
+            var istenen = Math.round(toplam + fazla);
+            if(istenenEl) istenenEl.innerText = istenen.toLocaleString('tr-TR');
+
+            if (gelenInput) {
+                var artiEksi = gelen - istenen;
+                if(artiEksi < 0) hasMissing = true;
+
+                if(artiEksiEl) {
+                    artiEksiEl.innerText = Math.round(artiEksi).toLocaleString('tr-TR');
+                    if(artiEksi < 0) artiEksiEl.style.color = '#dc2626';
+                    else if (artiEksi > 0) artiEksiEl.style.color = '#16a34a';
+                    else artiEksiEl.style.color = '#0f172a';
+                }
+            }
+        });
+
+        pane.querySelectorAll('.interlining-row').forEach(function(row) {
+            var isMiktariEl = row.querySelector('.row-is-miktari');
+            var birimInput = row.querySelector('.row-tela-birim');
+            var ihtiyacEl = row.querySelector('.row-ihtiyac');
+
+            var birim = parseTurkishFloat(birimInput ? birimInput.value : "0");
+
+            if(isMiktariEl) isMiktariEl.innerText = Math.round(jobQty).toLocaleString('tr-TR');
+
+            var ihtiyac = Math.ceil(jobQty * birim);
+            if(ihtiyacEl) ihtiyacEl.innerText = ihtiyac.toLocaleString('tr-TR');
+        });
+
+        var labelTable = pane.querySelector('.mrp-label-table');
+        if(labelTable) {
+            var asortiOranInputs = labelTable.querySelectorAll('.label-asorti-oran');
+            var acikAdetInputs = labelTable.querySelectorAll('.label-acik-adet');
+            var sipAdetiInput = labelTable.querySelector('.label-sip-adeti');
+            var toplamBedenTds = labelTable.querySelectorAll('.label-toplam-beden');
+            
+            var totalAsortiOran = 0;
+            var totalAcikAdet = 0;
+            
+            asortiOranInputs.forEach(input => totalAsortiOran += parseTurkishFloat(input.value || "0"));
+            acikAdetInputs.forEach(input => totalAcikAdet += parseTurkishFloat(input.value || "0"));
+            
+            var sipAdeti = parseTurkishFloat(sipAdetiInput ? sipAdetiInput.value : "0");
+            
+            if(labelTable.querySelector('.label-asorti-oran-toplam')) labelTable.querySelector('.label-asorti-oran-toplam').innerText = totalAsortiOran.toLocaleString('tr-TR');
+            if(labelTable.querySelector('.label-sip-adeti-toplam')) labelTable.querySelector('.label-sip-adeti-toplam').innerText = sipAdeti.toLocaleString('tr-TR');
+            if(labelTable.querySelector('.label-acik-adet-toplam')) labelTable.querySelector('.label-acik-adet-toplam').innerText = totalAcikAdet.toLocaleString('tr-TR');
+            
+            var birimAsorti = totalAsortiOran > 0 ? totalAsortiOran : 1;
+            var kalanAdet = jobQty - totalAcikAdet;
+            var asortiMultiplier = Math.round(kalanAdet / birimAsorti);
+            if (asortiMultiplier < 0) asortiMultiplier = 0;
+            
+            if(labelTable.querySelector('.label-kalan-adet-val')) labelTable.querySelector('.label-kalan-adet-val').innerText = kalanAdet.toLocaleString('tr-TR');
+            if(labelTable.querySelector('.label-yeni-lot-val')) labelTable.querySelector('.label-yeni-lot-val').innerText = asortiMultiplier.toLocaleString('tr-TR', {maximumFractionDigits: 3});
+            
+            var sizeBaseTotals = {};
+            var genelToplam = 0;
+            
+            if (toplamBedenTds.length > 0) {
+                toplamBedenTds.forEach(td => {
+                    var size = td.getAttribute('data-size');
+                    var asortiO = 0;
+                    var acikQ = 0;
+                    asortiOranInputs.forEach(inp => { if(inp.getAttribute('data-size') === size) asortiO = parseTurkishFloat(inp.value || "0"); });
+                    acikAdetInputs.forEach(inp => { if(inp.getAttribute('data-size') === size) acikQ = parseTurkishFloat(inp.value || "0"); });
+                    
+                    var totalForSize = (asortiO * asortiMultiplier) + acikQ;
+                    sizeBaseTotals[size] = totalForSize;
+                    genelToplam += totalForSize;
+                    
+                    td.innerText = Math.round(totalForSize).toLocaleString('tr-TR');
+                });
+            } else {
+                genelToplam = jobQty;
+            }
+            
+            if(labelTable.querySelector('.label-genel-toplam')) labelTable.querySelector('.label-genel-toplam').innerText = Math.round(genelToplam).toLocaleString('tr-TR');
+
+            labelTable.querySelectorAll('.mrp-label-row').forEach(function(row) {
+                var labelFireInput = row.querySelector('.row-label-fire');
+                var labelFire = parseTurkishFloat(labelFireInput ? labelFireInput.value : "0");
+                
+                var rowTotal = 0;
+                var sizeTds = row.querySelectorAll('.row-label-size-qty');
+                
+                if (sizeTds.length > 0) {
+                    sizeTds.forEach(function(td) {
+                        var size = td.getAttribute('data-size');
+                        var baseTotal = sizeBaseTotals[size] || 0;
+                        
+                        var finalSizeTotal = baseTotal + (baseTotal * (labelFire / 100));
+                        var roundedTotal = Math.round(finalSizeTotal);
+                        
+                        td.innerText = roundedTotal.toLocaleString('tr-TR');
+                        rowTotal += roundedTotal;
+                    });
+                } else {
+                    var finalTotal = genelToplam + (genelToplam * (labelFire / 100));
+                    rowTotal = Math.round(finalTotal);
+                }
+                
+                var toplamEl = row.querySelector('.row-label-toplam');
+                if(toplamEl) toplamEl.innerText = rowTotal.toLocaleString('tr-TR');
+            });
+        }
+    });
+
+    var missingInput = document.getElementById('pur_has_missing_materials');
+    if(missingInput) missingInput.value = hasMissing ? "true" : "false";
+}
+
+var colorTabsContainer = document.getElementById('colorTabsContainer');
+if(colorTabsContainer) colorTabsContainer.addEventListener('click', function(e) {
+    if(e.target.closest('.color-tab-add')) {
+        var modalHtml = `
+        <div id="customColorModal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); backdrop-filter:blur(4px); z-index:9999; display:flex; align-items:center; justify-content:center;">
+            <div style="background:white; padding:24px; border-radius:12px; width:400px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1);">
+                <h3 style="margin:0 0 16px 0; color:var(--primary-color); font-size:1.2rem; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-palette"></i> Yeni Renk Ekle</h3>
+                <label style="display:block; margin-bottom:8px; font-weight:600; color:#475569;">Renk Adı:</label>
+                <input type="text" id="newColorName" class="form-control" placeholder="Örn: BLACK, NAVY" style="width:100%; margin-bottom:16px; box-sizing:border-box;" autocomplete="off" />
+                
+                <label style="display:flex; align-items:center; gap:8px; margin-bottom:24px; cursor:pointer; font-size:0.9rem; color:#475569;">
+                    <input type="checkbox" id="copyFromCurrent" checked style="width:16px; height:16px;" />
+                    Mevcut renkteki tüm bilgileri kopyala
+                </label>
+                
+                <div style="display:flex; justify-content:flex-end; gap:12px;">
+                    <button type="button" id="btnCancelColor" class="btn-secondary" style="padding:8px 16px;">İptal</button>
+                    <button type="button" id="btnSaveColor" class="btn-planner" style="padding:8px 20px;"><i class="fa-solid fa-check" style="margin-right:6px;"></i> Ekle</button>
+                </div>
+            </div>
+        </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        var modal = document.getElementById('customColorModal');
+        var input = document.getElementById('newColorName');
+        input.focus();
+        
+        var closeAndRemove = function() {
+            modal.remove();
+        };
+        
+        document.getElementById('btnCancelColor').onclick = closeAndRemove;
+        
+        document.getElementById('btnSaveColor').onclick = function() {
+            var color = input.value.trim().toUpperCase();
+            if(!color) {
+                showBeautifulAlert("Lütfen geçerli bir renk adı girin!", "danger");
+                return;
+            }
+            var existing = document.querySelector('.color-tab[data-color="' + color + '"]');
+            if(existing) {
+                showBeautifulAlert("Bu renk zaten var!", "danger");
+                return;
+            }
+            
+            var baseColor = null;
+            if(document.getElementById('copyFromCurrent').checked) {
+                var activeTab = document.querySelector('.color-tab.active');
+                if(activeTab) {
+                    baseColor = activeTab.getAttribute('data-color');
+                }
+            }
+            
+            closeAndRemove();
+            
+            var paneToClone = document.querySelector('.color-pane.active') || document.querySelector('.color-pane');
+            if(!paneToClone) return;
+            
+            var newPane = paneToClone.cloneNode(true);
+            newPane.id = "pane-" + color;
+            newPane.classList.remove("active");
+            
+            var sourceColor = paneToClone.id.replace("pane-", "");
+            
+            newPane.querySelectorAll('input, select, textarea').forEach(function(input) {
+                if(input.name) {
+                    input.name = input.name.replace("pur_color_" + sourceColor + "_", "pur_color_" + color + "_");
+                }
+                if(!baseColor) {
+                    if(input.type === "text" || input.type === "number") input.value = "0";
+                    else if(input.type === "date") input.value = "";
+                }
+            });
+            
+            // replace color names in titles
+            var titles = newPane.querySelectorAll('.section-title');
+            titles.forEach(function(t) {
+                t.innerHTML = t.innerHTML.replace(sourceColor, color);
+            });
+            var labels = newPane.querySelectorAll('.data-label');
+            labels.forEach(function(t) {
+                t.innerHTML = t.innerHTML.replace(sourceColor, color);
+            });
+            
+            document.getElementById('colorPanesContainer').appendChild(newPane);
+            
+            var newTab = document.createElement('div');
+            newTab.className = "color-tab";
+            newTab.setAttribute("data-color", color);
+            newTab.innerText = color;
+            
+            document.getElementById('btnAddColor').before(newTab);
+            
+            newTab.click();
+            calculateMRP();
+        };
+        return;
+    }
+    
+    var tab = e.target.closest('.color-tab');
+    if(tab) {
+        document.querySelectorAll('.color-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.color-pane').forEach(p => p.classList.remove('active'));
+        
+        tab.classList.add('active');
+        document.getElementById('pane-' + tab.getAttribute('data-color')).classList.add('active');
+    }
+});
+
+// Event delegation for dynamically added inputs
+var colorPanesContainer = document.getElementById('colorPanesContainer');
+if(colorPanesContainer) colorPanesContainer.addEventListener('input', function(e) {
+    if (e.target.classList.contains('mrp-calc-source-adet')) {
+        var tr = e.target.closest('tr');
+        if (tr) {
+            var adet = parseTurkishFloat(e.target.value);
+            var metrajEl = tr.querySelector('.mrp-calc-source-metraj');
+            var kumasEl = tr.querySelector('.mrp-calc-source-kumas');
+            if (metrajEl && kumasEl) {
+                var metraj = parseTurkishFloat(metrajEl.value);
+                kumasEl.value = Math.round(adet * metraj).toLocaleString('tr-TR');
+            }
+        }
+    } else if (e.target.classList.contains('mrp-calc-source-kumas')) {
+        var tr = e.target.closest('tr');
+        if (tr) {
+            var kumas = parseTurkishFloat(e.target.value);
+            var metrajEl = tr.querySelector('.mrp-calc-source-metraj');
+            var adetEl = tr.querySelector('.mrp-calc-source-adet');
+            
+            if (adetEl && metrajEl) {
+                var adet = parseTurkishFloat(adetEl.value);
+                // Siparis adeti sabit oldugu icin, kumas miktari degisirse metraj hesaplanir.
+                // Eldeki kumas satirinda (Kumas 2) ise, adet hesaplanabilir, ama "Siparis Adeti" readonly yapildi.
+                // Eger Kumas 2 ise adet hesaplanmali, Ihtiyac Olan Kumas ise metraj hesaplanmali.
+                if (adetEl.hasAttribute('readonly') && adetEl.classList.contains('mrp-siparis-adeti')) {
+                    if (adet > 0) {
+                        var hesaplananMetraj = kumas / adet;
+                        metrajEl.value = Number.isInteger(hesaplananMetraj) ? hesaplananMetraj.toString() : hesaplananMetraj.toFixed(3);
+                    }
+                } else {
+                    var metraj = parseTurkishFloat(metrajEl.value);
+                    if (metraj > 0) {
+                        adetEl.value = Math.round(kumas / metraj).toLocaleString('tr-TR');
+                    }
+                }
+            }
+        }
+    } else if (e.target.classList.contains('mrp-calc-source-metraj')) {
+        var tr = e.target.closest('tr');
+        if (tr) {
+            var metraj = parseTurkishFloat(e.target.value);
+            var adetEl = tr.querySelector('.mrp-calc-source-adet');
+            var kumasEl = tr.querySelector('.mrp-calc-source-kumas');
+            if (adetEl && kumasEl) {
+                var adet = parseTurkishFloat(adetEl.value);
+                kumasEl.value = Math.round(adet * metraj).toLocaleString('tr-TR');
+            }
+        }
+    }
+
+    if(e.target.classList.contains('mrp-input') || e.target.classList.contains('interlining-input')) {
+        calculateMRP();
+    }
+});
+
+    // Güzel bir uyarı ve onay penceresi (SweetAlert benzeri)
+    function showBeautifulAlert(message, type = 'warning') {
+        $("#beautifulAlertOverlay").remove();
+        var icon = type === 'warning' ? '<i class="fa-solid fa-triangle-exclamation" style="font-size:3rem; color:#eab308; margin-bottom:15px;"></i>' : '<i class="fa-solid fa-circle-exclamation" style="font-size:3rem; color:#dc2626; margin-bottom:15px;"></i>';
+        var overlay = $('<div id="beautifulAlertOverlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.6); z-index:99999; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px); opacity:0; transition:opacity 0.3s;">' +
+            '<div style="background:#fff; padding:30px 40px; border-radius:16px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); text-align:center; max-width:450px; transform:scale(0.9); transition:transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);">' +
+            icon +
+            '<h3 style="margin:0 0 10px 0; color:#1e293b; font-size:1.25rem; font-weight:700;">Uyarı</h3>' +
+            '<p style="color:#475569; font-size:1rem; margin-bottom:25px; line-height:1.5;">' + message + '</p>' +
+            '<button onclick="$(\'#beautifulAlertOverlay\').css(\'opacity\',\'0\').find(\'div\').css(\'transform\',\'scale(0.9)\'); setTimeout(function(){ $(\'#beautifulAlertOverlay\').remove(); }, 300)" style="background:#2563eb; color:#fff; border:none; padding:10px 24px; border-radius:8px; font-weight:600; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background=\'#1d4ed8\'" onmouseout="this.style.background=\'#2563eb\'">Tamam, Anladım</button>' +
+            '</div></div>');
+        $("body").append(overlay);
+        // Force reflow and animate
+        overlay[0].offsetHeight;
+        overlay.css('opacity', '1').find('div').css('transform', 'scale(1)');
+    }
+
+    function showBeautifulConfirm(message, onConfirm) {
+        $("#beautifulConfirmOverlay").remove();
+        var overlay = $('<div id="beautifulConfirmOverlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.6); z-index:99999; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px); opacity:0; transition:opacity 0.3s;">' +
+            '<div style="background:#fff; padding:30px 40px; border-radius:16px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); text-align:center; max-width:450px; transform:scale(0.9); transition:transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);">' +
+            '<i class="fa-solid fa-circle-question" style="font-size:3rem; color:#3b82f6; margin-bottom:15px;"></i>' +
+            '<h3 style="margin:0 0 10px 0; color:#1e293b; font-size:1.25rem; font-weight:700;">Emin misiniz?</h3>' +
+            '<p style="color:#475569; font-size:1rem; margin-bottom:25px; line-height:1.5;">' + message + '</p>' +
+            '<div style="display:flex; justify-content:center; gap:12px;">' +
+            '<button id="btnConfirmCancel" style="background:#e2e8f0; color:#475569; border:none; padding:10px 20px; border-radius:8px; font-weight:600; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background=\'#cbd5e1\'" onmouseout="this.style.background=\'#e2e8f0\'">İptal</button>' +
+            '<button id="btnConfirmOk" style="background:#2563eb; color:#fff; border:none; padding:10px 20px; border-radius:8px; font-weight:600; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background=\'#1d4ed8\'" onmouseout="this.style.background=\'#2563eb\'">Evet, Devam Et</button>' +
+            '</div></div></div>');
+        
+        $("body").append(overlay);
+        overlay[0].offsetHeight;
+        overlay.css('opacity', '1').find('div').css('transform', 'scale(1)');
+
+        var close = function() {
+            overlay.css('opacity', '0').find('div').css('transform', 'scale(0.9)');
+            setTimeout(function() { overlay.remove(); }, 300);
+        };
+
+        $('#btnConfirmCancel').click(function() { close(); });
+        $('#btnConfirmOk').click(function() {
+            close();
+            onConfirm();
+        });
+    }
+
+const orderId = @Model.Id;
+
+let planCuttingItems = @Html.Raw(string.IsNullOrEmpty(Model.PlannedCuttingJson) ? "[]" : Model.PlannedCuttingJson);
+let planTargetSizes = @Html.Raw(string.IsNullOrEmpty(Model.SizeDistributionJson) ? "{}" : Model.SizeDistributionJson);
+let planTargetSizesAsorti = @Html.Raw(string.IsNullOrEmpty(Model.AsortiDistributionJson) ? "{}" : Model.AsortiDistributionJson);
+const planAsortiCount = @Model.AsortiCount;
+
+function planGetTotalCutForSize(sizeName, cutType) {
+    let total = 0;
+    planCuttingItems.forEach(item => {
+        if (item.CutType === cutType && item.Sizes && item.Sizes[sizeName]) {
+            total += parseFloat(item.Sizes[sizeName]) || 0;
+        }
+    });
+    return total;
+}
+// --- TAB 3: KESİM SÜRECİ ---
+        function planToggleCutForm(type) {
+            if (type === 'AcikAdet') {
+                $('#planCuttingEntryAcik').show();
+                planCalculateAcik();
+                setTimeout(function() { $('#planTxtAcikMultiplier').focus(); }, 100);
+            } else {
+                $('#planCuttingEntryAsorti').show();
+                planCalculateAsorti();
+                setTimeout(function() { $('#planTxtAsortiMultiplier').focus(); }, 100);
+            }
+        }
+        
+        function planCalculateAcik() {
+            const multiplier = parseFloat($('#planTxtAcikMultiplier').val()) || 1;
+            const markerLength = parseFloat($('#planTxtAcikMarkerLength').val()) || 0;
+            
+            let totalQty = 0;
+            $('.acik-adet-input-row').each(function() {
+                const val = parseFloat($(this).val()) || 0;
+                totalQty += (val * multiplier);
+            });
+            
+            $('#planTxtAcikTotal').val(totalQty);
+            if (totalQty > 0) {
+                $('#planTxtAcikUnitMeterage').val(((markerLength * multiplier) / totalQty).toFixed(2));
+            } else {
+                $('#planTxtAcikUnitMeterage').val('0');
+            }
+        }
+
+        function planCalculateAsorti() {
+            const multiplier = parseFloat($('#planTxtAsortiMultiplier').val()) || 1;
+            const markerLength = parseFloat($('#planTxtAsortiMarkerLength').val()) || 0;
+            
+            let totalQty = 0;
+            $('.asorti-input-row').each(function() {
+                const asortiValue = parseFloat($(this).data('asortivalue')) || 0;
+                const calculatedValue = asortiValue * multiplier;
+                $(this).val(calculatedValue); 
+                totalQty += calculatedValue;
+            });
+            
+            $('#planTxtAsortiTotal').val(totalQty);
+            if (totalQty > 0) {
+                $('#planTxtAsortiUnitMeterage').val(((markerLength * multiplier) / totalQty).toFixed(2));
+            } else {
+                $('#planTxtAsortiUnitMeterage').val('0');
+            }
+        }
+        
+        function planSaveAcikRow() {
+            const date = $('#planTxtAcikDate').val();
+            const multiplier = parseFloat($('#planTxtAcikMultiplier').val()) || 1;
+            const markerLength = parseFloat($('#planTxtAcikMarkerLength').val()) || 0;
+            const totalQty = parseFloat($('#planTxtAcikTotal').val()) || 0;
+            const unitMeterage = parseFloat($('#planTxtAcikUnitMeterage').val()) || 0;
+
+            if (totalQty <= 0) {
+                showBeautifulAlert("Lütfen geçerli bir kesim değeri giriniz (toplam adet > 0 olmalı).", "warning");
+                return;
+            }
+
+            const sizes = {};
+            let validationError = "";
+            $('.acik-adet-input-row').each(function() {
+                const sizeName = $(this).data('size');
+                const val = parseFloat($(this).val()) || 0;
+                const calculatedValue = val * multiplier;
+                if(calculatedValue > 0) {
+                    const targetQty = parseFloat(planTargetSizes[sizeName]) || 0;
+                    const alreadyCut = planGetTotalCutForSize(sizeName, 'Açık Adet');
+                    if ((alreadyCut + calculatedValue) > targetQty) {
+                        validationError = `Hata: '${sizeName}' bedeni için sipariş hedefini aşıyorsunuz! (Hedef: ${targetQty}, Toplam Kesilecek: ${alreadyCut + calculatedValue})`;
+                    }
+                    sizes[sizeName] = calculatedValue;
+                }
+            });
+            
+            if (validationError) {
+                Swal.fire({
+                    title: 'Uyarı',
+                    text: validationError + "\n\nYine de kaydetmek istiyor musunuz?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Evet, Kaydet',
+                    cancelButtonText: 'İptal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        _planAddCutToGlobalAndRender('Açık Adet', date, multiplier, sizes, totalQty, markerLength, unitMeterage);
+                        // Reset
+                        $('.acik-adet-input-row').val('0');
+                        $('#planTxtAcikMultiplier').val('1');
+                        $('#planCuttingEntryAcik').hide();
+                        planCalculateAcik();
+                    }
+                });
+                return;
+            }
+            
+            _planAddCutToGlobalAndRender('Açık Adet', date, multiplier, sizes, totalQty, markerLength, unitMeterage);
+            
+            // Reset
+            $('.acik-adet-input-row').val('0');
+            $('#planTxtAcikMultiplier').val('1');
+            $('#planCuttingEntryAcik').hide();
+            planCalculateAcik();
+        }
+
+        function planSaveAsortiRow() {
+            const date = $('#planTxtAsortiDate').val();
+            const multiplier = parseFloat($('#planTxtAsortiMultiplier').val()) || 1;
+            const markerLength = parseFloat($('#planTxtAsortiMarkerLength').val()) || 0;
+            const totalQty = parseFloat($('#planTxtAsortiTotal').val()) || 0;
+            const unitMeterage = parseFloat($('#planTxtAsortiUnitMeterage').val()) || 0;
+
+            if (totalQty <= 0) {
+                showBeautifulAlert("Lütfen geçerli bir kesim değeri giriniz (toplam adet > 0 olmalı).", "warning");
+                return;
+            }
+
+            const sizes = {};
+            let validationError = "";
+            $('.asorti-input-row').each(function() {
+                const sizeName = $(this).data('size');
+                const asortiValue = parseFloat($(this).data('asortivalue')) || 0;
+                const val = asortiValue * multiplier;
+                if(val > 0) {
+                    const targetQty = (parseFloat(planTargetSizesAsorti[sizeName]) || 0) * planAsortiCount;
+                    const alreadyCut = planGetTotalCutForSize(sizeName, 'Asorti');
+                    if ((alreadyCut + val) > targetQty) {
+                        validationError = `Hata: '${sizeName}' bedeni için sipariş hedefini aşıyorsunuz! (Hedef: ${targetQty}, Toplam Kesilecek: ${alreadyCut + val})`;
+                    }
+                    sizes[sizeName] = val;
+                }
+            });
+            
+            if (validationError) {
+                Swal.fire({
+                    title: 'Uyarı',
+                    text: validationError + "\n\nYine de kaydetmek istiyor musunuz?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Evet, Kaydet',
+                    cancelButtonText: 'İptal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        _planAddCutToGlobalAndRender('Asorti', date, multiplier, sizes, totalQty, markerLength, unitMeterage);
+                        // Reset
+                        $('#planTxtAsortiMultiplier').val('1');
+                        $('#planCuttingEntryAsorti').hide();
+                        planCalculateAsorti();
+                    }
+                });
+                return;
+            }
+            
+            _planAddCutToGlobalAndRender('Asorti', date, multiplier, sizes, totalQty, markerLength, unitMeterage);
+            
+            // Reset
+            $('#planTxtAsortiMultiplier').val('1');
+            $('#planCuttingEntryAsorti').hide();
+            planCalculateAsorti();
+        }
+
+        function _planAddCutToGlobalAndRender(cutType, date, multiplier, sizes, totalQty, markerLength, unitMeterage) {
+            const newCutName = "Kesim " + (planCuttingItems.length + 1);
+
+            planCuttingItems.push({
+                CutName: newCutName,
+                CutType: cutType,
+                Date: date,
+                Multiplier: multiplier,
+                Sizes: sizes,
+                TotalQuantity: totalQty,
+                MarkerLength: markerLength,
+                UnitMeterage: unitMeterage
+            });
+
+            planRenderCuttingTable();
+        }
+
+        function planRemoveCuttingItem(index) {
+            planCuttingItems.splice(index, 1);
+            
+            // Numaraları Yeniden Sırala
+            planCuttingItems.forEach((item, idx) => {
+                item.CutName = "Kesim " + (idx + 1);
+            });
+            
+            planRenderCuttingTable();
+            planSaveCuttingData();
+        }
+
+        function planRenderCuttingTable() {
+            let htmlAcik = '';
+            let htmlAsorti = '';
+            let acikTotal = 0;
+            let asortiTotal = 0;
+            let grandTotal = 0;
+            
+            let acikSizeTotals = {};
+            let asortiSizeTotals = {};
+            
+            planCuttingItems.forEach((item, index) => {
+                let cutName = item.CutName || `Kesim ${index + 1}`;
+                let cutTypeLabel = item.CutType || 'Açık Adet';
+                let isAsorti = cutTypeLabel === 'Asorti';
+                let sizesArr = isAsorti ? (typeof asortiSizesArr !== 'undefined' ? asortiSizesArr : []) : (typeof acikSizesArr !== 'undefined' ? acikSizesArr : []);
+                
+                let sizesHtml = '';
+                if (sizesArr && sizesArr.length > 0) {
+                    sizesArr.forEach(s => {
+                        let val = parseFloat(item.Sizes && item.Sizes[s] ? item.Sizes[s] : 0) || 0;
+                        if (isAsorti) {
+                            asortiSizeTotals[s] = (asortiSizeTotals[s] || 0) + val;
+                        } else {
+                            acikSizeTotals[s] = (acikSizeTotals[s] || 0) + val;
+                        }
+                        
+                        let displayVal = val;
+                        if (item.Multiplier && item.Multiplier > 0) {
+                            displayVal = val / item.Multiplier;
+                        }
+                        if (displayVal % 1 !== 0) {
+                            displayVal = displayVal.toFixed(2);
+                        }
+                        sizesHtml += `<td style="vertical-align: middle; text-align: center; color: #475569; font-weight: 500;">${displayVal}</td>`;
+                    });
+                } else {
+                    sizesHtml = `<td style="vertical-align: middle; text-align: center; color: #475569;">-</td>`;
+                }
+                
+                let qty = item.TotalQuantity || 0;
+                grandTotal += qty;
+                
+                let rowHtml = `
+                    <tr style="background: white; text-align: center;">
+                        <td class="sticky-kesim" style="font-weight: 700; color: #1e293b; vertical-align: middle; position: sticky; left: 0; background: white; z-index: 2; box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1);">${cutName}</td>
+                        <td style="vertical-align: middle;">${item.Multiplier}</td>
+                        ${sizesHtml}
+                        <td style="vertical-align: middle;"><strong style="color: #0f172a; font-size: 1.1rem;">${qty}</strong></td>
+                        <td style="vertical-align: middle;">${item.MarkerLength}</td>
+                        <td style="vertical-align: middle;">${item.UnitMeterage}</td>
+                        <td style="vertical-align: middle;">${item.Date}</td>
+                        <td class="sticky-islem" style="vertical-align: middle; position: sticky; right: 0; background: white; z-index: 2; box-shadow: -2px 0 5px -2px rgba(0,0,0,0.1);"><button class="btn btn-sm btn-danger" onclick="planRemoveCuttingItem(${index})"><i class="fa-solid fa-trash"></i></button></td>
+                    </tr>
+                `;
+                
+                if (isAsorti) {
+                    htmlAsorti += rowHtml;
+                    asortiTotal += qty;
+                } else {
+                    htmlAcik += rowHtml;
+                    acikTotal += qty;
+                }
+            });
+            
+            $('#planCuttingBodyAcik').html(htmlAcik);
+            $('#planAcikTotalCut').text(acikTotal.toLocaleString('tr-TR'));
+            
+            // Açık Adet Beden Toplamlarını Güncelle
+            if (typeof acikSizesArr !== 'undefined') {
+                acikSizesArr.forEach(s => {
+                    let totalVal = acikSizeTotals[s] || 0;
+                    let displayTotal = totalVal % 1 !== 0 ? totalVal.toFixed(2) : totalVal;
+                    $('#planAcikTotalCutSize_' + s).text(displayTotal);
+                });
+            }
+            
+            $('#planCuttingBodyAsorti').html(htmlAsorti);
+            $('#planAsortiTotalCut').text(asortiTotal.toLocaleString('tr-TR'));
+            
+            // Asorti Beden Toplamlarını Güncelle
+            if (typeof asortiSizesArr !== 'undefined') {
+                asortiSizesArr.forEach(s => {
+                    let totalVal = asortiSizeTotals[s] || 0;
+                    let displayTotal = totalVal % 1 !== 0 ? totalVal.toFixed(2) : totalVal;
+                    $('#planAsortiTotalCutSize_' + s).text(displayTotal);
+                });
+            }
+            
+            $('#planGrandTotalCut').text(grandTotal.toLocaleString('tr-TR'));
+
+            // Sipariş limit kontrolü
+            let orderQty = @Model.CalculatedQuantity;
+            let remaining = orderQty - grandTotal;
+            if (remaining > 0) {
+                $('#planDivRemainingCut').css('color', '#166534').html(`Kalan İhtiyaç: <strong id="planLblRemainingQty">${remaining}</strong> Adet`);
+                $('#planBtnEkleKesim').prop('disabled', false).removeClass('btn-secondary').addClass('btn-primary').html('<i class="fa-solid fa-plus" style="margin-right:4px;"></i> Kesim Ekle');
+            } else {
+                let excess = Math.abs(remaining);
+                let text = excess > 0 ? `Hedef Tamamlandı! (Fazla: ${excess} Adet)` : `Hedef Tamamlandı!`;
+                $('#planDivRemainingCut').css('color', '#15803d').html(`<i class="fa-solid fa-circle-check" style="margin-right: 5px;"></i> <strong>${text}</strong>`);
+                $('#planBtnEkleKesim').prop('disabled', true).removeClass('btn-primary').addClass('btn-secondary').html('<i class="fa-solid fa-lock" style="margin-right:4px;"></i> Kilitli');
+            }
+        }
+
+        function planSaveCuttingData() {
+            $.ajax({
+                url: '/Planning/UpdatePlannedCutting',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ Id: orderId, PlannedCuttingJson: JSON.stringify(planCuttingItems) }),
+                success: function(res) {
+                    if(res.success) showBeautifulAlert("Kesim bilgileri kaydedildi.", "success");
+                    else showBeautifulAlert("Hata: " + res.message, "danger");
+                }
+            });
+        }
+
+        
+    document.addEventListener('DOMContentLoaded', function() {
+        planRenderCuttingTable();
+        calculateMRP();
+
+        // Sipariş listesi başlangıç filtresi: Aktif
+        var currentOrderFilterInit = 'active';
+        currentOrderFilter = currentOrderFilterInit;
+        filterOrders();
+
+        // Aktif siparişi listede görünür alana kaydır
+        var activeOrder = document.querySelector('.order-list-item.active');
+        if (activeOrder) {
+            activeOrder.scrollIntoView({ behavior: 'auto', block: 'center' });
+        }
+
+    function bindCompletionValidation(formId, checkboxName, phaseName) {
+        var form = document.getElementById(formId);
+        if (!form) return;
+        var checkbox = form.querySelector('input[name="' + checkboxName + '"]');
+        if (!checkbox) return;
+        
+        function checkEmptyFields() {
+            var emptyFields = false;
+            var inputs = form.querySelectorAll('input:not([type="hidden"]):not([readonly]):not([type="checkbox"]):not(:disabled):not(.not-mandatory), select:not(:disabled):not(.not-mandatory)');
+            for(var i=0; i<inputs.length; i++) {
+                // Sadece ekranda görünür olan alanları zorunlu tut
+                if (inputs[i].offsetWidth > 0 || inputs[i].offsetHeight > 0) {
+                    if (inputs[i].value.trim() === '') {
+                        emptyFields = true;
+                        inputs[i].style.border = '2px solid #ef4444'; // Hatalı alanı kırmızı ile işaretle
+                    } else {
+                        inputs[i].style.border = ''; // Dolu olanın işaretini kaldır
+                    }
+                }
+            }
+            return emptyFields;
+        }
+
+        checkbox.addEventListener('change', function(e) {
+            if (this.checked) {
+                if (checkEmptyFields()) {
+                    showBeautifulAlert("Tüm alanlar doldurulmadan " + phaseName + " tamamlandı olarak işaretlenemez. Lütfen boş alanları doldurunuz.");
+                    this.checked = false;
+                }
+            }
+        });
+
+        form.addEventListener('submit', function(e) {
+            var isCompleted = checkbox.checked;
+            if (isCompleted) {
+                if (checkEmptyFields()) {
+                    showBeautifulAlert("Tüm alanlar doldurulmadan " + phaseName + " tamamlandı olarak işaretlenemez. Plan kaydedilecek ancak tamamlandı işareti kaldırılacaktır.");
+                    checkbox.checked = false;
+                    isCompleted = false;
+                }
+            }
+            
+            // Satın alma formu için özel kontrol
+            if (formId === 'purchasing-form') {
+                var hasMissingEl = document.getElementById('pur_has_missing_materials');
+                var hasMissing = hasMissingEl ? hasMissingEl.value === "true" : false;
+                if (hasMissing && isCompleted && !form.dataset.confirmed) {
+                    e.preventDefault();
+                    showBeautifulConfirm("Dikkat: Bu siparişte eksik malzemeler bulunmaktadır. Yine de Satın Alma aşamasını tamamlanmış olarak işaretlemek istiyor musunuz?", function() {
+                        form.dataset.confirmed = 'true';
+                        form.submit();
+                    });
+                }
+            }
+        });
+    }
+
+    bindCompletionValidation('sample-form', 'IsSampleTestCompleted', 'Numune Planlama');
+    bindCompletionValidation('purchasing-form', 'IsPurchasingCompleted', 'Satın Alma Planlama');
+    bindCompletionValidation('production-form', 'IsProductionCompleted', 'Üretim Planlama');
+});
+</script>
