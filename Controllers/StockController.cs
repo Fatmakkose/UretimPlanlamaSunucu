@@ -182,6 +182,32 @@ namespace UretimPlanlama.Controllers
                 if (existing == null)
                     return Json(new { success = false, message = "Stok kartı bulunamadı." });
 
+                if (existing.Kategori != model.Kategori)
+                {
+                    var prefix = model.Kategori switch
+                    {
+                        "Kumaş" => "KMS",
+                        "Malzeme" => "MLZ",
+                        "Tela" => "TLA",
+                        "Etiket" => "ETK",
+                        _ => "STK"
+                    };
+                    var lastCode = _context.StokKartlari
+                        .Where(s => s.StokKodu.StartsWith(prefix))
+                        .OrderByDescending(s => s.Id)
+                        .Select(s => s.StokKodu)
+                        .FirstOrDefault();
+
+                    int nextNum = 1;
+                    if (!string.IsNullOrEmpty(lastCode))
+                    {
+                        var numPart = lastCode.Replace(prefix + "-", "");
+                        int.TryParse(numPart, out nextNum);
+                        nextNum++;
+                    }
+                    existing.StokKodu = $"{prefix}-{nextNum:D4}";
+                }
+
                 existing.StokAdi = model.StokAdi;
                 existing.Kategori = model.Kategori;
                 existing.Birim = model.Birim;

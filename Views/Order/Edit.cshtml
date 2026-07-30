@@ -333,6 +333,10 @@
                 <input name="OpenSpecialCode" class="form-control" value="@Model.OpenSpecialCode" placeholder="Örn: ACK-001" />
             </div>
             <div class="form-group">
+                <label>Özel Renk Kodu</label>
+                <input name="OptionCode" class="form-control" value="@Model.OptionCode" placeholder="Örn: RENK-001" />
+            </div>
+            <div class="form-group">
                 <label>Özel Kod (Asorti)</label>
                 <input name="AsortiSpecialCode" class="form-control" value="@Model.AsortiSpecialCode" placeholder="Örn: ASR-001" />
             </div>
@@ -546,9 +550,7 @@
                         calcFields.push({ Key: "FİRE (%)", Type: "number", Def: "0" });
                         
                         const stokAdi = (stok.StokAdi || "").toUpperCase();
-                        if (stokAdi.includes("DÜĞME") || stokAdi.includes("DUGME")) {
-                            calcFields.push({ Key: "BOYUT", Type: "select", Def: "14L,16L,18L,20L,24L,28L,32L,36L,40L,44L" });
-                        }
+                        // Düğme için BOYUT dropdown'ı kaldırıldı
                     } else if (cat === "ETİKET" || cat === "ETIKET") {
                         isCalculable = true;
                         calcFields.push({ Key: "FİRE (%)", Type: "number", Def: "0" });

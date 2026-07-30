@@ -34,7 +34,7 @@ namespace UretimPlanlama.Controllers
             return View(orders);
         }
 
-        public IActionResult Create()
+        public IActionResult Create(string returnUrl = null)
         {
             if (!User.HasPermission("Write"))
             {
@@ -46,12 +46,13 @@ namespace UretimPlanlama.Controllers
             ViewBag.Colors = _context.ColorDefs.OrderBy(c => c.Name).ToList();
             ViewBag.Brands = _context.Brands.OrderBy(b => b.Name).ToList();
             ViewBag.StokKartlari = _context.StokKartlari.Where(s => s.Aktif).OrderBy(s => s.StokAdi).ToList();
+            ViewBag.ReturnUrl = returnUrl;
             return View();
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(Order order)
+        public IActionResult Create(Order order, string returnUrl = null)
         {
             if (!User.HasPermission("Write"))
             {
@@ -96,6 +97,12 @@ namespace UretimPlanlama.Controllers
                 _context.Add(order);
                 _context.SaveChanges();
                 TempData["SuccessMessage"] = "Sipariş oluşturuldu";
+                
+                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                {
+                    return Redirect(returnUrl);
+                }
+                
                 return RedirectToAction(nameof(Index)); // Doğrudan sipariş yönetimi sayfasına yönlendir
             }
             ViewBag.Workshops = _context.Workshops.Where(w => w.IsActive).OrderBy(w => w.Name).ToList();
@@ -103,6 +110,7 @@ namespace UretimPlanlama.Controllers
             ViewBag.Customers = _context.Customers.OrderBy(c => c.Name).ToList();
             ViewBag.Brands = _context.Brands.OrderBy(b => b.Name).ToList();
             ViewBag.StokKartlari = _context.StokKartlari.OrderBy(s => s.StokAdi).ToList();
+            ViewBag.ReturnUrl = returnUrl;
             return View(order);
         }
 

@@ -203,7 +203,7 @@
                         }
                         var trackColors = new List<string>();
                         if (!string.IsNullOrEmpty(Model.Color)) {
-                            trackColors = Model.Color.Split(new[] { ',', '-' }, StringSplitOptions.RemoveEmptyEntries).Select(c => c.Trim().ToUpper()).ToList();
+                            trackColors = Model.Color.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(c => c.Trim().ToUpper()).ToList();
                         }
                         if (!trackColors.Any()) trackColors.Add("GENEL");
 
@@ -821,6 +821,9 @@
                 background-color: transparent !important;
                 border: 1px solid black !important;
             }
+            .d-print-none {
+                display: none !important;
+            }
             /* Prevent other tabs and layout wrappers from taking up space and creating blank pages */
             .tab-content > .tab-pane:not(#packing) {
                 display: none !important;
@@ -832,6 +835,12 @@
             }
         </style>
         <div class="tab-pane" id="packing">
+            <div class="d-print-none" style="display: flex; justify-content: flex-end; width: 100%; margin-bottom: 25px; margin-top: 10px;">
+                <button type="button" onclick="window.print()" style="background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none; padding: 12px 24px; border-radius: 10px; font-weight: 600; font-size: 1.05rem; cursor: pointer; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3); transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 10px;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 15px rgba(37, 99, 235, 0.4)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 10px rgba(37, 99, 235, 0.3)';">
+                    <i class="fa-solid fa-print" style="font-size: 1.2rem;"></i>
+                    Çeki Listesini Yazdır
+                </button>
+            </div>
             <div id="printArea" style="background: white; padding: 20px; color: black; font-family: Arial, sans-serif;">
                 <!-- Başlık ve Logolar -->
                 <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 20px;">
@@ -844,14 +853,14 @@
                 <!-- Üst Bilgi Tablosu -->
                 <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
                     <table style="border-collapse: collapse; width: 40%;">
-                        <tr><td style="border: 1px solid black; padding: 4px 8px; font-weight: bold; width: 40%;">MÜMESSİL</td><td style="border: 1px solid black; padding: 4px 8px;">KANUNİ TEKSTİL</td></tr>
-                        <tr><td style="border: 1px solid black; padding: 4px 8px; font-weight: bold;">ÜRETİCİ ADI</td><td style="border: 1px solid black; padding: 4px 8px;">SADE GİYİM</td></tr>
-                        <tr><td style="border: 1px solid black; padding: 4px 8px; font-weight: bold;">INSPECTION TALEP NO</td><td style="border: 1px solid black; padding: 4px 8px;"></td></tr>
+                        <tr><td style="border: 1px solid black; padding: 4px 8px; font-weight: bold; width: 40%;">MÜMESSİL</td><td style="border: 1px solid black; padding: 4px 8px;" contenteditable="true">KANUNİ TEKSTİL</td></tr>
+                        <tr><td style="border: 1px solid black; padding: 4px 8px; font-weight: bold;">ÜRETİCİ ADI</td><td style="border: 1px solid black; padding: 4px 8px;" contenteditable="true">SADE GİYİM</td></tr>
+                        <tr><td style="border: 1px solid black; padding: 4px 8px; font-weight: bold;">INSPECTION TALEP NO</td><td style="border: 1px solid black; padding: 4px 8px;" contenteditable="true"></td></tr>
                     </table>
                     
                     <table style="border-collapse: collapse; width: 30%; text-align: center;">
                         <tr><td style="border: 1px solid black; padding: 4px 8px; font-weight: bold;">INSPECTION TARİHİ</td></tr>
-                        <tr><td style="border: 1px solid black; padding: 4px 8px;">@DateTime.Now.ToString("dd.MM.yyyy")</td></tr>
+                        <tr><td style="border: 1px solid black; padding: 4px 8px;" contenteditable="true">@DateTime.Now.ToString("dd.MM.yyyy")</td></tr>
                     </table>
                 </div>
 
@@ -861,7 +870,7 @@
                     string openSpecialCode = !string.IsNullOrEmpty(Model.OpenSpecialCode) ? Model.OpenSpecialCode : (!string.IsNullOrEmpty(Model.OptionCode) ? Model.OptionCode : "");
                 }
                 <h5 style="text-align: center; font-weight: bold; margin-bottom: 5px;">A SORTİLİ</h5>
-                <table style="border-collapse: collapse; width: 100%; text-align: center; font-size: 0.9rem; margin-bottom: 30px;">
+                <table style="border-collapse: collapse; width: 100%; text-align: center; font-size: 0.9rem; margin-bottom: 10px;">
                     <thead>
                         <tr style="background: #f0f0f0;">
                             <th style="border: 1px solid black; padding: 8px;">SİPARİŞ NUMARASI</th>
@@ -876,29 +885,30 @@
                             <th style="border: 1px solid black; padding: 8px;">ADET</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="asortili-tbody">
                         <tr>
-                            <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@Model.OrderCode</td>
-                            <td style="border: 1px solid black; padding: 8px; font-weight: bold;">BUB</td>
-                            <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@asortiSpecialCode</td>
-                            <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@Model.Color</td>
-                            <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@Model.ModelName</td>
+                            <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@Model.OrderCode</td>
+                            <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">BUB</td>
+                            <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@asortiSpecialCode</td>
+                            <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@Model.Color</td>
+                            <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@Model.ModelName</td>
                             <td style="border: 1px solid black; padding: 8px; background-color: #fefce8; cursor: text;" contenteditable="true" title="Manuel düzenleyebilirsiniz"></td>
-                            <td style="border: 1px solid black; padding: 8px;">@packingQty</td>
+                            <td style="border: 1px solid black; padding: 8px;" contenteditable="true">@packingQty</td>
                             <td style="border: 1px solid black; padding: 8px; background-color: #fefce8; cursor: text;" contenteditable="true" title="Manuel düzenleyebilirsiniz"></td>
                             <td style="border: 1px solid black; padding: 8px; background-color: #fefce8; cursor: text;" contenteditable="true" title="Manuel düzenleyebilirsiniz"></td>
-                            <td style="border: 1px solid black; padding: 8px;">@packingQty</td>
+                            <td style="border: 1px solid black; padding: 8px;" contenteditable="true">@packingQty</td>
                         </tr>
-                        <tr><td colspan="10" style="border: 1px solid black; padding: 20px;"></td></tr>
-                        <tr>
+                        <tr class="asortili-spacer"><td colspan="10" style="border: 1px solid black; padding: 20px;"></td></tr>
+                        <tr id="asortili-totals-row">
                             <td colspan="5" style="border: 1px solid black; padding: 8px; text-align: right; font-weight: bold;">TOPLAM</td>
                             <td style="border: 1px solid black; padding: 8px; font-weight: bold; background-color: #fefce8; cursor: text;" contenteditable="true" title="Manuel düzenleyebilirsiniz"></td>
-                            <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@packingQty</td>
+                            <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@packingQty</td>
                             <td colspan="2" style="border: 1px solid black; padding: 8px;"></td>
-                            <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@packingQty</td>
+                            <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@packingQty</td>
                         </tr>
                     </tbody>
                 </table>
+                <button type="button" class="btn btn-sm btn-outline-primary d-print-none mb-4" onclick="addAsortiliRow()"><i class="fa-solid fa-plus"></i> Satır Ekle</button>
 
                 <!-- AÇIK ADET BÖLÜMÜ -->
                 <h5 style="font-weight: bold; margin-bottom: 5px;">AÇIK ADET</h5>
@@ -917,7 +927,7 @@
                             <th style="border: 1px solid black; padding: 8px;">TOPLAM</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="acikadet-tbody">
                         @{
                             var packingSizesObj = new Dictionary<string, string>();
                             if (!string.IsNullOrEmpty(Model.SizeDistributionJson)) {
@@ -946,52 +956,283 @@
                                 
                                 <tr>
                                     @if(isFirst) {
-                                        <td rowspan="@rowSpan" style="border: 1px solid black; padding: 8px; font-weight: bold;">@Model.OrderCode</td>
-                                        <td rowspan="@rowSpan" style="border: 1px solid black; padding: 8px; font-weight: bold;">BUB</td>
-                                        <td rowspan="@rowSpan" style="border: 1px solid black; padding: 8px; font-weight: bold;">@openSpecialCode</td>
-                                        <td rowspan="@rowSpan" style="border: 1px solid black; padding: 8px; font-weight: bold;">@Model.Color</td>
-                                        <td rowspan="@rowSpan" style="border: 1px solid black; padding: 8px; font-weight: bold;">@Model.ModelName</td>
-                                        <td rowspan="@rowSpan" style="border: 1px solid black; padding: 8px; font-weight: bold;"></td>
+                                        <td rowspan="@rowSpan" style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@Model.OrderCode</td>
+                                        <td rowspan="@rowSpan" style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">BUB</td>
+                                        <td rowspan="@rowSpan" style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@openSpecialCode</td>
+                                        <td rowspan="@rowSpan" style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@Model.Color</td>
+                                        <td rowspan="@rowSpan" style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@Model.ModelName</td>
+                                        <td rowspan="@rowSpan" style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@Model.OptionCode</td>
                                         <td rowspan="@rowSpan" style="border: 1px solid black; padding: 8px; font-weight: bold; background-color: #fefce8; cursor: text;" contenteditable="true" title="Manuel düzenleyebilirsiniz"></td>
                                         isFirst = false;
                                     }
-                                    <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@kvp.Key</td>
+                                    <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@kvp.Key</td>
                                     <td style="border: 1px solid black; padding: 8px; background-color: #fefce8; cursor: text;" contenteditable="true" title="Manuel düzenleyebilirsiniz"></td>
-                                    <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@(sAdet > 0 ? sAdet.ToString("N0") : "")</td>
+                                    <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@(sAdet > 0 ? sAdet.ToString("N0") : "")</td>
                                 </tr>
                             }
                         } else {
                             <tr>
-                                <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@Model.OrderCode</td>
-                                <td style="border: 1px solid black; padding: 8px; font-weight: bold;">BUB</td>
-                                <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@openSpecialCode</td>
-                                <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@Model.Color</td>
-                                <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@Model.ModelName</td>
-                                <td style="border: 1px solid black; padding: 8px;"></td>
+                                <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@Model.OrderCode</td>
+                                <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">BUB</td>
+                                <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@openSpecialCode</td>
+                                <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@Model.Color</td>
+                                <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@Model.ModelName</td>
+                                <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@Model.OptionCode</td>
                                 <td style="border: 1px solid black; padding: 8px; background-color: #fefce8; cursor: text;" contenteditable="true" title="Manuel düzenleyebilirsiniz"></td>
-                                <td style="border: 1px solid black; padding: 8px; font-weight: bold;">-</td>
+                                <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">-</td>
                                 <td style="border: 1px solid black; padding: 8px; background-color: #fefce8; cursor: text;" contenteditable="true" title="Manuel düzenleyebilirsiniz"></td>
-                                <td style="border: 1px solid black; padding: 8px; font-weight: bold;">-</td>
+                                <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">-</td>
                             </tr>
                         }
-                        <tr>
+                        <tr class="acikadet-spacer"><td colspan="10" style="display:none;"></td></tr>
+                        <tr id="acikadet-totals-row-1">
                             <td colspan="6" style="border: 1px solid black;"></td>
                             <td colspan="2" style="border: 1px solid black; padding: 8px; text-align: right; font-weight: bold;">TOPLAM ADET</td>
-                            <td colspan="2" style="border: 1px solid black; padding: 8px; font-weight: bold;">@(toplamAcikAdet > 0 ? toplamAcikAdet.ToString("N0") : "")</td>
+                            <td colspan="2" style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@(toplamAcikAdet > 0 ? toplamAcikAdet.ToString("N0") : "")</td>
                         </tr>
-                        <tr>
+                        <tr id="acikadet-totals-row-2">
                             <td colspan="6" style="border: 1px solid black;"></td>
                             <td colspan="2" style="border: 1px solid black; padding: 8px; text-align: right; font-weight: bold;">TOPLAM KOLİ SAYISI</td>
                             <td colspan="2" style="border: 1px solid black; padding: 8px; font-weight: bold; background-color: #fefce8; cursor: text;" contenteditable="true" title="Manuel düzenleyebilirsiniz"></td>
                         </tr>
                     </tbody>
                 </table>
+                <div class="d-flex mb-4 d-print-none">
+                    <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="addAcikAdetRow()"><i class="fa-solid fa-plus"></i> Satır Ekle</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleAcikAdetMerge()"><i class="fa-solid fa-object-ungroup"></i> Sütunları Ayır / Birleştir</button>
+                </div>
                 
                 <div style="margin-top: 50px;">
                     <p style="border-top: 1px solid black; display: inline-block; padding-top: 5px;">ÜRETİCİ SORUMLUSU / İMZA</p>
                 </div>
             </div>
-            <div class="text-end mt-3 mb-2">
+            
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    var asortiliTbody = document.getElementById("asortili-tbody");
+                    if(asortiliTbody) {
+                        asortiliTbody.addEventListener("input", function(e) {
+                            if(e.target && e.target.nodeName === "TD") {
+                                var tr = e.target.closest("tr");
+                                if(tr.classList.contains("asortili-spacer") || tr.id === "asortili-totals-row") return;
+                                
+                                var tds = tr.querySelectorAll("td");
+                                if(tds.length === 10) {
+                                    var tkStr = tds[5].innerText.replace(',', '.');
+                                    var lotIciStr = tds[7].innerText.replace(',', '.');
+                                    var koliIciStr = tds[8].innerText.replace(',', '.');
+
+                                    var tk = parseFloat(tkStr) || 0;
+                                    var lotIciAdet = parseFloat(lotIciStr) || 0;
+                                    var koliIciLot = parseFloat(koliIciStr) || 0;
+                                    
+                                    // LOT ADETİ = TOPLAM KOLİ * LOT İÇİ ADETİ
+                                    var lotAdeti = tk * lotIciAdet;
+                                    tds[6].innerText = lotAdeti > 0 ? lotAdeti : "";
+                                    
+                                    // ADET = LOT İÇİ ADETİ * LOT ADETİ
+                                    var adet = lotIciAdet * lotAdeti;
+                                    tds[9].innerText = adet > 0 ? adet : "";
+                                    
+                                    calcAsortiliTotals();
+                                }
+                            }
+                        });
+                    }
+                    
+                    var acikadetTbody = document.getElementById("acikadet-tbody");
+                    if(acikadetTbody) {
+                        acikadetTbody.addEventListener("input", function(e) {
+                            if(e.target && e.target.nodeName === "TD") {
+                                var tr = e.target.closest("tr");
+                                if(tr.classList.contains("acikadet-spacer") || tr.id === "acikadet-totals-row-1" || tr.id === "acikadet-totals-row-2") return;
+                                calcAcikAdetTotals();
+                            }
+                        });
+                    }
+                });
+
+                function calcAsortiliTotals() {
+                    var tbody = document.getElementById("asortili-tbody");
+                    var trs = tbody.querySelectorAll("tr:not(.asortili-spacer):not(#asortili-totals-row)");
+                    var totalKoli = 0, totalLot = 0, totalAdet = 0;
+                    
+                    trs.forEach(function(tr) {
+                        var tds = tr.querySelectorAll("td");
+                        if(tds.length === 10) {
+                            var tkStr = tds[5].innerText.replace(',', '.');
+                            var lotStr = tds[6].innerText.replace(',', '.');
+                            var adetStr = tds[9].innerText.replace(',', '.');
+
+                            totalKoli += parseFloat(tkStr) || 0;
+                            totalLot += parseFloat(lotStr) || 0;
+                            totalAdet += parseFloat(adetStr) || 0;
+                        }
+                    });
+                    
+                    var totalRow = document.getElementById("asortili-totals-row");
+                    if(totalRow) {
+                        var totalTds = totalRow.querySelectorAll("td");
+                        totalTds[1].innerText = totalKoli > 0 ? totalKoli : "";
+                        totalTds[2].innerText = totalLot > 0 ? totalLot : "";
+                        totalTds[4].innerText = totalAdet > 0 ? totalAdet : "";
+                    }
+                }
+
+                function addAsortiliRow() {
+                    var tbody = document.getElementById("asortili-tbody");
+                    var newRow = document.createElement("tr");
+                    newRow.innerHTML = `
+                        <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true"></td>
+                        <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true"></td>
+                        <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true"></td>
+                        <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true"></td>
+                        <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true"></td>
+                        <td style="border: 1px solid black; padding: 8px; background-color: #fefce8; cursor: text;" contenteditable="true"></td>
+                        <td style="border: 1px solid black; padding: 8px;" contenteditable="true"></td>
+                        <td style="border: 1px solid black; padding: 8px; background-color: #fefce8; cursor: text;" contenteditable="true"></td>
+                        <td style="border: 1px solid black; padding: 8px; background-color: #fefce8; cursor: text;" contenteditable="true"></td>
+                        <td style="border: 1px solid black; padding: 8px;" contenteditable="true"></td>
+                    `;
+                    var lastSpacer = tbody.querySelector(".asortili-spacer");
+                    if(lastSpacer) tbody.insertBefore(newRow, lastSpacer);
+                    else tbody.appendChild(newRow);
+                }
+
+                function addAcikAdetRow() {
+                    var tbody = document.getElementById("acikadet-tbody");
+                    var newRow = document.createElement("tr");
+                    newRow.innerHTML = `
+                        <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true"></td>
+                        <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true"></td>
+                        <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true"></td>
+                        <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true"></td>
+                        <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true"></td>
+                        <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true"></td>
+                        <td style="border: 1px solid black; padding: 8px; background-color: #fefce8; cursor: text;" contenteditable="true"></td>
+                        <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true"></td>
+                        <td style="border: 1px solid black; padding: 8px; background-color: #fefce8; cursor: text;" contenteditable="true"></td>
+                        <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true"></td>
+                    `;
+                    var lastSpacer = tbody.querySelector(".acikadet-spacer");
+                    if(lastSpacer) tbody.insertBefore(newRow, lastSpacer);
+                    else tbody.appendChild(newRow);
+                }
+
+                function toggleAcikAdetMerge() {
+                    var tbody = document.getElementById("acikadet-tbody");
+                    if (!tbody) return;
+                    var rows = Array.from(tbody.querySelectorAll("tr:not(.acikadet-spacer):not(#acikadet-totals-row-1):not(#acikadet-totals-row-2)"));
+                    
+                    var isMerged = rows.some(r => r.cells[0] && r.cells[0].rowSpan > 1);
+                    
+                    if (isMerged) {
+                        // UNMERGE
+                        rows.forEach((tr, rowIndex) => {
+                            if (tr.cells[0] && tr.cells[0].rowSpan > 1) {
+                                var rowSpan = tr.cells[0].rowSpan;
+                                var sharedTds = [];
+                                for (var c = 0; c < 7; c++) {
+                                    sharedTds.push(tr.cells[c]);
+                                    tr.cells[c].removeAttribute("rowSpan");
+                                }
+                                
+                                for (var i = 1; i < rowSpan; i++) {
+                                    var nextRow = rows[rowIndex + i];
+                                    if(nextRow) {
+                                        for (var c = 6; c >= 0; c--) {
+                                            var clone = sharedTds[c].cloneNode(true);
+                                            nextRow.insertBefore(clone, nextRow.cells[0]);
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    } else {
+                        // MERGE identical first 7 columns
+                        var i = 0;
+                        while (i < rows.length) {
+                            if (rows[i].cells.length < 7) { i++; continue; }
+                            var matchCount = 1;
+                            for (var j = i + 1; j < rows.length; j++) {
+                                if (rows[j].cells.length < 7) break;
+                                var same = true;
+                                for (var c = 0; c < 7; c++) {
+                                    if (rows[i].cells[c].innerText.trim() !== rows[j].cells[c].innerText.trim()) {
+                                        same = false;
+                                        break;
+                                    }
+                                }
+                                if (same) matchCount++;
+                                else break;
+                            }
+                            
+                            if (matchCount > 1) {
+                                for (var c = 0; c < 7; c++) {
+                                    rows[i].cells[c].rowSpan = matchCount;
+                                }
+                                for (var j = i + 1; j < i + matchCount; j++) {
+                                    for (var c = 0; c < 7; c++) {
+                                        rows[j].deleteCell(0);
+                                    }
+                                }
+                            }
+                            i += matchCount;
+                        }
+                    }
+                    calcAcikAdetTotals();
+                }
+
+                function calcAcikAdetTotals() {
+                    var tbody = document.getElementById("acikadet-tbody");
+                    if (!tbody) return;
+                    var rows = Array.from(tbody.querySelectorAll("tr:not(.acikadet-spacer):not(#acikadet-totals-row-1):not(#acikadet-totals-row-2)"));
+                    
+                    var currentKoliSayisi = 0;
+                    var grandTotalAdet = 0;
+                    var grandTotalKoli = 0;
+                    
+                    rows.forEach(tr => {
+                        var koliSayisiCell, koliIciAdetCell, toplamCell;
+                        
+                        if (tr.cells.length === 10) {
+                            koliSayisiCell = tr.cells[6];
+                            koliIciAdetCell = tr.cells[8];
+                            toplamCell = tr.cells[9];
+                            
+                            var ksStr = koliSayisiCell.innerText.replace(',', '.');
+                            currentKoliSayisi = parseFloat(ksStr) || 0;
+                            grandTotalKoli += currentKoliSayisi;
+                        } else if (tr.cells.length === 3) {
+                            koliIciAdetCell = tr.cells[1];
+                            toplamCell = tr.cells[2];
+                        } else {
+                            return;
+                        }
+                        
+                        var kIciStr = koliIciAdetCell.innerText.replace(',', '.');
+                        var koliIciAdet = parseFloat(kIciStr) || 0;
+                        var toplam = currentKoliSayisi * koliIciAdet;
+                        
+                        toplamCell.innerText = toplam > 0 ? toplam : "";
+                        grandTotalAdet += toplam;
+                    });
+                    
+                    var totalsRow1 = document.getElementById("acikadet-totals-row-1");
+                    if (totalsRow1) {
+                        var cells = totalsRow1.querySelectorAll("td");
+                        cells[cells.length - 1].innerText = grandTotalAdet > 0 ? grandTotalAdet : "";
+                    }
+                    
+                    var totalsRow2 = document.getElementById("acikadet-totals-row-2");
+                    if (totalsRow2) {
+                        var cells = totalsRow2.querySelectorAll("td");
+                        cells[cells.length - 1].innerText = grandTotalKoli > 0 ? grandTotalKoli : "";
+                    }
+                }
+            </script>
+            
+            <div class="text-end mt-3 mb-2 d-print-none">
                 <button class="btn btn-primary" onclick="switchTab('reports')">Kaydet ve Devam Et <i class="fa-solid fa-arrow-right" style="margin-left: 8px;"></i></button>
             </div>
         </div>
@@ -1044,6 +1285,8 @@
                 // Numune
                 AddTimelineItem("sample_kumas_ytesti", "sample", "Kumaş Y-Testi Onayı", "fa-vial", "#8b5cf6", GetSD("sample_kumas_ytesti"), GetSD("sample_kumas_ytesti_actual"));
                 AddTimelineItem("sample_tuse_renk", "sample", "K-Tuşe Renk Onayı", "fa-palette", "#8b5cf6", GetSD("sample_tuse_renk"), GetSD("sample_tuse_renk_actual"));
+                AddTimelineItem("sample_lot_onayi", "sample", "Lot Onayı", "fa-check-double", "#8b5cf6", GetSD("sample_lot_onayi"), GetSD("sample_lot_onayi_actual"));
+                AddTimelineItem("sample_dikis_ipi_onayi", "sample", "Dikiş İpi Onayı", "fa-thread", "#8b5cf6", GetSD("sample_dikis_ipi_onayi"), GetSD("sample_dikis_ipi_onayi_actual"));
                 AddTimelineItem("sample_dugme_renk", "sample", "Düğme Renk Kalite", "fa-circle-dot", "#8b5cf6", GetSD("sample_dugme_renk"), GetSD("sample_dugme_renk_actual"));
                 AddTimelineItem("sample_pp_onay", "sample", "PP Onay", "fa-shirt", "#8b5cf6", GetSD("sample_pp_onay"), GetSD("sample_pp_onay_actual"));
 

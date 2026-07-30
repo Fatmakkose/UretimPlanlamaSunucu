@@ -233,7 +233,7 @@
             <a href="/Order/ExportToExcel" class="btn-secondary" style="display: flex; align-items: center; gap: 8px; background: white; border: 1px solid #cbd5e1; padding: 8px 16px; border-radius: 6px; font-weight: 600; color: #334155; cursor: pointer; text-decoration: none;">
                 <i class="fa-solid fa-download"></i> Excel Dışa Aktar
             </a>
-            <a href="/Order/Create" class="btn-planner" style="background-color: #0369a1; border: none; color: white; display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(3, 105, 161, 0.2); text-decoration: none;">
+            <a href="/Order/Create?returnUrl=%2FOrder%2FIndex" class="btn-planner" style="background-color: #0369a1; border: none; color: white; display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(3, 105, 161, 0.2); text-decoration: none;">
                 <i class="fa-solid fa-plus"></i> Yeni Sipariş
             </a>
         </div>
@@ -251,13 +251,14 @@
         }
         else
         {
-            <table class="clean-table" style="width: 100%; border-collapse: collapse; text-align: left;">
+            <table class="clean-table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.75rem;">
                 <thead>
                     <tr>
                         <th style="padding-left: 24px;">SİPARİŞ KODU</th>
                         <th>TARİH</th>
                         <th>MODEL</th>
-                        <th>DETAY</th>
+                        <th>RENK</th>
+                        <th>MARKA</th>
                         <th>KUMAŞÇI</th>
                         <th>ATÖLYE</th>
                         <th style="text-align: right;">SİPARİŞ ADEDİ</th>
@@ -275,30 +276,27 @@
                         if (orderGroup.Count() == 1)
                         {
                             // Tek renkli sipariş - düz satır (açılır kapanır değil)
-                            <tr class="order-row main-order-row hover-row" data-kpi-status="@groupKpiBucket" style="border-bottom: 1px solid #f1f5f9; background: #fff; cursor: pointer;" onclick="window.location.href='/Order/Edit/@firstOrder.Id'">
+                            <tr class="order-row main-order-row hover-row" data-kpi-status="@groupKpiBucket" style="border-bottom: 1px solid #f1f5f9; background: #fff; cursor: pointer;" onclick="$('.view-order-detail[data-id=\'@firstOrder.Id\']').click()">
                                 <td style="padding-left: 24px;">
-                                    <span style="color: #0369a1; font-weight: 700;">@firstOrder.OrderCode</span>
+                                    <a href="javascript:void(0)" style="background-color: var(--primary-color); color: white; padding: 4px 12px; border-radius: 9999px; font-weight: 600; text-decoration: none; display: inline-block;" onclick="$('.view-order-detail[data-id=\'@firstOrder.Id\']').click(); event.stopPropagation();">@firstOrder.OrderCode</a>
                                 </td>
                                 <td>
-                                    <span style="font-size: 0.85rem; color: #64748b; font-weight: 500;">
+                                    <span style="font-size: 0.75rem; color: #64748b; font-weight: 500;">
                                         <i class="fa-regular fa-calendar" style="margin-right: 4px;"></i>@firstOrder.OrderDate.ToString("dd.MM.yyyy")
                                     </span>
                                 </td>
                                 <td>
-                                    <strong style="color: #1e293b; font-size: 0.9rem; display: block;">@firstOrder.ModelName</strong>
-                                    <span style="font-size: 0.75rem; color: #64748b; display: block; margin-top: 2px;">@(string.IsNullOrEmpty(firstOrder.ModelNo) ? "-" : firstOrder.ModelNo)</span>
+                                    <strong style="color: #1e293b; font-size: 0.8rem; display: block;">@firstOrder.ModelName</strong>
+                                    @if(!string.IsNullOrEmpty(firstOrder.ModelNo)) { <span style="font-size: 0.7rem; color: #64748b; display: block; margin-top: 2px;">@firstOrder.ModelNo</span> }
                                 </td>
                                 <td>
-                                    <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-                                        <span style="background-color: #f1f5f9; color: #475569; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">@firstOrder.Color</span>
-                                        @if (!string.IsNullOrEmpty(firstOrder.Brand))
-                                        {
-                                            <span style="background-color: #e0e7ff; color: #4f46e5; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">@firstOrder.Brand</span>
-                                        }
-                                    </div>
+                                    <span style="color: #475569; font-size: 0.75rem; font-weight: 500;">@firstOrder.Color</span>
                                 </td>
                                 <td>
-                                    <span style="color: #334155; font-size: 0.85rem;"><i class="fa-solid fa-truck" style="margin-right: 8px; color: #94a3b8; width: 14px;"></i>@firstOrder.FabricSupplier</span>
+                                    <span style="color: #475569; font-size: 0.75rem; font-weight: 500;">@(string.IsNullOrEmpty(firstOrder.Brand) ? "-" : firstOrder.Brand)</span>
+                                </td>
+                                <td>
+                                    <span style="color: #334155; font-size: 0.75rem;"><i class="fa-solid fa-truck" style="margin-right: 8px; color: #94a3b8; width: 14px;"></i>@firstOrder.FabricSupplier</span>
                                 </td>
                                 <td>
                                     @{
@@ -312,10 +310,10 @@
                                             } catch {}
                                         }
                                     }
-                                    <span style="color: #334155; font-size: 0.85rem;"><i class="fa-solid fa-industry" style="margin-right: 8px; color: #94a3b8; width: 14px;"></i>@atolyeStr</span>
+                                    <span style="color: #334155; font-size: 0.75rem;"><i class="fa-solid fa-industry" style="margin-right: 8px; color: #94a3b8; width: 14px;"></i>@atolyeStr</span>
                                 </td>
-                                <td style="text-align: right; font-weight: 700; font-size: 1rem; color: #0f172a;">
-                                    @firstOrder.CalculatedQuantity.ToString("N0") <span style="font-weight: 500; font-size: 0.75rem; color: #64748b;">Adet</span>
+                                <td style="text-align: right; font-weight: 700; font-size: 0.85rem; color: #0f172a;">
+                                    @firstOrder.CalculatedQuantity.ToString("N0") <span style="font-weight: 500; font-size: 0.7rem; color: #64748b;">Adet</span>
                                 </td>
                                 <td style="text-align: center; padding-right: 24px;">
                                     <div style="display: flex; gap: 4px; justify-content: center; align-items: center;">
@@ -336,33 +334,31 @@
                             <tr class="order-row main-order-row" data-groupclass="@groupClass" style="cursor: pointer; border-bottom: 2px solid #e2e8f0; background: #fff;" onclick="$('.@groupClass').toggle(); $(this).find('.toggle-icon').toggleClass('fa-rotate-90');">
                                 <td style="padding-left: 24px; display:flex; align-items:center; gap:8px;">
                                     <i class="fa-solid fa-chevron-right toggle-icon" style="color: #94a3b8; font-size: 0.8rem; transition: transform 0.2s;"></i>
-                                    <span style="color: #0369a1; font-weight: 700;">@firstOrder.OrderCode</span>
+                                    <span style="background-color: var(--primary-color); color: white; padding: 4px 12px; border-radius: 9999px; font-weight: 600; display: inline-block;">@firstOrder.OrderCode</span>
                                 </td>
                                 <td>
-                                    <span style="font-size: 0.85rem; color: #64748b; font-weight: 500;">
+                                    <span style="font-size: 0.75rem; color: #64748b; font-weight: 500;">
                                         <i class="fa-regular fa-calendar" style="margin-right: 4px;"></i>@firstOrder.OrderDate.ToString("dd.MM.yyyy")
                                     </span>
                                 </td>
                                 <td>
-                                    <strong style="color: #1e293b; font-size: 0.9rem; display: block;">@firstOrder.ModelName</strong>
-                                    <span style="font-size: 0.75rem; color: #64748b; display: block; margin-top: 2px;">@(string.IsNullOrEmpty(firstOrder.ModelNo) ? "-" : firstOrder.ModelNo)</span>
+                                    <strong style="color: #1e293b; font-size: 0.8rem; display: block;">@firstOrder.ModelName</strong>
+                                    @if(!string.IsNullOrEmpty(firstOrder.ModelNo)) { <span style="font-size: 0.7rem; color: #64748b; display: block; margin-top: 2px;">@firstOrder.ModelNo</span> }
                                 </td>
                                 <td>
-                                    <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-                                        @foreach(var c in colors)
-                                        {
-                                            <span style="background-color: #f1f5f9; color: #475569; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">@c.Color</span>
-                                        }
-                                    </div>
+                                    <span style="color: #475569; font-size: 0.75rem; font-weight: 500;">@string.Join(", ", colors.Select(c => c.Color).Distinct())</span>
                                 </td>
                                 <td>
-                                    <span style="color: #94a3b8; font-size: 0.8rem; font-style:italic;">Çoklu (Genişletiniz)</span>
+                                    <span style="color: #475569; font-size: 0.75rem; font-weight: 500;">@string.Join(", ", colors.Select(c => c.Brand).Where(b => !string.IsNullOrEmpty(b)).Distinct())</span>
                                 </td>
                                 <td>
-                                    <span style="color: #94a3b8; font-size: 0.8rem; font-style:italic;">Çoklu (Genişletiniz)</span>
+                                    <span style="color: #94a3b8; font-size: 0.75rem; font-style:italic;">Çoklu (Genişletiniz)</span>
                                 </td>
-                                <td style="text-align: right; font-weight: 700; font-size: 1rem; color: #0f172a;">
-                                    @totalQty.ToString("N0") <span style="font-weight: 500; font-size: 0.75rem; color: #64748b;">Adet</span>
+                                <td>
+                                    <span style="color: #94a3b8; font-size: 0.75rem; font-style:italic;">Çoklu (Genişletiniz)</span>
+                                </td>
+                                <td style="text-align: right; font-weight: 700; font-size: 0.85rem; color: #0f172a;">
+                                    @totalQty.ToString("N0") <span style="font-weight: 500; font-size: 0.7rem; color: #64748b;">Adet</span>
                                 </td>
                                 <td style="text-align: center; padding-right: 24px;">
                                     <button class="action-btn btnDeleteOrderGroup" data-ids="@allIds" title="Siparişi Komple Sil" onclick="event.stopPropagation();"><i class="fa-solid fa-trash" style="color: #ef4444;"></i></button>
@@ -371,23 +367,20 @@
 
                             foreach (var order in orderGroup)
                             {
-                                <tr class="order-row @groupClass hover-row" style="display: none; background: #f8fafc; border-bottom: 1px dashed #cbd5e1; cursor: pointer;" onclick="window.location.href='/Order/Edit/@order.Id'">
+                                <tr class="order-row @groupClass hover-row" style="display: none; background: #f8fafc; border-bottom: 1px dashed #cbd5e1; cursor: pointer;" onclick="$('.view-order-detail[data-id=\'@order.Id\']').click()">
                                     <td style="padding-left: 50px;">
                                         <span style="font-size:0.8rem; color:#94a3b8;"><i class="fa-solid fa-arrow-turn-up fa-rotate-90"></i></span>
                                     </td>
                                     <td></td>
                                     <td></td>
                                     <td>
-                                        <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-                                            <span style="background-color: #f1f5f9; color: #475569; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">@order.Color</span>
-                                            @if (!string.IsNullOrEmpty(order.Brand))
-                                            {
-                                                <span style="background-color: #e0e7ff; color: #4f46e5; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">@order.Brand</span>
-                                            }
-                                        </div>
+                                        <span style="color: #475569; font-size: 0.75rem; font-weight: 500;">@order.Color</span>
                                     </td>
                                     <td>
-                                        <span style="color: #334155; font-size: 0.85rem;"><i class="fa-solid fa-truck" style="margin-right: 8px; color: #94a3b8; width: 14px;"></i>@order.FabricSupplier</span>
+                                        <span style="color: #475569; font-size: 0.75rem; font-weight: 500;">@(string.IsNullOrEmpty(order.Brand) ? "-" : order.Brand)</span>
+                                    </td>
+                                    <td>
+                                        <span style="color: #334155; font-size: 0.75rem;"><i class="fa-solid fa-truck" style="margin-right: 8px; color: #94a3b8; width: 14px;"></i>@order.FabricSupplier</span>
                                     </td>
                                     <td>
                                         @{
@@ -401,10 +394,10 @@
                                                 } catch {}
                                             }
                                         }
-                                        <span style="color: #334155; font-size: 0.85rem;"><i class="fa-solid fa-industry" style="margin-right: 8px; color: #94a3b8; width: 14px;"></i>@childAtolyeStr</span>
+                                        <span style="color: #334155; font-size: 0.75rem;"><i class="fa-solid fa-industry" style="margin-right: 8px; color: #94a3b8; width: 14px;"></i>@childAtolyeStr</span>
                                     </td>
                                     <td style="text-align: right; font-weight: 600; font-size: 0.95rem; color: #0f172a;">
-                                        @order.CalculatedQuantity.ToString("N0") <span style="font-weight: 500; font-size: 0.75rem; color: #64748b;">Adet</span>
+                                        @order.CalculatedQuantity.ToString("N0") <span style="font-weight: 500; font-size: 0.7rem; color: #64748b;">Adet</span>
                                     </td>
                                     <td style="text-align: center; padding-right: 24px;">
                                         <div style="display: flex; gap: 4px; justify-content: center; align-items: center;">
@@ -531,6 +524,18 @@
                 </h4>
                 <div style="overflow-x: auto;" id="detDynamicSizesContainer">
                     <!-- Dinamik tablo JS ile doldurulacak -->
+                </div>
+            </div>
+
+            <!-- Zaman Çizelgesi Kartı -->
+            <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); margin-bottom: 24px;">
+                <h4 style="margin: 0 0 16px 0; font-size: 1rem; color: var(--primary-color); font-weight: 600; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
+                    <i class="fa-solid fa-calendar-check" style="margin-right: 6px;"></i> Zaman Çizelgesi
+                </h4>
+                <div class="horizontal-timeline-wrapper" style="overflow-x: auto; padding: 20px 10px; background: white; border-radius: 12px; border: 1px solid #e2e8f0; position: relative;">
+                    <div id="detTimelineContainer" style="display: flex; gap: 30px; min-width: max-content; position: relative; padding-top: 30px; padding-bottom: 20px;">
+                        <!-- JS ile doldurulacak -->
+                    </div>
                 </div>
             </div>
 
@@ -1287,7 +1292,7 @@
 
                                     var tableHtml = '<table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 0.9rem;"><thead><tr style="border-bottom: 2px solid var(--border-color); font-weight: 600; color: var(--text-muted);"><th style="padding: 8px; text-align: left;">Beden Türü</th>';
                                     allSizes.forEach(s => { tableHtml += '<th style="padding: 8px;">' + s + '</th>'; });
-                                    tableHtml += '<th style="padding: 8px; border-left: 1px solid var(--border-color); color: var(--text-main);">Toplam</th></tr></thead><tbody>';
+tableHtml += '<th style="padding: 8px; border-left: 1px solid var(--border-color); color: var(--text-main);">Toplam</th></tr></thead><tbody>';
 
                                     // Açık Adetler
                                     var openTotal = 0;
@@ -1299,31 +1304,141 @@
                                     });
                                     tableHtml += '<td style="padding: 12px 8px; border-left: 1px solid var(--border-color); font-weight: 700; color: #0284c7; background: #e0f2fe;">' + openTotal + '</td></tr>';
 
-                                    // Asorti Oran
-                                    var asortiRatioTotal = 0;
-                                    tableHtml += '<tr style="border-bottom: 1px solid var(--border-color);"><td style="padding: 12px 8px; text-align: left; font-weight: 600; color: #16a34a;">Asorti Oran</td>';
+                                    // Asorti Adetler
+                                    var asortiTotal = 0;
+                                    tableHtml += '<tr><td style="padding: 12px 8px; text-align: left; font-weight: 600; color: #16a34a;">Asorti Oran</td>';
                                     allSizes.forEach(s => { 
                                         var val = parseInt(asortiDist[s]) || 0;
-                                        asortiRatioTotal += val;
+                                        asortiTotal += val;
                                         tableHtml += '<td style="padding: 12px 8px;">' + val + '</td>';
                                     });
-                                    tableHtml += '<td style="padding: 12px 8px; border-left: 1px solid var(--border-color); font-weight: 700; color: #16a34a; background: #dcfce7;">' + asortiRatioTotal + '</td></tr>';
-
-                                    // Asorti Toplam
-                                    var asortiCount = order.asortiCount || 0;
-                                    var asortiFinalQty = asortiRatioTotal * asortiCount;
-                                    tableHtml += '<tr><td style="padding: 12px 8px; text-align: left; font-weight: 600; color: #15803d;">Asorti Toplam</td>';
-                                    tableHtml += '<td colspan="' + allSizes.length + '" style="padding: 12px 8px; text-align: right; color: var(--text-muted); font-style: italic;">Lot Sayısı: <strong style="color: var(--text-main); font-style: normal; margin-right: 15px;">' + asortiCount + '</strong> (Lot Sayısı × Asorti Oran Toplamı) =</td>';
-                                    tableHtml += '<td style="padding: 12px 8px; border-left: 1px solid var(--border-color); font-weight: 700; color: #15803d; background: #bbf7d0;">' + asortiFinalQty + '</td></tr>';
+                                    tableHtml += '<td style="padding: 12px 8px; border-left: 1px solid var(--border-color); font-weight: 700; color: #16a34a; background: #dcfce7;">' + asortiTotal + '</td></tr>';
+                                    
+                                    var lotCount = parseInt(order.asortiCount) || 0;
+                                    var asortiOverallTotal = lotCount * asortiTotal;
+                                    tableHtml += '<tr style="border-top: 1px dashed var(--border-color);"><td colspan="' + (allSizes.length + 1) + '" style="padding: 12px 8px; text-align: right; font-weight: 600; color: #15803d; font-style: italic;">Lot Sayısı: <strong style="color: #111827;">' + lotCount + '</strong> &nbsp;&nbsp;&nbsp; (Lot Sayısı × Asorti Oran Toplamı) =</td>';
+                                    tableHtml += '<td style="padding: 12px 8px; border-left: 1px solid var(--border-color); font-weight: 800; color: #111827; background: #bbf7d0; font-size: 1.1rem;">' + asortiOverallTotal + '</td></tr>';
 
                                     tableHtml += '</tbody></table>';
-
                                     $("#detDynamicSizesContainer").html(tableHtml);
+
+                                    // Zaman Çizelgesi Oluşturma (Timeline)
+                                    var timelineItems = [];
+                                    var pDict = {};
+                                    var sDict = {};
+                                    try { if (order.productionJson) pDict = JSON.parse(order.productionJson); } catch(e){}
+                                    try { if (order.sampleTestJson) sDict = JSON.parse(order.sampleTestJson); } catch(e){}
+                                    
+                                    function getPD(k) { return pDict[k] || ""; }
+                                    function getSD(k) { return sDict[k] || ""; }
+                                    
+                                    function addTl(id, type, title, icon, color, pDate, aDate) {
+                                        var pDateObj = null;
+                                        if (pDate) { var parts = pDate.split('-'); if(parts.length===3) pDateObj = new Date(parts[0], parts[1]-1, parts[2]); }
+                                        var aDateObj = null;
+                                        if (aDate) { var parts = aDate.split('-'); if(parts.length===3) aDateObj = new Date(parts[0], parts[1]-1, parts[2]); }
+                                        
+                                        var isDelayed = false;
+                                        var delayDays = 0;
+                                        var earlyDays = 0;
+                                        var today = new Date();
+                                        today.setHours(0,0,0,0);
+                                        
+                                        if (!aDateObj && pDateObj && pDateObj < today) {
+                                            isDelayed = true;
+                                            delayDays = Math.floor((today - pDateObj) / (1000 * 60 * 60 * 24));
+                                        } else if (aDateObj && pDateObj && aDateObj > pDateObj) {
+                                            isDelayed = true;
+                                            delayDays = Math.floor((aDateObj - pDateObj) / (1000 * 60 * 60 * 24));
+                                        } else if (aDateObj && pDateObj && aDateObj < pDateObj) {
+                                            earlyDays = Math.floor((pDateObj - aDateObj) / (1000 * 60 * 60 * 24));
+                                        }
+                                        
+                                        timelineItems.push({
+                                            id: id, type: type, title: title, icon: icon, color: color,
+                                            pDate: pDateObj, aDate: aDateObj, isDelayed: isDelayed, delayDays: delayDays, earlyDays: earlyDays
+                                        });
+                                    }
+                                    
+                                    addTl("sample_kumas_ytesti", "sample", "Kumaş Y-Testi Onayı", "fa-vial", "#8b5cf6", getSD("sample_kumas_ytesti"), getSD("sample_kumas_ytesti_actual"));
+                                    addTl("sample_tuse_renk", "sample", "K-Tuşe Renk Onayı", "fa-palette", "#8b5cf6", getSD("sample_tuse_renk"), getSD("sample_tuse_renk_actual"));
+                                    addTl("sample_lot_onayi", "sample", "Lot Onayı", "fa-check-double", "#8b5cf6", getSD("sample_lot_onayi"), getSD("sample_lot_onayi_actual"));
+                                    addTl("sample_dikis_ipi_onayi", "sample", "Dikiş İpi Onayı", "fa-thread", "#8b5cf6", getSD("sample_dikis_ipi_onayi"), getSD("sample_dikis_ipi_onayi_actual"));
+                                    addTl("sample_dugme_renk", "sample", "Düğme Renk Kalite", "fa-circle-dot", "#8b5cf6", getSD("sample_dugme_renk"), getSD("sample_dugme_renk_actual"));
+                                    addTl("sample_pp_onay", "sample", "PP Onay", "fa-shirt", "#8b5cf6", getSD("sample_pp_onay"), getSD("sample_pp_onay_actual"));
+                                    
+                                    addTl("prod_kesim_baslangic", "prod", "Kesim Başlangıç", "fa-scissors", "#3b82f6", getPD("prod_kesim_baslangic"), getPD("prod_kesim_baslangic_actual"));
+                                    addTl("prod_kesim_bitis", "prod", "Kesim Bitiş", "fa-check-double", "#3b82f6", getPD("prod_kesim_bitis"), getPD("prod_kesim_bitis_actual"));
+                                    addTl("prod_dikim_baslangic", "prod", "Dikim Başlangıç", "fa-mitten", "#ec4899", getPD("prod_dikim_baslangic"), getPD("prod_dikim_baslangic_actual"));
+                                    addTl("prod_dikim_bitis", "prod", "Dikim Bitiş", "fa-check-double", "#ec4899", getPD("prod_dikim_bitis"), getPD("prod_dikim_bitis_actual"));
+                                    addTl("prod_paket_baslangic", "prod", "Paket Başlangıç", "fa-box", "#f59e0b", getPD("prod_paket_baslangic"), getPD("prod_paket_baslangic_actual"));
+                                    addTl("prod_paket_bitis", "prod", "Paket Bitiş", "fa-check-double", "#f59e0b", getPD("prod_paket_bitis"), getPD("prod_paket_bitis_actual"));
+                                    addTl("prod_gs_gidisi", "prod", "GS Gidişi", "fa-plane-departure", "#10b981", getPD("prod_gs_gidisi"), getPD("prod_gs_gidisi_actual"));
+                                    addTl("prod_yola_cikis", "prod", "Yola Çıkış", "fa-truck-fast", "#10b981", getPD("prod_yola_cikis"), getPD("prod_yola_cikis_actual"));
+                                    addTl("prod_depo_varis", "prod", "Depo Varış", "fa-warehouse", "#10b981", getPD("prod_depo_varis"), getPD("prod_depo_varis_actual"));
+                                    
+                                    var termin = getPD("prod_knn_revize_termin") || getPD("prod_suanki_termin") || (order.plannedPackagingEndDate ? order.plannedPackagingEndDate.substring(0, 10) : "");
+                                    addTl("termin_tarihi", "prod", "Termin Hedefi", "fa-flag-checkered", "#ef4444", termin, getPD("termin_tarihi_actual"));
+                                    
+                                    var tlHtml = '<div style="position: absolute; height: 4px; background-color: #cbd5e1; top: 50px; left: 0; right: 0; border-radius: 2px; z-index: 0;"></div>';
+                                    
+                                    function fmtDt(d) {
+                                        if(!d) return "-";
+                                        var dd = String(d.getDate()).padStart(2, '0');
+                                        var mm = String(d.getMonth() + 1).padStart(2, '0');
+                                        var yyyy = d.getFullYear();
+                                        return dd + '.' + mm + '.' + yyyy;
+                                    }
+                                    
+                                    timelineItems.forEach(function(item) {
+                                        var cardBg = item.isDelayed ? "#fef2f2" : (item.aDate ? "#f0fdf4" : "#ffffff");
+                                        var cardBorder = item.isDelayed ? "#fecaca" : (item.aDate ? "#bbf7d0" : "#e2e8f0");
+                                        var statusIcon = item.aDate ? "<i class='fa-solid fa-circle-check' style='color:#16a34a;'></i>" : (item.isDelayed ? "<i class='fa-solid fa-circle-exclamation' style='color:#dc2626;'></i>" : "<i class='fa-solid fa-clock' style='color:#94a3b8;'></i>");
+                                        
+                                        var badge = "";
+                                        if (item.isDelayed) {
+                                            badge = '<span style="background: #ef4444; color: white; font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 12px; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3); position: absolute; top: -12px; right: 10px;">' + item.delayDays + ' GÜN GECİKTİ</span>';
+                                        } else if (item.earlyDays > 0 && item.aDate) {
+                                            badge = '<span style="background: #10b981; color: white; font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 12px; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3); position: absolute; top: -12px; right: 10px;">' + item.earlyDays + ' GÜN ERKEN</span>';
+                                        } else if (item.aDate && item.delayDays === 0 && item.earlyDays === 0) {
+                                            badge = '<span style="background: #3b82f6; color: white; font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 12px; box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3); position: absolute; top: -12px; right: 10px;">ZAMANINDA</span>';
+                                        }
+                                        
+                                        tlHtml += '<div style="position: relative; width: 260px; display: flex; flex-direction: column; align-items: center; z-index: 1;">';
+                                        tlHtml += '<div style="width: 44px; height: 44px; background-color: ' + item.color + '; border: 4px solid white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 16px; position: relative; z-index: 2;">';
+                                        tlHtml += '<i class="fa-solid ' + item.icon + '" style="color: white; font-size: 1.1rem;"></i>';
+                                        tlHtml += '</div>';
+                                        tlHtml += '<div style="background: ' + cardBg + '; border: 1px solid ' + cardBorder + '; border-radius: 10px; padding: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); width: 100%; position: relative;">';
+                                        tlHtml += badge;
+                                        tlHtml += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; margin-top: 4px;">';
+                                        tlHtml += '<h5 style="margin: 0; font-weight: 700; color: #1e293b; font-size: 0.95rem;">' + item.title + '</h5>';
+                                        tlHtml += '<span style="font-size: 1rem;">' + statusIcon + '</span>';
+                                        tlHtml += '</div>';
+                                        tlHtml += '<div style="display: flex; flex-direction: column; gap: 8px;">';
+                                        tlHtml += '<div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #475569;">';
+                                        tlHtml += '<span><strong>Planlanan:</strong></span>';
+                                        tlHtml += '<span>' + fmtDt(item.pDate) + '</span>';
+                                        tlHtml += '</div>';
+                                        tlHtml += '<div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #475569; align-items: center;">';
+                                        tlHtml += '<span><strong>Gerçekleşen:</strong></span>';
+                                        tlHtml += '<span>' + fmtDt(item.aDate) + '</span>';
+                                        tlHtml += '</div>';
+                                        tlHtml += '</div>';
+                                        tlHtml += '</div>';
+                                        tlHtml += '</div>';
+                                    });
+                                    $("#detTimelineContainer").html(tlHtml);
 
                                     // Model Detayları & Aksesuarlar (Dinamik HTML)
                                     var accHtml = '';
                                     var materials = [];
                                     try { materials = JSON.parse(order.orderMaterialsJson || "[]") || []; } catch(e){ materials = []; }
+                                    
+                                    var purData = {};
+                                    try { purData = JSON.parse(order.purchasingMaterialsJson || "{}") || {}; } catch(e){}
+                                    var trackColors = [];
+                                    if (order.color) { trackColors = order.color.split(',').map(function(c) { return c.trim().toUpperCase(); }); }
+                                    if (!trackColors.length) trackColors.push("GENEL");
                                     
                                     if (Array.isArray(materials) && materials.length > 0) {
                                         var grouped = {};
@@ -1338,11 +1453,104 @@
                                             accHtml += '<div style="display: grid; grid-template-columns: 1fr; gap: 8px;">';
                                             grouped[category].forEach(function(item) {
                                                 var displayName = (item.stokAdi || item.StokAdi || item.stokKodu || item.StokKodu || 'Bilinmeyen Ürün');
-                                                var qtyDisplay = '';
-                                                if (category !== 'KUMAŞ' && category !== 'MALZEME' && category !== 'ETİKET' && category !== 'TELA') {
-                                                    qtyDisplay = '<br/><span style="color:#64748b; font-size:0.8rem;">Miktar: ' + (item.miktar || item.Miktar || 0) + '</span>';
+                                                
+                                                var calcTotal = 0;
+                                                var cat = category;
+                                                var itemKey = "stk_" + (item.stokKartiId || item.StokKartiId);
+                                                var ozDict = {};
+                                                try {
+                                                    var ozList = JSON.parse(item.ozelliklerJson || item.OzelliklerJson || "[]") || [];
+                                                    if (Array.isArray(ozList)) {
+                                                        ozList.forEach(function(oz) { if(oz.Key) ozDict[oz.Key.toUpperCase()] = oz.Value; });
+                                                    }
+                                                } catch(e){}
+                                                
+                                                var getOz = function(key) {
+                                                    var kUp = key.toUpperCase();
+                                                    if (ozDict[kUp] !== undefined) return ozDict[kUp];
+                                                    for (var k in ozDict) {
+                                                        if (k.indexOf(kUp) > -1) return ozDict[k];
+                                                    }
+                                                    return undefined;
+                                                };
+                                                var parseTrJs = function(v) {
+                                                    if (!v) return 0;
+                                                    v = v.toString().trim();
+                                                    if (v.indexOf(',') > -1 && v.indexOf('.') > -1) v = v.replace(/\./g, "").replace(",", ".");
+                                                    else if (v.indexOf(',') > -1) v = v.replace(",", ".");
+                                                    else if (v.indexOf('.') === v.length - 4) v = v.replace(/\./g, "");
+                                                    return parseFloat(v) || 0;
+                                                };
+                                                
+                                                trackColors.forEach(function(c) {
+                                                    var sipAdetiStr = purData["pur_color_" + c + "_siparis_adeti"];
+                                                    var siparisAdeti = sipAdetiStr ? parseTrJs(sipAdetiStr) : (order.calculatedQuantity || 0);
+                                                    if (siparisAdeti === 0) siparisAdeti = order.calculatedQuantity || 0;
+                                                    
+                                                    var bedenMiktar = parseTrJs(purData["pur_color_" + c + "_beden_miktar"]);
+                                                    var bedenCikacak = parseTrJs(purData["pur_color_" + c + "_beden_cikacak"]);
+                                                    var jobQty = bedenMiktar > 0 ? bedenCikacak : siparisAdeti;
+                                                    
+                                                    if (cat === "KUMAŞ" || cat === "KUMAS") {
+                                                        var dKumas = parseTrJs(purData["pur_color_" + c + "_beden_miktar"]);
+                                                        if (dKumas === 0) dKumas = parseTrJs(purData["pur_color_" + c + "_istenen_kumas_miktar"]);
+                                                        if (dKumas > 0) {
+                                                            calcTotal += dKumas;
+                                                        } else {
+                                                            var metrajStr = getOz("METRAJ") || (item.miktar || item.Miktar || 0).toString();
+                                                            calcTotal += Math.round(jobQty * parseTrJs(metrajStr));
+                                                        }
+                                                    } else if (cat === "TELA") {
+                                                        var dynBirim = getOz("TELA BİRİM") || getOz("BİRİM") || (item.miktar || item.Miktar || 0).toString();
+                                                        var birim = parseTrJs(purData["pur_color_" + c + "_tela_birim_" + itemKey] || dynBirim);
+                                                        calcTotal += Math.ceil(jobQty * birim);
+                                                    } else if (cat === "ETİKET" || cat === "ETIKET") {
+                                                        var dynFire = getOz("FİRE (%)") || getOz("FIRE") || getOz("FİRE") || "0";
+                                                        var fire = parseTrJs(purData["pur_color_" + c + "_label_fire_" + itemKey] || dynFire);
+                                                        var tmp = jobQty * 1;
+                                                        calcTotal += Math.round(tmp + Math.round(tmp * (fire / 100.0)));
+                                                    } else {
+                                                        var dynBirim = getOz("BİRİM KULLANIM") || getOz("BİRİM") || getOz("BIRIM") || (item.miktar || item.Miktar || 0).toString();
+                                                        var birim = parseTrJs(purData["pur_color_" + c + "_birim_" + itemKey] || dynBirim);
+                                                        var dynFire = getOz("FİRE (%)") || getOz("FIRE") || getOz("FİRE") || (order.wastageRate || 0).toString();
+                                                        var fire = parseTrJs(purData["pur_color_" + c + "_fire_" + itemKey] || dynFire);
+                                                        var toplam = jobQty * birim;
+                                                        calcTotal += Math.round(toplam + Math.round(toplam * (fire / 100.0)));
+                                                    }
+                                                });
+                                                
+                                                var finalQty = calcTotal > 0 ? calcTotal : (parseFloat(item.miktar || item.Miktar) || 0);
+                                                
+                                                var qtyDisplay = '<br/><span style="color:#64748b; font-size:0.8rem; font-weight: 600;">Planlanan Miktar: <span style="color:#b45309;">' + finalQty.toLocaleString('tr-TR') + '</span></span>';
+                                                
+                                                var displayProps = [];
+                                                if (Array.isArray(ozList)) {
+                                                    ozList.forEach(function(oz) {
+                                                        if (oz.Key && oz.Value) {
+                                                            var k = oz.Key.toUpperCase();
+                                                            if (k !== "HESAP ADETİ" && k !== "TOPLAM SİPARİŞ" && k !== "AÇIK ADET" && k !== "BİRİM ASORTİ") {
+                                                                displayProps.push(k + ": " + oz.Value);
+                                                            }
+                                                        }
+                                                    });
                                                 }
-                                                var aciklamaDisplay = (item.aciklama || item.Aciklama) ? '<br/><span style="color:#0284c7; font-size:0.8rem; font-weight: 500;">' + (item.aciklama || item.Aciklama) + '</span>' : '';
+                                                var propsText = displayProps.join(" | ");
+                                                
+                                                var rawAciklama = item.aciklama || item.Aciklama || "";
+                                                rawAciklama = rawAciklama.replace(/Miktar:\s*[0-9,\.]+/, "")
+                                                    .replace(/BİRİM KULLANIM\s*:\s*[0-9,\.]+(\s*\|\s*)?/gi, "")
+                                                    .replace(/BİRİM METRAJ\s*:\s*[0-9,\.]+(\s*\|\s*)?/gi, "")
+                                                    .replace(/FİRE\s*\(\%\)\s*:\s*[0-9,\.]+(\s*\|\s*)?/gi, "")
+                                                    .replace(/BOY\s*:\s*[0-9a-zA-Z,\.]+(\s*\|\s*)?/gi, "")
+                                                    .replace(/RENK\s*:\s*[^\|]+(\s*\|\s*)?/gi, "")
+                                                    .replace(/^[ \|\-]+|[ \|\-]+$/g, "")
+                                                    .replace(/<br\s*\/?>\s*(<br\s*\/?>)+/g, "<br/>").replace(/^(<br\s*\/?>)+/, "").trim();
+                                                
+                                                var finalAciklamaText = "";
+                                                if (rawAciklama) { finalAciklamaText += rawAciklama + "<br/>"; }
+                                                if (propsText) { finalAciklamaText += propsText; }
+                                                
+                                                var aciklamaDisplay = finalAciklamaText ? '<br/><span style="color:#0284c7; font-size:0.8rem; font-weight: 500;">' + finalAciklamaText + '</span>' : '';
                                                 accHtml += '<div style="background:#f8fafc; padding:8px; border-radius:6px; border:1px solid #e2e8f0; font-size:0.85rem;">' +
                                                             '<strong>' + displayName + '</strong>' + qtyDisplay + aciklamaDisplay + '</div>';
                                             });

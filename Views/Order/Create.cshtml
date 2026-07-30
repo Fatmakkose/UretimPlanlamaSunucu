@@ -233,12 +233,12 @@
         <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: var(--text-muted);">Sisteme yeni bir sipariş ve üretim kaydı ekleyin</p>
     </div>
     <div class="header-actions">
-        <a href="/Order/Index" class="btn-secondary" style="text-decoration:none;"><i class="fa-solid fa-arrow-left"></i> Geri Dön</a>
+        <a href="@(string.IsNullOrEmpty(ViewBag.ReturnUrl as string) ? "/Order/Index" : ViewBag.ReturnUrl)" class="btn-secondary" style="text-decoration:none;"><i class="fa-solid fa-arrow-left"></i> Geri Dön</a>
     </div>
 </div>
 
 <div class="premium-wrapper">
-    <form id="newOrderForm" action="/Order/Create" method="post">
+    <form id="newOrderForm" action="@(string.IsNullOrEmpty(ViewBag.ReturnUrl as string) ? "/Order/Create" : $"/Order/Create?returnUrl={System.Net.WebUtility.UrlEncode(ViewBag.ReturnUrl as string)}")" method="post">
         @Html.AntiForgeryToken()
         <input type="hidden" id="orderMaterialsJson" name="OrderMaterialsJson" value="[]" />
 
@@ -320,7 +320,7 @@
         </div>
 
         <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 12px;">
-            <a href="/Order/Index" class="btn-secondary" style="padding: 10px 20px; text-decoration:none;">İptal</a>
+            <a href="@(string.IsNullOrEmpty(ViewBag.ReturnUrl as string) ? "/Order/Index" : ViewBag.ReturnUrl)" class="btn-secondary" style="padding: 10px 20px; text-decoration:none;">İptal</a>
             <button type="button" id="btnSubmitOrder" class="btn-planner" style="padding: 10px 24px;"><i class="fa-solid fa-save"></i> Siparişi Kaydet ve Plana Al</button>
         </div>
 
@@ -708,6 +708,7 @@
                         asortiSizes: row.data('asortiSizes') || {},
                         asortiCount: row.find('.row-asorti-count').val() || "0",
                         openSpecialCode: row.find('.row-open-special-code').val() || "",
+                        openColorCode: row.find('.row-open-color-code').val() || "",
                         asortiSpecialCode: row.find('.row-asorti-special-code').val() || ""
                     };
                     data.push(rowData);
@@ -744,6 +745,7 @@
                 var fabricator = savedData ? savedData.fabricator : "";
                 var asortiCount = savedData ? savedData.asortiCount : "0";
                 var openSpecialCode = savedData ? (savedData.openSpecialCode || "") : "";
+                var openColorCode = savedData ? (savedData.openColorCode || "") : "";
                 var asortiSpecialCode = savedData ? (savedData.asortiSpecialCode || "") : "";
 
                 var openSizes = (savedData && savedData.openSizes) ? savedData.openSizes : {};
@@ -835,9 +837,15 @@
                                 </div>
                                 <input type="hidden" class="row-open-total" value="0" />
 
-                                <div style="margin-top:16px; padding-top:12px; border-top:1px dashed #cbd5e1;">
-                                    <label style="font-size: 0.8rem; font-weight: 600; color:#475569; margin-bottom:4px; display:block;"><i class="fa-solid fa-barcode" style="margin-right:4px; color:#0284c7;"></i> Özel Kod (Açık Adet)</label>
-                                    <input type="text" class="form-control row-open-special-code" value="${openSpecialCode}" placeholder="Örn: ACK-001" style="height:32px; font-size:0.85rem;" />
+                                <div style="margin-top:16px; padding-top:12px; border-top:1px dashed #cbd5e1; display:flex; gap:8px;">
+                                    <div style="flex:1;">
+                                        <label style="font-size: 0.8rem; font-weight: 600; color:#475569; margin-bottom:4px; display:block;"><i class="fa-solid fa-barcode" style="margin-right:4px; color:#0284c7;"></i> Özel Kod (Açık Adet)</label>
+                                        <input type="text" class="form-control row-open-special-code" value="${openSpecialCode}" placeholder="Örn: ACK-001" style="height:32px; font-size:0.85rem;" />
+                                    </div>
+                                    <div style="flex:1;">
+                                        <label style="font-size: 0.8rem; font-weight: 600; color:#475569; margin-bottom:4px; display:block;"><i class="fa-solid fa-palette" style="margin-right:4px; color:#0284c7;"></i> Özel Renk Kodu</label>
+                                        <input type="text" class="form-control row-open-color-code" value="${openColorCode || ''}" placeholder="Örn: RENK-001" style="height:32px; font-size:0.85rem;" />
+                                    </div>
                                 </div>
                             </div>
 
@@ -1176,7 +1184,7 @@
                     if (!orderObj.PocketFlapInterliningMeterage) orderObj.PocketFlapInterliningMeterage = null;
 
                     orderObj.Color = row.find('.row-color').val();
-                    orderObj.OptionCode = "";
+                    orderObj.OptionCode = row.find('.row-open-color-code').val() || "";
                     orderObj.OpenSpecialCode = row.find('.row-open-special-code').val() || "";
                     orderObj.AsortiSpecialCode = row.find('.row-asorti-special-code').val() || "";
                     orderObj.PlannedPackagingEndDate = row.find('.row-inspection-date').val() || null;

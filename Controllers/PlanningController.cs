@@ -302,6 +302,8 @@ namespace UretimPlanlama.Controllers
                 }
                 if (form.ContainsKey("actual_sample_kumas_ytesti")) dictSample["actual_sample_kumas_ytesti"] = form["actual_sample_kumas_ytesti"].ToString();
                 if (form.ContainsKey("actual_sample_tuse_renk")) dictSample["actual_sample_tuse_renk"] = form["actual_sample_tuse_renk"].ToString();
+                if (form.ContainsKey("actual_sample_lot_onayi")) dictSample["actual_sample_lot_onayi"] = form["actual_sample_lot_onayi"].ToString();
+                if (form.ContainsKey("actual_sample_dikis_ipi_onayi")) dictSample["actual_sample_dikis_ipi_onayi"] = form["actual_sample_dikis_ipi_onayi"].ToString();
                 if (form.ContainsKey("actual_sample_dugme_renk")) dictSample["actual_sample_dugme_renk"] = form["actual_sample_dugme_renk"].ToString();
                 if (form.ContainsKey("actual_sample_dugme_test")) dictSample["actual_sample_dugme_test"] = form["actual_sample_dugme_test"].ToString();
                 if (form.ContainsKey("actual_sample_pp_onay")) dictSample["actual_sample_pp_onay"] = form["actual_sample_pp_onay"].ToString();

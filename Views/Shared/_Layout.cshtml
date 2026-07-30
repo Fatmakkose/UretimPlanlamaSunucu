@@ -22,32 +22,33 @@
 <body>    <div class="wrapper">
         <header class="top-navbar">
             <div class="navbar-logo">
-                <a href="/">
-                    <img src="~/images/logo.jpg" alt=" Kanuni Tekstil Logo " asp-append-version="true" />
+                <a href="javascript:void(0)" id="logoMenuToggle" title="Menüyü Aç/Kapat">
+                    <img src="~/images/yeni_logo.png" alt=" Kanuni Tekstil Logo " asp-append-version="true" />
                 </a>
             </div>
             
-            <ul class="navbar-menu">
+            <ul class="navbar-menu" id="mainNavbarMenu">
+                <li><a href="/" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Home" || ViewContext.RouteData.Values["Controller"] == null ? "active" : "")"><i class="fa-solid fa-house" style="width: 20px;"></i> Ana Sayfa</a></li>
                 @if ((await AuthorizationService.AuthorizeAsync(User, "SiparisAccess")).Succeeded)
                 {
-                    <li><a href="/Order" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Order" ? "active" : "")">Siparişler</a></li>
+                    <li><a href="/Order" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Order" ? "active" : "")"><i class="fa-solid fa-file-invoice" style="width: 20px;"></i> Siparişler</a></li>
                 }
                 
                 @if ((await AuthorizationService.AuthorizeAsync(User, "PlanlamaAccess")).Succeeded)
                 {
-                    <li><a href="/Planning" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Planning" && (ViewContext.RouteData.Values["Action"]?.ToString() == "Index" || ViewContext.RouteData.Values["Action"]?.ToString() == "Plan") ? "active" : "")">Planlama</a></li>
+                    <li><a href="/Planning" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Planning" && (ViewContext.RouteData.Values["Action"]?.ToString() == "Index" || ViewContext.RouteData.Values["Action"]?.ToString() == "Plan") ? "active" : "")"><i class="fa-solid fa-calendar-days" style="width: 20px;"></i> Planlama</a></li>
                 }
 
                 @if ((await AuthorizationService.AuthorizeAsync(User, "SurecAccess")).Succeeded)
                 {
-                    <li><a href="/ProcessTracking" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "ProcessTracking" ? "active" : "")">Süreç Takibi</a></li>
-                    <li><a href="/WorkshopCapacity" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "WorkshopCapacity" ? "active" : "")">Atölye Takibi</a></li>
+                    <li><a href="/ProcessTracking" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "ProcessTracking" ? "active" : "")"><i class="fa-solid fa-chart-line" style="width: 20px;"></i> Süreç Takibi</a></li>
+                    <li><a href="/WorkshopCapacity" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "WorkshopCapacity" ? "active" : "")"><i class="fa-solid fa-industry" style="width: 20px;"></i> Atölye Takibi</a></li>
                 }
 
                 @if ((await AuthorizationService.AuthorizeAsync(User, "RaporAccess")).Succeeded)
                 {
                     <li>
-                        <a href="#" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Finance" ? "active" : "")">Cari Yönetimi <i class="fa-solid fa-chevron-down"></i></a>
+                        <a href="#" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Finance" ? "active" : "")"><i class="fa-solid fa-coins" style="width: 20px;"></i> Cari Yönetimi <i class="fa-solid fa-chevron-down"></i></a>
                         <ul class="submenu" style="width: 250px;">
                             <li><a href="/Finance/Definitions"><i class="fa-solid fa-address-book"></i> Cari Tanımı</a></li>
                             <li><a href="/Finance/Purchase"><i class="fa-solid fa-cart-arrow-down"></i> Alış İşlemleri</a></li>
@@ -60,7 +61,7 @@
                 @if ((await AuthorizationService.AuthorizeAsync(User, "DepoAccess")).Succeeded)
                 {
                     <li>
-                        <a href="#" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Stock" ? "active" : "")">Stok Yönetimi <i class="fa-solid fa-chevron-down"></i></a>
+                        <a href="#" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Stock" ? "active" : "")"><i class="fa-solid fa-boxes-stacked" style="width: 20px;"></i> Stok Yönetimi <i class="fa-solid fa-chevron-down"></i></a>
                         <ul class="submenu" style="width: 200px;">
                             <li><a href="/Stock/Definitions"><i class="fa-solid fa-box-open"></i> Stok Tanımı</a></li>
                             <li><a href="/Stock/Movements"><i class="fa-solid fa-arrow-right-arrow-left"></i> Stok Hareketleri</a></li>
@@ -72,7 +73,7 @@
                 @if (User.IsInRole("Admin"))
                 {
                     <li>
-                        <a href="#" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Definitions" || ViewContext.RouteData.Values["Controller"]?.ToString() == "ColorDef" || ViewContext.RouteData.Values["Controller"]?.ToString() == "Authorization" ? "active" : "")">Yönetim <i class="fa-solid fa-chevron-down"></i></a>
+                        <a href="#" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Definitions" || ViewContext.RouteData.Values["Controller"]?.ToString() == "ColorDef" || ViewContext.RouteData.Values["Controller"]?.ToString() == "Authorization" ? "active" : "")"><i class="fa-solid fa-gears" style="width: 20px;"></i> Yönetim <i class="fa-solid fa-chevron-down"></i></a>
                         <ul class="submenu">
                             <li><a href="/Authorization" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Authorization" ? "active" : "")"><i class="fa-solid fa-user-shield"></i> Yetkilendirme</a></li>
                             <li class="divider"></li>
@@ -155,15 +156,42 @@
                 }
             });
 
-            $(document).click(function() {
+            $('#userProfileDropdown .dropdown-menu').click(function(e) {
+                e.stopPropagation();
+            });
+
+            // Logo menü aç/kapat
+            $('#logoMenuToggle').click(function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $('#mainNavbarMenu').toggleClass('show-menu');
+                
+                // Diğerlerini kapat
                 $('#userProfileDropdown .dropdown-menu').fadeOut(150);
                 $('#userProfileDropdown').removeClass('active');
                 $('#notificationDropdown').fadeOut(150);
                 $('#notificationBellBtn').removeClass('active');
             });
 
-            $('#userProfileDropdown .dropdown-menu').click(function(e) {
+            $(document).click(function() {
+                $('#userProfileDropdown .dropdown-menu').fadeOut(150);
+                $('#userProfileDropdown').removeClass('active');
+                $('#notificationDropdown').fadeOut(150);
+                $('#notificationBellBtn').removeClass('active');
+                $('#mainNavbarMenu').removeClass('show-menu');
+            });
+
+            $('#mainNavbarMenu').click(function(e) {
                 e.stopPropagation();
+            });
+            
+            // Alt menüleri accordion gibi aç/kapat
+            $('#mainNavbarMenu > li > a').click(function(e) {
+                if ($(this).siblings('.submenu').length > 0) {
+                    e.preventDefault();
+                    $(this).siblings('.submenu').slideToggle(200);
+                    $(this).parent().siblings().find('.submenu').slideUp(200);
+                }
             });
 
             // --- Gerçek Zamanlı Bildirim Sistemi JS ---
@@ -181,6 +209,7 @@
                 // Diğer açılır menüleri kapat
                 $('#userProfileDropdown .dropdown-menu').fadeOut(150);
                 $('#userProfileDropdown').removeClass('active');
+                $('#mainNavbarMenu').removeClass('show-menu');
                 
                 if (isOpen) {
                     $dropdown.fadeOut(150);

@@ -128,13 +128,14 @@
         }
         else
         {
-            <table class="clean-table" style="width: 100%; border-collapse: collapse; text-align: left;">
+            <table class="clean-table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.75rem;">
                 <thead>
                     <tr>
                         <th style="padding-left: 24px;">SİPARİŞ KODU</th>
                         <th>TARİH</th>
                         <th>MODEL</th>
-                        <th>DETAY</th>
+                        <th>RENK</th>
+                        <th>MARKA</th>
                         <th>KUMAŞÇI</th>
                         <th>ATÖLYE</th>
                         <th style="text-align: right;">SİPARİŞ ADEDİ</th>
@@ -153,24 +154,25 @@
                         {
                             <tr class="order-row main-order-row hover-row" data-kpi-status="@groupKpiBucket" style="border-bottom: 1px solid #f1f5f9; background: #fff; cursor: pointer;" onclick="window.location.href='/Planning/Plan/@firstOrder.Id'">
                                 <td style="padding-left: 24px;">
-                                    <span style="color: #0369a1; font-weight: 700;">@firstOrder.OrderCode</span>
+                                    <span style="background-color: var(--primary-color); color: white; padding: 4px 12px; border-radius: 9999px; font-weight: 600; display: inline-block;">@firstOrder.OrderCode</span>
                                 </td>
                                 <td>
-                                    <span style="font-size: 0.85rem; color: #64748b; font-weight: 500;">
+                                    <span style="font-size: 0.75rem; color: #64748b; font-weight: 500;">
                                         <i class="fa-regular fa-calendar" style="margin-right: 4px;"></i>@firstOrder.OrderDate.ToString("dd.MM.yyyy")
                                     </span>
                                 </td>
                                 <td>
-                                    <strong style="color: #1e293b; font-size: 0.9rem; display: block;">@firstOrder.ModelName</strong>
-                                    <span style="font-size: 0.75rem; color: #64748b; display: block; margin-top: 2px;">@(string.IsNullOrEmpty(firstOrder.ModelNo) ? "-" : firstOrder.ModelNo)</span>
+                                    <strong style="color: #1e293b; font-size: 0.8rem; display: block;">@firstOrder.ModelName</strong>
+                                    @if(!string.IsNullOrEmpty(firstOrder.ModelNo)) { <span style="font-size: 0.7rem; color: #64748b; display: block; margin-top: 2px;">@firstOrder.ModelNo</span> }
                                 </td>
                                 <td>
-                                    <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-                                        <span style="background-color: #f1f5f9; color: #475569; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">@firstOrder.Color</span>
-                                    </div>
+                                    <span style="color: #475569; font-size: 0.75rem; font-weight: 500;">@firstOrder.Color</span>
                                 </td>
                                 <td>
-                                    <span style="color: #334155; font-size: 0.85rem;"><i class="fa-solid fa-truck" style="margin-right: 8px; color: #94a3b8; width: 14px;"></i>@firstOrder.FabricSupplier</span>
+                                    <span style="color: #475569; font-size: 0.75rem; font-weight: 500;">@(string.IsNullOrEmpty(firstOrder.Brand) ? "-" : firstOrder.Brand)</span>
+                                </td>
+                                <td>
+                                    <span style="color: #334155; font-size: 0.75rem;"><i class="fa-solid fa-truck" style="margin-right: 8px; color: #94a3b8; width: 14px;"></i>@firstOrder.FabricSupplier</span>
                                 </td>
                                 <td>
                                     @{
@@ -184,10 +186,10 @@
                                             } catch {}
                                         }
                                     }
-                                    <span style="color: #334155; font-size: 0.85rem;"><i class="fa-solid fa-industry" style="margin-right: 8px; color: #94a3b8; width: 14px;"></i>@atolyeStr</span>
+                                    <span style="color: #334155; font-size: 0.75rem;"><i class="fa-solid fa-industry" style="margin-right: 8px; color: #94a3b8; width: 14px;"></i>@atolyeStr</span>
                                 </td>
-                                <td style="text-align: right; font-weight: 700; font-size: 1rem; color: #0f172a;">
-                                    @firstOrder.CalculatedQuantity.ToString("N0") <span style="font-weight: 500; font-size: 0.75rem; color: #64748b;">Adet</span>
+                                <td style="text-align: right; font-weight: 700; font-size: 0.85rem; color: #0f172a;">
+                                    @firstOrder.CalculatedQuantity.ToString("N0") <span style="font-weight: 500; font-size: 0.7rem; color: #64748b;">Adet</span>
                                 </td>
                                 <td style="text-align: center; padding-right: 24px;">
                                     <a href="/Planning/Plan/@firstOrder.Id" class="action-btn" onclick="event.stopPropagation();"><i class="fa-solid fa-calendar-check"></i> Planla</a>
@@ -201,33 +203,31 @@
                             <tr class="order-row main-order-row" data-kpi-status="@groupKpiBucket" data-groupclass="@groupClass" style="cursor: pointer; border-bottom: 2px solid #e2e8f0; background: #fff;" onclick="$('.@groupClass').toggle(); $(this).find('.toggle-icon').toggleClass('fa-rotate-90');">
                                 <td style="padding-left: 24px; display:flex; align-items:center; gap:8px;">
                                     <i class="fa-solid fa-chevron-right toggle-icon" style="color: #94a3b8; font-size: 0.8rem; transition: transform 0.2s;"></i>
-                                    <span style="color: #0369a1; font-weight: 700;">@firstOrder.OrderCode</span>
+                                    <span style="background-color: var(--primary-color); color: white; padding: 4px 12px; border-radius: 9999px; font-weight: 600; display: inline-block;">@firstOrder.OrderCode</span>
                                 </td>
                                 <td>
-                                    <span style="font-size: 0.85rem; color: #64748b; font-weight: 500;">
+                                    <span style="font-size: 0.75rem; color: #64748b; font-weight: 500;">
                                         <i class="fa-regular fa-calendar" style="margin-right: 4px;"></i>@firstOrder.OrderDate.ToString("dd.MM.yyyy")
                                     </span>
                                 </td>
                                 <td>
-                                    <strong style="color: #1e293b; font-size: 0.9rem; display: block;">@firstOrder.ModelName</strong>
-                                    <span style="font-size: 0.75rem; color: #64748b; display: block; margin-top: 2px;">@(string.IsNullOrEmpty(firstOrder.ModelNo) ? "-" : firstOrder.ModelNo)</span>
+                                    <strong style="color: #1e293b; font-size: 0.8rem; display: block;">@firstOrder.ModelName</strong>
+                                    @if(!string.IsNullOrEmpty(firstOrder.ModelNo)) { <span style="font-size: 0.7rem; color: #64748b; display: block; margin-top: 2px;">@firstOrder.ModelNo</span> }
                                 </td>
                                 <td>
-                                    <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-                                        @foreach(var c in colors)
-                                        {
-                                            <span style="background-color: #f1f5f9; color: #475569; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">@c.Color</span>
-                                        }
-                                    </div>
+                                    <span style="color: #475569; font-size: 0.75rem; font-weight: 500;">@string.Join(", ", colors.Select(c => c.Color).Distinct())</span>
                                 </td>
                                 <td>
-                                    <span style="color: #94a3b8; font-size: 0.8rem; font-style:italic;">Çoklu (Genişletiniz)</span>
+                                    <span style="color: #475569; font-size: 0.75rem; font-weight: 500;">@string.Join(", ", colors.Select(c => c.Brand).Where(b => !string.IsNullOrEmpty(b)).Distinct())</span>
                                 </td>
                                 <td>
-                                    <span style="color: #94a3b8; font-size: 0.8rem; font-style:italic;">Çoklu (Genişletiniz)</span>
+                                    <span style="color: #94a3b8; font-size: 0.75rem; font-style:italic;">Çoklu (Genişletiniz)</span>
                                 </td>
-                                <td style="text-align: right; font-weight: 700; font-size: 1rem; color: #0f172a;">
-                                    @totalQty.ToString("N0") <span style="font-weight: 500; font-size: 0.75rem; color: #64748b;">Adet</span>
+                                <td>
+                                    <span style="color: #94a3b8; font-size: 0.75rem; font-style:italic;">Çoklu (Genişletiniz)</span>
+                                </td>
+                                <td style="text-align: right; font-weight: 700; font-size: 0.85rem; color: #0f172a;">
+                                    @totalQty.ToString("N0") <span style="font-weight: 500; font-size: 0.7rem; color: #64748b;">Adet</span>
                                 </td>
                                 <td style="text-align: center; padding-right: 24px;">
                                     <i class="fa-solid fa-layer-group" style="color:#94a3b8;" title="Çoklu Sipariş"></i>
@@ -243,12 +243,13 @@
                                     <td></td>
                                     <td></td>
                                     <td>
-                                        <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-                                            <span style="background-color: #f1f5f9; color: #475569; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">@order.Color</span>
-                                        </div>
+                                        <span style="color: #475569; font-size: 0.75rem; font-weight: 500;">@order.Color</span>
                                     </td>
                                     <td>
-                                        <span style="color: #334155; font-size: 0.85rem;"><i class="fa-solid fa-truck" style="margin-right: 8px; color: #94a3b8; width: 14px;"></i>@order.FabricSupplier</span>
+                                        <span style="color: #475569; font-size: 0.75rem; font-weight: 500;">@(string.IsNullOrEmpty(order.Brand) ? "-" : order.Brand)</span>
+                                    </td>
+                                    <td>
+                                        <span style="color: #334155; font-size: 0.75rem;"><i class="fa-solid fa-truck" style="margin-right: 8px; color: #94a3b8; width: 14px;"></i>@order.FabricSupplier</span>
                                     </td>
                                     <td>
                                         @{
@@ -262,10 +263,10 @@
                                                 } catch {}
                                             }
                                         }
-                                        <span style="color: #334155; font-size: 0.85rem;"><i class="fa-solid fa-industry" style="margin-right: 8px; color: #94a3b8; width: 14px;"></i>@childAtolyeStr</span>
+                                        <span style="color: #334155; font-size: 0.75rem;"><i class="fa-solid fa-industry" style="margin-right: 8px; color: #94a3b8; width: 14px;"></i>@childAtolyeStr</span>
                                     </td>
                                     <td style="text-align: right; font-weight: 600; font-size: 0.95rem; color: #0f172a;">
-                                        @order.CalculatedQuantity.ToString("N0") <span style="font-weight: 500; font-size: 0.75rem; color: #64748b;">Adet</span>
+                                        @order.CalculatedQuantity.ToString("N0") <span style="font-weight: 500; font-size: 0.7rem; color: #64748b;">Adet</span>
                                     </td>
                                     <td style="text-align: center; padding-right: 24px;">
                                         <a href="/Planning/Plan/@order.Id" class="action-btn" onclick="event.stopPropagation();"><i class="fa-solid fa-calendar-check"></i> Planla</a>

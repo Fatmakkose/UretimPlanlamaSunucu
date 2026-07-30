@@ -432,7 +432,7 @@ namespace UretimPlanlama.Controllers
             var trackColors = new List<string>();
             if (!string.IsNullOrEmpty(order.Color))
             {
-                trackColors = order.Color.Split(new[] { ',', '-' }, StringSplitOptions.RemoveEmptyEntries).Select(c => c.Trim().ToUpper()).ToList();
+                trackColors = order.Color.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(c => c.Trim().ToUpper()).ToList();
             }
             if (!trackColors.Any()) trackColors.Add("GENEL");
 
