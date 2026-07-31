@@ -41,7 +41,17 @@
 
                 @if ((await AuthorizationService.AuthorizeAsync(User, "SurecAccess")).Succeeded)
                 {
-                    <li><a href="/ProcessTracking" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "ProcessTracking" ? "active" : "")"><i class="fa-solid fa-chart-line" style="width: 20px;"></i> Süreç Takibi</a></li>
+                    <li>
+                        <a href="#" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "ProcessTracking" ? "active" : "")"><i class="fa-solid fa-chart-line" style="width: 20px;"></i> Süreç Takibi <i class="fa-solid fa-chevron-down"></i></a>
+                        <ul class="submenu" style="width: 220px;">
+                            <li><a href="/ProcessTracking"><i class="fa-solid fa-list"></i> Tüm Süreçler</a></li>
+                            <li><a href="/ProcessTracking/Index?step=purchase"><i class="fa-solid fa-truck"></i> Sevk Onay</a></li>
+                            <li><a href="/ProcessTracking/Index?step=timeline"><i class="fa-solid fa-calendar-check"></i> Takvim & Planlama</a></li>
+                            <li><a href="/ProcessTracking/Index?step=cutting"><i class="fa-solid fa-scissors"></i> Kesim Süreci</a></li>
+                            <li><a href="/ProcessTracking/Index?step=packing"><i class="fa-solid fa-box"></i> Çeki Listesi</a></li>
+                            <li><a href="/ProcessTracking/Index?step=fileclosing"><i class="fa-solid fa-file-signature"></i> Dosya Kapama</a></li>
+                        </ul>
+                    </li>
                     <li><a href="/WorkshopCapacity" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "WorkshopCapacity" ? "active" : "")"><i class="fa-solid fa-industry" style="width: 20px;"></i> Atölye Takibi</a></li>
                 }
 

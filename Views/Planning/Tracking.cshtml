@@ -1127,15 +1127,13 @@
         <div style="padding: 20px 24px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: #fafafa;">
             <div>
                 <h3 style="margin: 0; font-size: 1.3rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 10px;">
-                    <i class="fa-solid fa-folder-open" style="color: var(--primary-color);"></i> Sipariş Detayı: <span id="detOrderCode" style="color: var(--primary-color);">...</span>
+                    <i class="fa-solid fa-folder-open" style="color: var(--primary-color);"></i> Sipariş Detayı
                 </h3>
                 <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: var(--text-muted);">
                     <i class="fa-regular fa-calendar"></i> Sipariş Tarihi: <span id="detOrderDate">...</span>
                 </p>
             </div>
             <div style="display: flex; align-items: center; gap: 10px; margin-right: 20px;">
-                <span id="detStatusBadge" class="badge" style="font-size: 0.85rem; padding: 6px 14px; border-radius: 20px; font-weight: 600;">...</span>
-                <span id="detFabricBadge" class="badge" style="font-size: 0.85rem; padding: 6px 14px; border-radius: 20px; font-weight: 600;">...</span>
                 <span id="detJITBadge" class="badge" style="font-size: 0.85rem; padding: 6px 14px; border-radius: 20px; font-weight: 600; display: none;">JIT</span>
             </div>
             <button id="btnCloseDetailModal" style="background: transparent; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; transition: color 0.2s;"><i class="fa-solid fa-xmark"></i></button>
@@ -1151,6 +1149,10 @@
                         <i class="fa-solid fa-circle-info" style="margin-right: 6px;"></i> Ürün ve Genel Bilgiler
                     </h4>
                     <div style="display: grid; grid-template-columns: 1fr; gap: 12px; font-size: 0.9rem;">
+                        <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px;">
+                            <span style="color: var(--text-muted);"><i class="fa-solid fa-hashtag" style="margin-right: 8px; width: 14px;"></i>Sipariş Kodu</span>
+                            <strong id="detOrderCode" style="color: var(--text-main);">...</strong>
+                        </div>
                         <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px;">
                             <span style="color: var(--text-muted);"><i class="fa-solid fa-shirt" style="margin-right: 8px; width: 14px;"></i>Model Adı</span>
                             <strong id="detModelName" style="color: var(--text-main);">...</strong>

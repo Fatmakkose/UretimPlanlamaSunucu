@@ -235,7 +235,7 @@
             </div>
             <div class="form-group">
                 <label>Sipariş Kodu (PO)</label>
-                <input name="OrderCode" class="form-control" required value="@Model.OrderCode" />
+                <input name="OrderCode" class="form-control" value="@Model.OrderCode" />
             </div>
             <div class="form-group">
                 <label>Müşteri (Buyer)</label>
@@ -339,6 +339,18 @@
             <div class="form-group">
                 <label>Özel Kod (Asorti)</label>
                 <input name="AsortiSpecialCode" class="form-control" value="@Model.AsortiSpecialCode" placeholder="Örn: ASR-001" />
+            </div>
+            <div class="form-group">
+                <label>Model Detay</label>
+                <input name="GoodsDescription" class="form-control" value="@Model.GoodsDescription" placeholder="Örn: Örme Erkek Sweatshirt" />
+            </div>
+            <div class="form-group">
+                <label>Teslim Yeri</label>
+                <input name="DeliveryPlace" class="form-control" value="@Model.DeliveryPlace" placeholder="Örn: LCWaikiki Depoları" />
+            </div>
+            <div class="form-group">
+                <label>Sezon</label>
+                <input name="Season" class="form-control" value="@Model.Season" placeholder="Örn: 2026 İlkbahar / Yaz" />
             </div>
         </div>
     </div>
@@ -472,6 +484,8 @@
             const miktar = mat ? mat.Miktar : '';
             
             // Try to extract color from OzelliklerJson if exists
+            const aciklama = mat ? mat.Aciklama : '';
+            
             let renkVal = '';
             if (mat && mat.OzelliklerJson) {
                 try {
@@ -495,9 +509,9 @@
                         <input type="hidden" class="mat-miktar" value="${miktar}" />
                         <input type="hidden" class="mat-renk-input" value="${renkVal}" />
                     </td>
-                    <td class="mat-kategori-cell" style="vertical-align: top; padding-top: 20px;">-</td>
-                    <td class="mat-birim-cell" style="font-weight: 600; color: #475569; vertical-align: top; padding-top: 20px;">-</td>
-                    <td style="text-align: center; vertical-align: top; padding-top: 20px;">
+                    <td class="mat-kategori-cell" style="vertical-align: top; padding-top: 12px;">-</td>
+                    <td class="mat-birim-cell" style="font-weight: 600; color: #475569; vertical-align: top; padding-top: 12px;">-</td>
+                    <td style="text-align: center; vertical-align: top; padding-top: 12px;">
                         <button type="button" class="btnRemoveRow" style="background: transparent; color: #ef4444; border: none; font-size: 1.1rem; cursor: pointer; padding: 6px 10px; transition: all 0.2s;"><i class="fa-regular fa-trash-can"></i></button>
                     </td>
                 </tr>
@@ -596,7 +610,7 @@
                             } else {
                                 inputHtml = `<input type="number" step="any" class="form-control mat-dyn-prop" data-key="${f.Key}" value="${pVal}" placeholder="${f.Def || '...'}" style="padding: 6px 10px; font-size:0.75rem; width:100%;" />`;
                             }
-                            detayHtml += `<div style="flex: 1;"><label style="font-size:0.65rem; text-transform:uppercase; color:#94a3b8; font-weight:700; margin-bottom:4px;">${f.Key}</label>${inputHtml}</div>`;
+                            detayHtml += `<div style="flex: 1 1 0; min-width: 120px; max-width: 220px;"><label style="font-size:0.65rem; text-transform:uppercase; color:#94a3b8; font-weight:700; margin-bottom:4px;">${f.Key}</label>${inputHtml}</div>`;
                         });
                         detayHtml += `</div>`;
                         detayDiv.html(detayHtml);

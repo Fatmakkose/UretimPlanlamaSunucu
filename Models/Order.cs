@@ -11,8 +11,8 @@ namespace UretimPlanlama.Models
         [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd}", ApplyFormatInEditMode = true)]
         public DateTime OrderDate { get; set; } = DateTime.Now;
 
-        [Required(ErrorMessage = "Sipariş Kodu zorunludur.")]
-        public string OrderCode { get; set; } = string.Empty;
+        // [Required(ErrorMessage = "Sipariş Kodu zorunludur.")]
+        public string? OrderCode { get; set; } = string.Empty;
 
         public string? PaymentMethod { get; set; }
 
@@ -36,6 +36,8 @@ namespace UretimPlanlama.Models
         public DateTime? RevisedInspectionDate { get; set; } // Revize Termin Tarihi
 
         public string? Brand { get; set; }
+        
+        public string? Season { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal? FabricPrice { get; set; }

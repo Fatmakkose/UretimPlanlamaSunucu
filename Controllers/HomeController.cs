@@ -63,8 +63,10 @@ public class HomeController : Controller
             bool isPaket = o.PackagingStartDate.HasValue || HasP("prod_paket_baslangic_actual") || isPaketBitis;
             bool isDikimBitis = o.SewingEndDate.HasValue || HasP("prod_dikim_bitis_actual");
             bool isDikim = o.SewingStartDate.HasValue || HasP("prod_dikim_baslangic_actual") || isDikimBitis || isPaket;
+            
+            bool hasCuttingData = !string.IsNullOrEmpty(o.CuttingProcessJson) && o.CuttingProcessJson != "[]" && o.CuttingProcessJson != "null";
             bool isKesimBitis = o.CuttingEndDate.HasValue || HasP("prod_kesim_bitis_actual") || isDikim;
-            bool isKesim = o.CuttingStartDate.HasValue || HasP("prod_kesim_baslangic_actual") || isKesimBitis;
+            bool isKesim = o.CuttingStartDate.HasValue || HasP("prod_kesim_baslangic_actual") || hasCuttingData || isKesimBitis;
 
             // Kesim KPI Hesaplamaları
             if (isKesimBitis) {

@@ -19,10 +19,12 @@ namespace UretimPlanlama.Controllers
             _emailService = emailService;
         }
 
-        public IActionResult Index()
+        public IActionResult Index(string step = null)
         {
             if (!User.HasPermission("View"))
                 return RedirectToAction("AccessDenied", "Account");
+
+            ViewBag.Step = step;
 
             var orders = _context.Orders
                 .Where(o => o.Status != "İptal Edildi")
@@ -31,10 +33,12 @@ namespace UretimPlanlama.Controllers
             return View(orders);
         }
 
-        public IActionResult Track(int id)
+        public IActionResult Track(int id, string step = null)
         {
             if (!User.HasPermission("View"))
                 return RedirectToAction("AccessDenied", "Account");
+
+            ViewBag.Step = step;
 
             var order = _context.Orders
                 .Include(o => o.OrderMaterials)
