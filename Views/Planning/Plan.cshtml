@@ -217,63 +217,67 @@
     @if (Model != null && Model.Id > 0)
     {
         <div class="main-planning">
-            <div style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <a href="/Planning" style="text-decoration: none; color: #0369a1; font-weight: 600; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: #f1f5f9; border-radius: 6px; border: 1px solid #e2e8f0; transition: all 0.2s;">
                     <i class="fa-solid fa-arrow-left"></i> Planlama Listesine Dön
                 </a>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-            <div>
-                <span style="font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase;">PLANLAMA DETAYI</span>
-                <div style="display: flex; align-items: baseline; gap: 8px; margin-top: 4px; user-select: none;">
-                    <h2 style="margin: 0; color: #0f172a; padding-bottom: 2px;">@Model.OrderCode</h2>
-                </div>
-            </div>
-            <div style="display: flex; gap: 8px;">
                 <a href="/Planning/ExportToExcel" class="btn-planner" style="background: #16a34a; border-color: #16a34a; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 5px;"><i class="fa-solid fa-file-excel"></i> Excel</a>
             </div>
-        </div>
 
-        <!-- Sipariş Detayları Kartı (Daima Açık) -->
-        <div id="orderDetailsCard" style="margin-bottom: 16px; background: white; border-radius: 10px; box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; padding: 12px 16px;">
-            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; margin-bottom: 10px;">
-                <span style="font-weight: 700; color: #0f172a; font-size: 0.9rem;"><i class="fa-solid fa-box-open" style="color: #0ea5e9; margin-right: 6px;"></i>Sipariş Özellikleri</span>
-            </div>
+            <!-- LCW SUPPLIER TARZI ASILI KARTLAR (HANGING CARDS) -->
+            <div style="margin-bottom: 25px; display: flex; gap: 12px; flex-wrap: wrap; z-index: 100; position: sticky; top: -1px; background: rgba(248, 250, 252, 0.95); backdrop-filter: blur(8px); padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,0.05);">
             
-            <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px;">
-                <div style="background: #f8fafc; padding: 8px 10px; border-radius: 6px;">
-                    <div style="font-size: 0.65rem; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px;">MODEL</div>
-                    <div style="font-weight: 600; color: #0f172a; font-size: 0.8rem;">@Model.ModelName</div>
+            <!-- Sipariş Kodu -->
+            <div style="flex: 1; min-width: 120px; background: #fff; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03); padding: 10px 14px; border: 1px solid #e2e8f0; position: relative; border-bottom: 3px solid #3b82f6;">
+                <div style="font-size: 0.6rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-hashtag" style="color: #94a3b8;"></i> SİPARİŞ KODU</div>
+                <div style="font-size: 0.9rem; font-weight: 800; color: #0f172a; word-wrap: break-word;">@Model.OrderCode</div>
+            </div>
+
+            <!-- Model -->
+            <div style="flex: 1.5; min-width: 130px; background: #fff; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03); padding: 10px 14px; border: 1px solid #e2e8f0; position: relative; border-bottom: 3px solid #0ea5e9;">
+                <div style="font-size: 0.6rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-barcode" style="color: #94a3b8;"></i> MODEL</div>
+                <div style="font-size: 0.85rem; font-weight: 700; color: #0f172a; word-wrap: break-word;" title="@Model.ModelName">@Model.ModelName</div>
+            </div>
+
+            <!-- Renk -->
+            <div style="flex: 1; min-width: 110px; background: #fff; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03); padding: 10px 14px; border: 1px solid #e2e8f0; position: relative; border-bottom: 3px solid #8b5cf6;">
+                <div style="font-size: 0.6rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-palette" style="color: #94a3b8;"></i> RENK</div>
+                <div style="font-size: 0.85rem; font-weight: 700; color: #0f172a; word-wrap: break-word;" title="@Model.Color">@Model.Color</div>
+            </div>
+
+            <!-- Müşteri -->
+            <div style="flex: 1.5; min-width: 130px; background: #fff; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03); padding: 10px 14px; border: 1px solid #e2e8f0; position: relative; border-bottom: 3px solid #10b981;">
+                <div style="font-size: 0.6rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-building" style="color: #94a3b8;"></i> MÜŞTERİ</div>
+                <div style="font-size: 0.85rem; font-weight: 700; color: #0f172a; word-wrap: break-word;" title="@Model.Customer">@Model.Customer</div>
+            </div>
+
+            <!-- Atölye -->
+            <div style="flex: 1.5; min-width: 130px; background: #fff; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03); padding: 10px 14px; border: 1px solid #e2e8f0; position: relative; border-bottom: 3px solid #d946ef;">
+                <div style="font-size: 0.6rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-industry" style="color: #94a3b8;"></i> ATÖLYE</div>
+                <div style="font-size: 0.85rem; font-weight: 700; color: #0f172a; word-wrap: break-word;">
+                    @{
+                        var atolyeInfo = GetProdVal("prod_dikim_atolyesi");
+                        if (string.IsNullOrEmpty(atolyeInfo)) { atolyeInfo = Model.SewingWorkshop ?? Model.ProductionPlace; }
+                        <text>@(string.IsNullOrEmpty(atolyeInfo) ? "-" : atolyeInfo)</text>
+                    }
                 </div>
-                <div style="background: #f8fafc; padding: 8px 10px; border-radius: 6px;">
-                    <div style="font-size: 0.65rem; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px;">RENK</div>
-                    <div style="font-weight: 600; color: #0f172a; font-size: 0.8rem;">@Model.Color</div>
+            </div>
+
+            <!-- Adet -->
+            <div style="flex: 1; min-width: 90px; background: #fffbeb; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03); padding: 10px 14px; border: 1px solid #fef3c7; position: relative; border-bottom: 3px solid #f59e0b;">
+                <div style="font-size: 0.6rem; color: #b45309; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-calculator" style="color: #fbbf24;"></i> ADET</div>
+                <div style="font-size: 0.95rem; font-weight: 800; color: #92400e;">@Model.CalculatedQuantity.ToString("N0")</div>
+            </div>
+
+            <!-- Termin & Revize -->
+            <div style="flex: 1.5; min-width: 140px; background: #fff; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03); padding: 10px 14px; border: 1px solid #e2e8f0; position: relative; border-bottom: 3px solid #ef4444; display: flex; flex-direction: column; justify-content: center; gap: 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="font-size: 0.6rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">TERMİN:</div>
+                    <div style="font-weight: 700; color: #0f172a; font-size: 0.75rem;">@(Model.PlannedPackagingEndDate.HasValue ? Model.PlannedPackagingEndDate.Value.ToString("dd.MM.yyyy") : "-")</div>
                 </div>
-                <div style="background: #f8fafc; padding: 8px 10px; border-radius: 6px;">
-                    <div style="font-size: 0.65rem; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px;">MÜŞTERİ</div>
-                    <div style="font-weight: 600; color: #0f172a; font-size: 0.8rem;">@Model.Customer</div>
-                </div>
-                <div style="background: #fdf4ff; padding: 8px 10px; border-radius: 6px; border: 1px solid #fae8ff;">
-                    <div style="font-size: 0.65rem; color: #a21caf; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px;">ATÖLYE</div>
-                    <div style="font-weight: 600; color: #701a75; font-size: 0.8rem;">
-                        @{
-                            var atolyeInfo = GetProdVal("prod_dikim_atolyesi");
-                            if (string.IsNullOrEmpty(atolyeInfo)) { atolyeInfo = Model.SewingWorkshop ?? Model.ProductionPlace; }
-                            <text>@(string.IsNullOrEmpty(atolyeInfo) ? "-" : atolyeInfo)</text>
-                        }
-                    </div>
-                </div>
-                <div style="background: #f8fafc; padding: 8px 10px; border-radius: 6px;">
-                    <div style="font-size: 0.65rem; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px;">ADET</div>
-                    <div style="font-weight: 600; color: #0f172a; font-size: 0.8rem;">@Model.CalculatedQuantity.ToString("N0")</div>
-                </div>
-                <div style="background: #f0f9ff; padding: 8px 10px; border-radius: 6px; border: 1px solid #e0f2fe;">
-                    <div style="font-size: 0.65rem; color: #0284c7; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px;">TERMİN TARİHİ</div>
-                    <div style="font-weight: 600; color: #0c4a6e; font-size: 0.8rem;">@(Model.PlannedPackagingEndDate.HasValue ? Model.PlannedPackagingEndDate.Value.ToString("dd.MM.yyyy") : "-")</div>
-                </div>
-                <div style="background: #fdf2f8; padding: 8px 10px; border-radius: 6px; border: 1px solid #fce7f3;">
-                    <div style="font-size: 0.65rem; color: #db2777; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px;">REVİZE TERMİN</div>
-                    <div style="font-weight: 600; color: #9d174d; font-size: 0.8rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="font-size: 0.6rem; color: #dc2626; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">REVİZE:</div>
+                    <div style="font-weight: 700; color: #dc2626; font-size: 0.75rem;">
                         @{
                             var revizeTermin = Model.RevisedInspectionDate.HasValue 
                                 ? Model.RevisedInspectionDate.Value.ToString("dd.MM.yyyy") 
@@ -298,12 +302,12 @@
                                     }
                                 }
                             }
-                            
                             <text>@(string.IsNullOrEmpty(revizeTermin) ? "-" : revizeTermin)</text>
                         }
                     </div>
                 </div>
             </div>
+
         </div>
 
         @{
@@ -335,6 +339,15 @@
                 <div class="plan-tab-title">3. ÜRETİM PLANLAMA</div>
                 @if (Model.IsProductionCompleted) {
                     <div class="plan-tab-status status-complete">%100 TAMAM</div>
+                } else {
+                    <div class="plan-tab-status status-notstarted">BEKLİYOR</div>
+                }
+            </div>
+            <div class="plan-tab @(activeTab == "kesim" ? "active" : "")" onclick="switchTab('kesim', this)">
+                <i class="fa-solid fa-scissors"></i>
+                <div class="plan-tab-title">4. KESİM PLANLAMASI</div>
+                @if (!string.IsNullOrEmpty(Model.PlannedCuttingJson) && Model.PlannedCuttingJson != "[]") {
+                    <div class="plan-tab-status status-complete">VERİ GİRİLDİ</div>
                 } else {
                     <div class="plan-tab-status status-notstarted">BEKLİYOR</div>
                 }
@@ -553,7 +566,7 @@
             </style>
 
             @if (colors.Count > 1 || (colors.Count == 1 && colors[0] != "GENEL")) {
-            <div class="color-tabs" id="colorTabsContainer">
+            <div class="color-tabs" id="colorTabsContainer" style="display: none !important;">
                 @foreach(var c in colors) {
                     <div class="color-tab @(c == colors.First() ? "active" : "")" data-color="@c">@c</div>
                 }
@@ -827,135 +840,10 @@
             </form>
         </div>
 
-        <!-- Sekme 3: Üretim -->
-        <div id="tab-uretim" class="tab-content @(activeTab == "uretim" ? "active" : "")">
-            <form id="production-form" action="/Planning/UpdateProductionPlan" method="post">
-                <input type="hidden" name="Id" value="@Model.Id" />
-                <h3 style="font-size: 1.1rem; margin-bottom: 16px; color: #1e293b;">Üretim Planlama Detayları</h3>
-                
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
-                    <!-- Kesim ve Dikim Kartı -->
-                    <div class="content-section">
-                        <div class="section-title">
-                            <i class="fa-solid fa-scissors"></i> Kesim ve Dikim
-                        </div>
-                        <div style="display: flex; flex-direction: column; gap: 16px;">
-                            <div>
-                                <div class="data-label">DİKİM ATÖLYESİ</div>
-                                <select name="prod_dikim_atolyesi" class="input-field">
-                                    <option value="">-- Atölye Seçin --</option>
-                                    @if (ViewBag.Workshops != null)
-                                    {
-                                        var prodDikim = GetProdVal("prod_dikim_atolyesi");
-                                        if (string.IsNullOrEmpty(prodDikim)) { prodDikim = Model.SewingWorkshop ?? Model.ProductionPlace; }
-                                        foreach (var w in (System.Collections.Generic.List<UretimPlanlama.Models.Workshop>)ViewBag.Workshops)
-                                        {
-                                            if (!string.IsNullOrEmpty(prodDikim) && prodDikim.Equals(w.Name, StringComparison.OrdinalIgnoreCase))
-                                            {
-                                                <option value="@w.Name" selected>@w.Name</option>
-                                            }
-                                            else
-                                            {
-                                                <option value="@w.Name">@w.Name</option>
-                                            }
-                                        }
-                                    }
-                                </select>
-                            </div>
-                            <div>
-                                <div class="data-label">ÜRETİLECEK MİKTAR</div>
-                                <input type="text" class="input-field" value="@Model.CalculatedQuantity.ToString("N0")" disabled style="background:#f1f5f9; font-weight:600; color:#475569;" />
-                            </div>
-                            <div>
-                                <div class="data-label" style="display:flex; justify-content:space-between; align-items:center;">
-                                    <span>DİKİLECEK MİKTAR</span>
-                                    <label style="display:flex; align-items:center; gap:4px; font-size:0.75rem; color:#0f172a; cursor:pointer; text-transform:none; margin:0;">
-                                        <input type="checkbox" onchange="if(this.checked) { document.getElementById('prodDikimMiktari').value = '@Model.CalculatedQuantity'; } else { document.getElementById('prodDikimMiktari').value = ''; }" /> Tamamı
-                                    </label>
-                                </div>
-                                <input type="number" id="prodDikimMiktari" name="prod_dikim_miktari" class="input-field" value="@GetProdVal("prod_dikim_miktari")" placeholder="Örn: @Model.CalculatedQuantity" />
-                            </div>
-                            <div>
-                                <div class="data-label">KESİM BAŞLANGIÇ</div>
-                                <input type="date" name="prod_kesim_baslangic" class="input-field" value="@GetProdVal("prod_kesim_baslangic")" />
-                            </div>
-                            <div>
-                                <div class="data-label">KESİM BİTİŞ</div>
-                                <input type="date" name="prod_kesim_bitis" class="input-field" value="@GetProdVal("prod_kesim_bitis")" />
-                            </div>
-                            <div>
-                                <div class="data-label">DİKİM BAŞLANGIÇ</div>
-                                <input type="date" name="prod_dikim_baslangic" class="input-field" value="@GetProdVal("prod_dikim_baslangic")" />
-                            </div>
-                            <div>
-                                <div class="data-label">DİKİM BİTİŞ</div>
-                                <input type="date" name="prod_dikim_bitis" class="input-field" value="@GetProdVal("prod_dikim_bitis")" />
-                            </div>
-                        </div>
-                    </div>
 
-                    <!-- Paket ve Lojistik Kartı -->
-                    <div class="content-section">
-                        <div class="section-title">
-                            <i class="fa-solid fa-box-open"></i> Paket ve Lojistik
-                        </div>
-                        <div style="display: flex; flex-direction: column; gap: 16px;">
-                            <div>
-                                <div class="data-label">PAKET BAŞLANGIÇ</div>
-                                <input type="date" name="prod_paket_baslangic" class="input-field" value="@GetProdVal("prod_paket_baslangic")" />
-                            </div>
-                            <div>
-                                <div class="data-label">PAKET BİTİŞ</div>
-                                <input type="date" name="prod_paket_bitis" class="input-field" value="@GetProdVal("prod_paket_bitis")" />
-                            </div>
-                            <div>
-                                <div class="data-label">GS GİDİŞİ</div>
-                                <input type="date" name="prod_gs_gidisi" class="input-field" value="@GetProdVal("prod_gs_gidisi")" />
-                            </div>
-                            <div>
-                                <div class="data-label">YOLA ÇIKIŞ</div>
-                                <input type="date" name="prod_yola_cikis" class="input-field" value="@GetProdVal("prod_yola_cikis")" />
-                            </div>
-                            <div>
-                                <div class="data-label">DEPO VARIŞ</div>
-                                <input type="date" name="prod_depo_varis" class="input-field" value="@GetProdVal("prod_depo_varis")" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Termin Kartı -->
-                    <div class="content-section">
-                        <div class="section-title">
-                            <i class="fa-solid fa-calendar-check"></i> Termin Bilgileri
-                        </div>
-                        <div style="display: flex; flex-direction: column; gap: 16px;">
-                            <div>
-                                <div class="data-label">ATÖLYE TERMİN TARİHİ</div>
-                                @{
-                                    var suAnkiTermin = GetProdVal("prod_suanki_termin");
-                                    if (string.IsNullOrEmpty(suAnkiTermin) && Model.PlannedPackagingEndDate.HasValue)
-                                    {
-                                        suAnkiTermin = Model.PlannedPackagingEndDate.Value.ToString("yyyy-MM-dd");
-                                    }
-                                }
-                                <input type="date" name="prod_suanki_termin" class="input-field" value="@suAnkiTermin" onchange="document.querySelector('input[name=\'prod_yola_cikis\']').value = this.value;" />
-                            </div>
-                            <div>
-                                <div class="data-label">KNN REVİZE TERMİN</div>
-                                @{
-                                    var revizeTerminInput = GetProdVal("prod_knn_revize_termin");
-                                    if (string.IsNullOrEmpty(revizeTerminInput) && Model.RevisedInspectionDate.HasValue)
-                                    {
-                                        revizeTerminInput = Model.RevisedInspectionDate.Value.ToString("yyyy-MM-dd");
-                                    }
-                                }
-                                <input type="date" name="prod_knn_revize_termin" class="input-field not-mandatory" value="@revizeTerminInput" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- KESİM SÜRECİ TAB -->
+        <!-- Sekme 3: Kesim -->
+        <div id="tab-kesim" class="tab-content @(activeTab == "kesim" ? "active" : "")">
+<!-- KESİM SÜRECİ TAB -->
         <div style="margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 20px; max-width: 100%; overflow: hidden;">
             @{
                 var sizesObj = new Dictionary<string, string>();
@@ -1234,6 +1122,137 @@
                 <button type="button" class="btn" onclick="planSaveCuttingData()" style="background: linear-gradient(135deg, #16a34a, #15803d); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; box-shadow: 0 2px 6px rgba(22,163,74,0.3); display: flex; align-items: center; gap: 8px; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(22,163,74,0.4)'" onmouseout="this.style.transform=''; this.style.boxShadow='0 2px 6px rgba(22,163,74,0.3)'"><i class="fa-solid fa-save"></i> Kesim Planını Kaydet</button>
             </div>
         </div>
+        </div>
+
+        <!-- Sekme 4: Üretim -->
+        <div id="tab-uretim" class="tab-content @(activeTab == "uretim" ? "active" : "")">
+            <form id="production-form" action="/Planning/UpdateProductionPlan" method="post">
+                <input type="hidden" name="Id" value="@Model.Id" />
+                <h3 style="font-size: 1.1rem; margin-bottom: 16px; color: #1e293b;">Üretim Planlama Detayları</h3>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+                    <!-- Kesim ve Dikim Kartı -->
+                    <div class="content-section">
+                        <div class="section-title">
+                            <i class="fa-solid fa-scissors"></i> Kesim ve Dikim
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 16px;">
+                            <div>
+                                <div class="data-label">DİKİM ATÖLYESİ</div>
+                                <select name="prod_dikim_atolyesi" class="input-field">
+                                    <option value="">-- Atölye Seçin --</option>
+                                    @if (ViewBag.Workshops != null)
+                                    {
+                                        var prodDikim = GetProdVal("prod_dikim_atolyesi");
+                                        if (string.IsNullOrEmpty(prodDikim)) { prodDikim = Model.SewingWorkshop ?? Model.ProductionPlace; }
+                                        foreach (var w in (System.Collections.Generic.List<UretimPlanlama.Models.Workshop>)ViewBag.Workshops)
+                                        {
+                                            if (!string.IsNullOrEmpty(prodDikim) && prodDikim.Equals(w.Name, StringComparison.OrdinalIgnoreCase))
+                                            {
+                                                <option value="@w.Name" selected>@w.Name</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="@w.Name">@w.Name</option>
+                                            }
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <div>
+                                <div class="data-label">ÜRETİLECEK MİKTAR</div>
+                                <input type="text" class="input-field" value="@Model.CalculatedQuantity.ToString("N0")" disabled style="background:#f1f5f9; font-weight:600; color:#475569;" />
+                            </div>
+                            <div>
+                                <div class="data-label" style="display:flex; justify-content:space-between; align-items:center;">
+                                    <span>DİKİLECEK MİKTAR</span>
+                                    <label style="display:flex; align-items:center; gap:4px; font-size:0.75rem; color:#0f172a; cursor:pointer; text-transform:none; margin:0;">
+                                        <input type="checkbox" onchange="if(this.checked) { document.getElementById('prodDikimMiktari').value = '@Model.CalculatedQuantity'; } else { document.getElementById('prodDikimMiktari').value = ''; }" /> Tamamı
+                                    </label>
+                                </div>
+                                <input type="number" id="prodDikimMiktari" name="prod_dikim_miktari" class="input-field" value="@GetProdVal("prod_dikim_miktari")" placeholder="Örn: @Model.CalculatedQuantity" />
+                            </div>
+                            <div>
+                                <div class="data-label">KESİM BAŞLANGIÇ</div>
+                                <input type="date" name="prod_kesim_baslangic" class="input-field" value="@GetProdVal("prod_kesim_baslangic")" />
+                            </div>
+                            <div>
+                                <div class="data-label">KESİM BİTİŞ</div>
+                                <input type="date" name="prod_kesim_bitis" class="input-field" value="@GetProdVal("prod_kesim_bitis")" />
+                            </div>
+                            <div>
+                                <div class="data-label">DİKİM BAŞLANGIÇ</div>
+                                <input type="date" name="prod_dikim_baslangic" class="input-field" value="@GetProdVal("prod_dikim_baslangic")" />
+                            </div>
+                            <div>
+                                <div class="data-label">DİKİM BİTİŞ</div>
+                                <input type="date" name="prod_dikim_bitis" class="input-field" value="@GetProdVal("prod_dikim_bitis")" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Paket ve Lojistik Kartı -->
+                    <div class="content-section">
+                        <div class="section-title">
+                            <i class="fa-solid fa-box-open"></i> Paket ve Lojistik
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 16px;">
+                            <div>
+                                <div class="data-label">PAKET BAŞLANGIÇ</div>
+                                <input type="date" name="prod_paket_baslangic" class="input-field" value="@GetProdVal("prod_paket_baslangic")" />
+                            </div>
+                            <div>
+                                <div class="data-label">PAKET BİTİŞ</div>
+                                <input type="date" name="prod_paket_bitis" class="input-field" value="@GetProdVal("prod_paket_bitis")" />
+                            </div>
+                            <div>
+                                <div class="data-label">GS GİDİŞİ</div>
+                                <input type="date" name="prod_gs_gidisi" class="input-field" value="@GetProdVal("prod_gs_gidisi")" />
+                            </div>
+                            <div>
+                                <div class="data-label">YOLA ÇIKIŞ</div>
+                                <input type="date" name="prod_yola_cikis" class="input-field" value="@GetProdVal("prod_yola_cikis")" />
+                            </div>
+                            <div>
+                                <div class="data-label">DEPO VARIŞ</div>
+                                <input type="date" name="prod_depo_varis" class="input-field" value="@GetProdVal("prod_depo_varis")" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Termin Kartı -->
+                    <div class="content-section">
+                        <div class="section-title">
+                            <i class="fa-solid fa-calendar-check"></i> Termin Bilgileri
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 16px;">
+                            <div>
+                                <div class="data-label">ATÖLYE TERMİN TARİHİ</div>
+                                @{
+                                    var suAnkiTermin = GetProdVal("prod_suanki_termin");
+                                    if (string.IsNullOrEmpty(suAnkiTermin) && Model.PlannedPackagingEndDate.HasValue)
+                                    {
+                                        suAnkiTermin = Model.PlannedPackagingEndDate.Value.ToString("yyyy-MM-dd");
+                                    }
+                                }
+                                <input type="date" name="prod_suanki_termin" class="input-field" value="@suAnkiTermin" onchange="document.querySelector('input[name=\'prod_yola_cikis\']').value = this.value;" />
+                            </div>
+                            <div>
+                                <div class="data-label">KNN REVİZE TERMİN</div>
+                                @{
+                                    var revizeTerminInput = GetProdVal("prod_knn_revize_termin");
+                                    if (string.IsNullOrEmpty(revizeTerminInput) && Model.RevisedInspectionDate.HasValue)
+                                    {
+                                        revizeTerminInput = Model.RevisedInspectionDate.Value.ToString("yyyy-MM-dd");
+                                    }
+                                }
+                                <input type="date" name="prod_knn_revize_termin" class="input-field not-mandatory" value="@revizeTerminInput" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                
 
         
 <br/>

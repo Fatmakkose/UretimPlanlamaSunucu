@@ -1,0 +1,382 @@
+@model UretimPlanlama.Models.Order
+
+@{
+    ViewData["Title"] = "Sipariş Malzemeleri - " + Model.OrderCode;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="dashboard-header" style="margin-bottom: 25px;">
+    <div class="header-title">
+        <h1 style="font-size: 1.4rem; margin: 0; color: var(--text-main);">Malzeme Yönetimi</h1>
+        <p style="margin: 4px 0 0 0; color: #64748b; font-size: 0.9rem;">@Model.OrderCode numaralı sipariş için malzeme girişi</p>
+    </div>
+    <div class="header-actions">
+        <a href="/Order/Index" class="btn-secondary" style="display:inline-flex; align-items:center; gap:8px; padding:8px 16px; border-radius:6px; text-decoration:none;"><i class="fa-solid fa-arrow-left"></i> Geri Dön</a>
+    </div>
+</div>
+
+<div class="schedule-section" style="background: white; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); padding: 24px; margin-bottom: 24px;">
+    
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid #e2e8f0;">
+        <label style="font-size:1.1rem; font-weight:700; color:#1e293b; margin:0; display:flex; align-items:center; gap:8px;">
+            <i class="fa-solid fa-boxes-stacked" style="color: #3b82f6;"></i> Kullanılacak Malzemeler
+        </label>
+    </div>
+
+    <div id="stockMaterialsContainer" style="display: flex; flex-direction: column; gap: 12px;">
+        <!-- Dinamik kartlar buraya eklenecek -->
+    </div>
+    
+    <button type="button" id="btnAddStockMaterial" style="margin-top: 16px; width: 100%; padding: 12px; border: 2px dashed #cbd5e1; border-radius: 8px; background: transparent; color: #475569; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;" onmouseover="this.style.background='#f8fafc'; this.style.borderColor='#94a3b8'; this.style.color='#0f172a';" onmouseout="this.style.background='transparent'; this.style.borderColor='#cbd5e1'; this.style.color='#475569';">
+        <i class="fa-solid fa-plus"></i> Yeni Malzeme Ekle
+    </button>
+    
+    <!-- Stok Kartları Datası (JS İçin) -->
+    <div id="stokKartlariData" style="display:none;" data-list='@Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.StokKartlari, new System.Text.Json.JsonSerializerOptions { ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles }))'></div>
+    
+    <!-- Model'den gelen mevcut materials json -->
+    <input type="hidden" id="initialMaterialsJson" value='@Html.Raw(Model.OrderMaterialsJson)' />
+    <input type="hidden" id="orderId" value="@Model.Id" />
+    
+    <div style="margin-top: 32px; padding-top: 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 12px;">
+        <button type="button" id="btnSaveMaterials" class="btn-planner" style="padding: 10px 24px; font-size: 1rem;"><i class="fa-solid fa-save" style="margin-right: 8px;"></i> Kaydet</button>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let stokKartlariList = [];
+        try {
+            const rawData = $('#stokKartlariData').attr('data-list');
+            if (rawData) stokKartlariList = JSON.parse(rawData);
+        } catch (e) { console.error('Stok kartları yüklenirken hata:', e); }
+
+        function addStockMaterialRow(stokKartiId = '', miktar = '', aciklama = '', initialProps = {}) {
+            let optionsHtml = '<option value="">-- Stok Seçin --</option>';
+            stokKartlariList.forEach(s => {
+                const selected = s.Id == stokKartiId ? 'selected' : '';
+                optionsHtml += `<option value="${s.Id}" ${selected}>${s.StokAdi} (${s.StokKodu}) - Mevcut: ${s.MevcutMiktar}</option>`;
+            });
+
+            const trHtml = `
+                <div class="stock-material-row" data-initial-props='${JSON.stringify(initialProps)}' style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #3b82f6; border-radius: 8px; margin-bottom: 8px; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); transition: all 0.2s;">
+                    <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 250px; display: flex; align-items: center; gap: 12px;">
+                            <i class="fa-solid fa-box" style="color: #94a3b8; font-size: 1.1rem;"></i>
+                            <select class="form-control sm-stokkarti" style="flex: 1; background: #ffffff; padding: 10px 14px; border-radius: 6px; border: 1px solid #cbd5e1; font-weight: 600; color: #1e293b; font-size: 0.9rem; cursor: pointer; appearance: auto; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+                                ${optionsHtml}
+                            </select>
+                            <input type="hidden" class="sm-miktar" value="${miktar}" />
+                            <input type="hidden" class="sm-aciklama" value="${aciklama}" />
+                        </div>
+                        <div class="prop-summary" style="font-size: 0.85rem; color: #3b82f6; font-weight: 500; cursor: pointer; padding: 6px 12px; border-radius: 6px; background: #eff6ff; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;" title="Detayları düzenlemek için tıklayın">
+                            ${aciklama ? '<i class="fa-solid fa-pen-to-square"></i> ' + aciklama : '<i class="fa-solid fa-pen-to-square"></i> Özellik Seç'}
+                        </div>
+                        <div>
+                            <button type="button" class="btnRemoveStockMaterial" style="background: transparent; color: #ef4444; border: none; padding: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-size: 1.2rem;" title="Sil" onmouseover="this.style.color='#b91c1c'; this.style.transform='scale(1.1)'" onmouseout="this.style.color='#ef4444'; this.style.transform='scale(1)'"><i class="fa-solid fa-circle-xmark"></i></button>
+                        </div>
+                    </div>
+                    <div class="stok-detaylari" style="display:none; padding-top: 12px; margin-top: 8px; border-top: 1px dashed #cbd5e1;"></div>
+                </div>
+            `;
+            $('#stockMaterialsContainer').append(trHtml);
+            
+            var newSelect = $('#stockMaterialsContainer').find('.stock-material-row:last .sm-stokkarti');
+            if (stokKartiId) {
+                newSelect.trigger('change');
+            }
+        }
+
+        $(document).on('click', '#btnAddStockMaterial', function() {
+            $('#stockMaterialsContainer .stok-detaylari').slideUp(200);
+            addStockMaterialRow();
+        });
+
+        $(document).on('click', '.btnRemoveStockMaterial', function() {
+            $(this).closest('.stock-material-row').remove();
+        });
+
+        $(document).on('change', '.sm-stokkarti', function() {
+            var select = $(this);
+            var stokId = select.val();
+            var prevStokId = select.data('prev-stok');
+            if (prevStokId === stokId) return;
+            select.data('prev-stok', stokId);
+
+            var row = select.closest('.stock-material-row');
+            var detayDiv = row.find('.stok-detaylari');
+            
+            if (!stokId) {
+                detayDiv.empty();
+                row.find('.sm-miktar').prop('readonly', false).css('background', '#f8fafc');
+                return;
+            }
+
+            var stok = stokKartlariList.find(s => s.Id == stokId);
+            if (stok) {
+                var detayHtml = `<div style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
+                                    <div style="background: #f1f5f9; padding: 8px 16px; border-radius: 10px; font-size: 0.85rem; color: #475569; display: flex; align-items: center; gap: 8px; border: 1px solid #e2e8f0;"><i class="fa-solid fa-tag" style="color: #94a3b8;"></i> Kategori: <b style="color: #1e293b; margin-left: 4px;">${stok.Kategori || '-'}</b></div> 
+                                    <div style="background: #f1f5f9; padding: 8px 16px; border-radius: 10px; font-size: 0.85rem; color: #475569; display: flex; align-items: center; gap: 8px; border: 1px solid #e2e8f0;"><i class="fa-solid fa-ruler" style="color: #94a3b8;"></i> Birim: <b style="color: #1e293b; margin-left: 4px;">${stok.Birim || '-'}</b></div> 
+                                    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 8px 16px; border-radius: 10px; font-size: 0.85rem; color: #166534; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-boxes-stacked" style="color: #22c55e;"></i> Mevcut: <b style="font-size: 1rem; color: #15803d; margin-left: 4px;">${stok.MevcutMiktar || 0}</b></div>
+                                 </div>`;
+                
+                var initialPropsStr = row.attr('data-initial-props');
+                var initProps = {};
+                if (initialPropsStr) {
+                    try {
+                        initProps = JSON.parse(initialPropsStr);
+                        row.removeAttr('data-initial-props');
+                    } catch(e) {}
+                } else {
+                    row.find('.sm-dyn-prop, .sm-ozellik').each(function() {
+                        var k = $(this).data('key');
+                        var v = $(this).val();
+                        if (k && v) initProps[k.toUpperCase()] = v;
+                    });
+                }
+
+                var cat = (stok.Kategori || "").trim().toUpperCase();
+                var calcFields = [];
+                var isCalculable = false;
+
+                if (cat === "KUMAŞ" || cat === "KUMAS") {
+                    isCalculable = true;
+                    calcFields.push({ Key: "BİRİM METRAJ", Type: "number", Def: "" });
+                } else if (cat === "MALZEME") {
+                    isCalculable = true;
+                    calcFields.push({ Key: "BİRİM KULLANIM", Type: "number", Def: "" });
+                    calcFields.push({ Key: "FİRE (%)", Type: "number", Def: "0" });
+                } else if (cat === "ETİKET" || cat === "ETIKET") {
+                    isCalculable = true;
+                    calcFields.push({ Key: "FİRE (%)", Type: "number", Def: "0" });
+                } else if (cat === "TELA") {
+                    isCalculable = true;
+                    calcFields.push({ Key: "TELA BİRİM", Type: "select", Def: "0.000,0.010,0.020,0.030,0.033,0.045,0.046,0.047" });
+                    calcFields.push({ Key: "GRAM", Type: "select", Def: "55,80,115,175,KAĞIT" });
+                    calcFields.push({ Key: "RENK", Type: "select", Def: "BEYAZ,SİYAH" });
+                }
+
+                var extraOzellikler = [];
+                if (stok.OzelliklerJson) {
+                    try {
+                        var parsedOz = JSON.parse(stok.OzelliklerJson);
+                        if (Array.isArray(parsedOz)) {
+                            parsedOz.forEach(function(o) {
+                                if (o.Key) {
+                                    var existingIdx = calcFields.findIndex(c => c.Key === o.Key.toUpperCase());
+                                    if (existingIdx > -1) {
+                                        calcFields[existingIdx] = { Key: o.Key.toUpperCase(), Type: o.Type || 'text', Def: o.Value || '' };
+                                    } else {
+                                        extraOzellikler.push(o);
+                                    }
+                                }
+                            });
+                        }
+                    } catch(e){}
+                }
+
+                if (isCalculable) {
+                    row.find('.sm-miktar').prop('readonly', true).css('background', '#e2e8f0');
+                } else {
+                    row.find('.sm-miktar').prop('readonly', false).css('background', '#f8fafc');
+                }
+
+                if (calcFields.length > 0 || extraOzellikler.length > 0) {
+                    detayHtml += `<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+                                      <div style="width: 4px; height: 18px; background: linear-gradient(135deg, #3b82f6, #2563eb); border-radius: 4px;"></div>
+                                      <h6 style="color: #1e293b; font-weight: 700; font-size: 0.95rem; margin: 0;">Hesaplama ve Özellikler</h6>
+                                  </div>
+                                  <div class="calc-fields-container" data-cat="${cat}" style="display:flex; flex-wrap: wrap; gap:16px; background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px dashed #cbd5e1;">`;
+                    
+                    var allFields = [];
+                    calcFields.forEach(function(cf) {
+                        allFields.push({ Key: cf.Key.toUpperCase(), Type: cf.Type, Value: cf.Def, IsCalc: true });
+                    });
+                    extraOzellikler.forEach(function(oz) {
+                        allFields.push({ Key: oz.Key.toUpperCase(), Type: oz.Type, Value: oz.Value, IsCalc: false });
+                    });
+
+                    if (stok.StokAdi && stok.StokAdi.toUpperCase().includes("DÜĞME")) {
+                        var orderMap = { "BOYUT": 1, "BİRİM KULLANIM": 2, "FİRE (%)": 3, "RENK": 4 };
+                        allFields.sort(function(a, b) {
+                            var orderA = orderMap[a.Key] || 99;
+                            var orderB = orderMap[b.Key] || 99;
+                            return orderA - orderB;
+                        });
+                    }
+
+                    allFields.forEach(function(f) {
+                         var pVal = initProps[f.Key] !== undefined ? initProps[f.Key] : (f.Value || "");
+                         var calcClass = f.IsCalc ? 'sm-calc-trigger' : '';
+                         var inputHtml = "";
+                         if (f.Type === 'select') {
+                             var opts = f.Value.split(',');
+                             inputHtml = `<select class="form-control sm-dyn-prop ${calcClass}" data-key="${f.Key}" style="width:100%; padding: 8px 12px; font-size: 0.85rem; border-radius: 8px; font-weight:600;">
+                                            <option value="">Seçiniz</option>`;
+                             opts.forEach(function(o) {
+                                 var sel = (o.trim() === pVal) ? 'selected' : '';
+                                 inputHtml += `<option value="${o.trim()}" ${sel}>${o.trim()}</option>`;
+                             });
+                             inputHtml += `</select>`;
+                         } else {
+                             var typeAttr = f.Type === 'number' ? 'number' : 'text';
+                             var stepAttr = f.Type === 'number' ? 'step="any"' : '';
+                             inputHtml = `<input type="${typeAttr}" ${stepAttr} class="form-control sm-dyn-prop ${calcClass}" data-key="${f.Key}" value="${pVal}" placeholder="${f.Value || '...'}" style="width:100%; font-weight:600; padding: 8px 12px; font-size: 0.85rem; border-radius: 8px;" />`;
+                         }
+                         
+                         detayHtml += `
+                         <div style="flex: 1 1 0; min-width: 150px; max-width: 250px;">
+                             <label style="font-size: 0.8rem; color: #64748b; margin-bottom: 6px; display: block; font-weight: 600;">${f.Key}</label>
+                             ${inputHtml}
+                         </div>`;
+                    });
+
+                    detayHtml += `</div>`;
+                }
+                
+                $('.stok-detaylari').not(detayDiv).slideUp(300);
+                detayDiv.html(detayHtml).hide().slideDown(300);
+                if (isCalculable) {
+                    row.find('.sm-calc-trigger').first().trigger('input');
+                }
+            } else {
+                detayDiv.slideUp(300, function() { $(this).empty(); });
+                row.find('.sm-miktar').prop('readonly', false).css('background', '#f8fafc');
+            }
+            updateStockSummary(row);
+        });
+
+        $(document).on('input change', '.sm-calc-trigger', function() {
+            var row = $(this).closest('.stock-material-row');
+            var miktarInput = row.find('.sm-miktar');
+            var miktar = 0;
+            if (miktarInput.prop('readonly')) {
+                miktarInput.val(Number.isInteger(miktar) ? miktar : miktar.toFixed(3));
+            }
+            updateStockSummary(row);
+        });
+
+        $(document).on('input change', '.sm-miktar, .sm-aciklama, .sm-dyn-prop', function() {
+            if (!$(this).hasClass('sm-calc-trigger')) {
+                updateStockSummary($(this).closest('.stock-material-row'));
+            }
+        });
+
+        function updateStockSummary(row) {
+            var dynProps = [];
+            var propStrs = [];
+            row.find('.sm-dyn-prop').each(function() {
+                var key = $(this).attr('data-key');
+                var val = $(this).val();
+                if (val) {
+                    dynProps.push({ Key: key, Value: val });
+                    if (!["HESAP ADETİ", "BİRİM KULLANIM", "FİRE (%)", "BİRİM METRAJ", "TOPLAM SİPARİŞ", "AÇIK ADET", "BİRİM ASORTİ", "LOT BAŞI BEDEN", "TELA BİRİM", "TELA TİPİ"].includes(key.toUpperCase())) {
+                        propStrs.push(key + ": " + val);
+                    }
+                }
+            });
+            
+            var autoAciklama = propStrs.join(' | ');
+            row.find('.sm-aciklama').val(autoAciklama);
+            row.find('.prop-summary').html(autoAciklama ? '<i class="fa-solid fa-pen-to-square"></i> ' + autoAciklama : '<i class="fa-solid fa-pen-to-square"></i> Özellik Seç');
+        }
+
+        $(document).on('click', '.stock-material-row', function(e) {
+            if ($(e.target).closest('.btnRemoveStockMaterial, .select2-container, .sm-stokkarti, .stok-detaylari').length > 0) return;
+            
+            var detayDiv = $(this).find('.stok-detaylari');
+            if (detayDiv.children().length === 0) return;
+            
+            if (detayDiv.is(':visible')) {
+                detayDiv.slideUp(300);
+            } else {
+                $('.stok-detaylari').not(detayDiv).slideUp(300);
+                detayDiv.slideDown(300);
+            }
+        });
+
+        $(document).ready(function() {
+            // Load Initial Materials
+            var initialJson = $('#initialMaterialsJson').val();
+            if (initialJson && initialJson !== "[]") {
+                try {
+                    var initMats = JSON.parse(initialJson);
+                    initMats.forEach(function(m) {
+                        var props = {};
+                        if (m.OzelliklerJson) {
+                            try {
+                                var pArr = JSON.parse(m.OzelliklerJson);
+                                pArr.forEach(function(p) {
+                                    if(p.Key && p.Value) props[p.Key.toUpperCase()] = p.Value;
+                                });
+                            } catch(e){}
+                        }
+                        addStockMaterialRow(m.StokKartiId, m.Miktar, m.Aciklama, props);
+                    });
+                } catch(e) { console.error(e); }
+            } else {
+                addStockMaterialRow();
+            }
+
+            // Save Materials
+            $('#btnSaveMaterials').click(function() {
+                var btn = $(this);
+                var origText = btn.html();
+                
+                var materials = [];
+                $('.stock-material-row').each(function() {
+                    var row = $(this);
+                    var stokId = parseInt(row.find('.sm-stokkarti').val());
+                    var miktar = parseFloat(row.find('.sm-miktar').val()) || 0;
+                    var aciklama = row.find('.sm-aciklama').val();
+                    
+                    var dynProps = [];
+                    row.find('.sm-dyn-prop').each(function() {
+                        var key = $(this).attr('data-key');
+                        var val = $(this).val();
+                        if (val) {
+                            dynProps.push({ Key: key, Value: val });
+                        }
+                    });
+                    var ozelliklerJsonStr = dynProps.length > 0 ? JSON.stringify(dynProps) : null;
+                    
+                    if (stokId > 0) {
+                        materials.push({
+                            StokKartiId: stokId,
+                            Miktar: miktar,
+                            Aciklama: aciklama,
+                            OzelliklerJson: ozelliklerJsonStr
+                        });
+                    }
+                });
+
+                var orderModel = {
+                    Id: parseInt($('#orderId').val()),
+                    OrderMaterialsJson: JSON.stringify(materials)
+                };
+
+                btn.prop('disabled', true).html('<i class="fa-solid fa-circle-notch fa-spin"></i> Kaydediliyor...');
+
+                $.ajax({
+                    url: '/Order/SaveMaterials',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(orderModel),
+                    success: function(res) {
+                        if (res.success) {
+                            window.location.href = '/Order/Index';
+                        } else {
+                            alert('Hata: ' + res.message);
+                            btn.prop('disabled', false).html(origText);
+                        }
+                    },
+                    error: function(err) {
+                        alert('Sunucu hatası oluştu!');
+                        console.error(err);
+                        btn.prop('disabled', false).html(origText);
+                    }
+                });
+            });
+        });
+    </script>
+}

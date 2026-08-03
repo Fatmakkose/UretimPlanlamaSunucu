@@ -246,13 +246,19 @@
         <input type="hidden" id="orderMaterialsJson" name="OrderMaterialsJson" value="[]" />
 
         <div style="margin-bottom: 16px;">
-        <div style="display: flex; gap: 24px; align-items: flex-start; margin-bottom: 16px; flex-wrap: wrap;">
+        <div style="display: flex; flex-direction: column; gap: 24px; margin-bottom: 16px;">
             
-            <!-- Sol Taraf: Genel Bilgiler -->
-            <div style="flex: 1; min-width: 400px; max-width: 700px;">
-                <h4 style="margin: 0 0 12px 0; padding-bottom: 8px; border-bottom: 2px solid #f1f5f9; font-size: 1rem; color: #1e293b; font-weight: 700; letter-spacing: -0.2px;"><i class="fa-solid fa-circle-info" style="margin-right: 8px; font-size: 1.1rem;"></i> Genel Bilgiler</h4>
+            <!-- Üst Kısım: Genel Bilgiler -->
+            <div style="width: 100%; margin: 0 auto;">
+                <h4 style="margin: 0 0 16px 0; padding: 12px 16px; background: #e2e8f0; border-radius: 8px; font-size: 1.05rem; color: #1e293b; font-weight: 700; letter-spacing: -0.2px; display: flex; align-items: center;"><i class="fa-solid fa-circle-info" style="margin-right: 10px; font-size: 1.2rem; color: #10b981;"></i> Genel Bilgiler</h4>
                 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; margin-bottom: 12px;">
+                <div class="genel-bilgiler-grid" style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px;">
+                    <style>
+                        .genel-bilgiler-grid .form-group { margin-bottom: 0; }
+                        .genel-bilgiler-grid label { font-size: 0.75rem; font-weight: 600; color: #475569; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; display: block; }
+                        .genel-bilgiler-grid input, .genel-bilgiler-grid select { font-size: 0.8rem; padding: 4px 8px; height: 32px; border-radius: 6px; width: 100%; border: 1px solid #cbd5e1; }
+                        .genel-bilgiler-grid input:focus, .genel-bilgiler-grid select:focus { border-color: #3b82f6; outline: none; }
+                    </style>
                     <div class="form-group">
                         <label>Sipariş Tarihi</label>
                         <input name="OrderDate" class="form-control" type="date" required value="@DateTime.Now.ToString("yyyy-MM-dd")" />
@@ -314,37 +320,15 @@
                 </div>
             </div>
 
-            <!-- Sağ Taraf: Malzemeler -->
-            <div style="flex: 1; min-width: 400px;">
 
-                <div style="background:#ffffff; padding:16px; border:1px solid #e2e8f0; border-radius:12px; margin-bottom:16px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                        <label style="font-size:0.95rem; font-weight:700; color:#1e293b; margin:0; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-boxes-stacked" style="color: #3b82f6;"></i> Kullanılacak Malzemeler (Stoktan Seçim)</label>
-                    </div>
-                    
-                    <div id="stockMaterialsContainer" style="display: flex; flex-direction: column; gap: 12px;">
-                        <!-- Dinamik kartlar buraya eklenecek -->
-                    </div>
-                    <button type="button" id="btnAddStockMaterial" style="margin-top: 12px; width: 100%; padding: 8px; border: 2px dashed #cbd5e1; border-radius: 8px; background: transparent; color: #475569; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;" onmouseover="this.style.background='#f8fafc'; this.style.borderColor='#94a3b8'; this.style.color='#0f172a';" onmouseout="this.style.background='transparent'; this.style.borderColor='#cbd5e1'; this.style.color='#475569';"><i class="fa-solid fa-plus"></i> Yeni Ürün Ekle</button>
-                    <input type="hidden" name="FabricsJson" id="fabricsJson" value="[]" />
-                    <input type="hidden" name="UnitFabricMeterage" id="hiddenUnitFabricMeterage" />
-                    <input type="hidden" name="FabricUnit" id="hiddenFabricUnit" />
-                    <input type="hidden" name="WastageRate" id="hiddenWastageRate" />
-                    <input type="hidden" name="LargeButtonCount" id="hiddenLargeButtonCount" />
-                    <input type="hidden" name="SmallButtonCount" id="hiddenSmallButtonCount" />
-                    
-                    <!-- Stok Kartları Datası (JS İçin) -->
-                    <div id="stokKartlariData" style="display:none;" data-list='@Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.StokKartlari, new System.Text.Json.JsonSerializerOptions { ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles }))'></div>
-                </div>
-            </div>
 
-        </div>
-
-            <div style="margin-bottom: 24px;">
+            <div style="width: 100%; margin-bottom: 24px; margin-top: 24px;">
+                <h4 style="margin: 0 0 16px 0; padding: 12px 16px; background: #e2e8f0; border-radius: 8px; font-size: 1.05rem; color: #1e293b; font-weight: 700; letter-spacing: -0.2px; display: flex; align-items: center;"><i class="fa-solid fa-palette" style="margin-right: 10px; font-size: 1.2rem; color: #3b82f6;"></i> Renk ve Beden Dağılımları</h4>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color); flex-wrap:wrap; gap:16px;">
                     <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; flex:1;">
                         <label style="font-weight: 600; font-size: 0.9rem; color: #1e293b; margin:0;"><i class="fa-solid fa-ruler"></i> Beden Şablonu:</label>
-                        <select id="sizeTemplateSelector" class="form-control" style="width: 130px; padding: 6px 12px; font-size: 0.85rem; border-radius: 6px; font-weight:600; background:#f8fafc; border:1px solid #cbd5e1;">
+                        <select id="sizeTemplateSelector" class="form-control" style="width: 170px; padding: 6px 12px; font-size: 0.85rem; border-radius: 6px; font-weight:600; background:#f8fafc; border:1px solid #cbd5e1;">
+                            <option value="">-- Şablon Seçin --</option>
                             <option value="standart">XS,S,M,L..</option>
                             <option value="numerik">34,36,38..</option>
                         </select>
@@ -352,7 +336,7 @@
                             <!-- Checkboxes dynamically populated -->
                         </div>
                     </div>
-                    <button type="button" id="btnAddColorRow" class="btn-secondary" style="padding: 8px 16px; font-size: 0.9rem; white-space:nowrap;"><i class="fa-solid fa-plus"></i> Yeni Renk Ekle</button>
+                    <button type="button" id="btnAddColorRow" class="btn-planner" style="padding: 8px 16px; font-size: 0.9rem; white-space:nowrap; background: linear-gradient(135deg, #10b981, #059669) !important; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3) !important;"><i class="fa-solid fa-plus"></i> Yeni Renk Ekle</button>
                 </div>
 
                 <!-- Renk Kartları Konteyneri -->
@@ -372,6 +356,33 @@
                         <div id="grandTotalAsortiAdet" style="font-size: 1.5rem; color: #16a34a; font-weight: 800;">0</div>
                     </div>
                 </div>
+
+                <div style="margin-top: 40px;">
+                    <h4 style="margin: 0 0 16px 0; padding: 12px 16px; background: #e2e8f0; border-radius: 8px; font-size: 1.05rem; color: #1e293b; font-weight: 700; letter-spacing: -0.2px; display: flex; align-items: center;"><i class="fa-solid fa-gem" style="margin-right: 10px; font-size: 1.2rem; color: #f59e0b;"></i> Aksesuar Ekleme</h4>
+                    <div style="display: flex; justify-content: center;">
+                        <button type="button" id="btnAddAccessory" class="btn-planner" style="padding: 10px 24px; font-size: 0.95rem; white-space:nowrap; background: linear-gradient(135deg, #f59e0b, #d97706) !important; box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.3) !important;"><i class="fa-solid fa-plus"></i> Aksesuar Ekle</button>
+                    </div>
+                </div>
+
+                <!-- İsteğe Bağlı Malzeme Ekleme Alanı -->
+                <div id="materialsSectionWrapper" class="schedule-section" style="display: none; background: white; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); padding: 24px; margin-top: 24px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid #e2e8f0;">
+                        <label style="font-size:1.1rem; font-weight:700; color:#1e293b; margin:0; display:flex; align-items:center; gap:8px;">
+                            <i class="fa-solid fa-boxes-stacked" style="color: #3b82f6;"></i> Kullanılacak Malzemeler (Stoktan Seçim) <span style="font-size: 0.8rem; font-weight: 500; color: #64748b; margin-left: 8px;">*İsteğe Bağlı</span>
+                        </label>
+                    </div>
+
+                    <div id="stockMaterialsContainer" style="display: flex; flex-direction: column; gap: 12px;">
+                        <!-- Dinamik kartlar buraya eklenecek -->
+                    </div>
+                    
+                    <button type="button" id="btnAddStockMaterial" style="margin-top: 16px; width: 100%; padding: 12px; border: 2px dashed #cbd5e1; border-radius: 8px; background: transparent; color: #475569; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;" onmouseover="this.style.background='#f8fafc'; this.style.borderColor='#94a3b8'; this.style.color='#0f172a';" onmouseout="this.style.background='transparent'; this.style.borderColor='#cbd5e1'; this.style.color='#475569';">
+                        <i class="fa-solid fa-plus"></i> Yeni Malzeme Ekle
+                    </button>
+                    
+                    <!-- Stok Kartları Datası (JS İçin) -->
+                    <div id="stokKartlariData" style="display:none;" data-list='@Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.StokKartlari, new System.Text.Json.JsonSerializerOptions { ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles }))'></div>
+                </div>
             </div>
 
         </div>
@@ -387,14 +398,13 @@
 
 @section Scripts {
     <script>
-        // Stock Materials Logic
         let stokKartlariList = [];
         try {
             const rawData = $('#stokKartlariData').attr('data-list');
             if (rawData) stokKartlariList = JSON.parse(rawData);
         } catch (e) { console.error('Stok kartları yüklenirken hata:', e); }
 
-        function addStockMaterialRow(stokKartiId = '', miktar = '', aciklama = '') {
+        function addStockMaterialRow(stokKartiId = '', miktar = '', aciklama = '', initialProps = {}) {
             let optionsHtml = '<option value="">-- Stok Seçin --</option>';
             stokKartlariList.forEach(s => {
                 const selected = s.Id == stokKartiId ? 'selected' : '';
@@ -402,24 +412,24 @@
             });
 
             const trHtml = `
-                <div class="stock-material-row" style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid var(--primary-color); border-radius: 8px; margin-bottom: 8px; padding: 10px 14px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); transition: all 0.2s;">
+                <div class="stock-material-row" data-initial-props='${JSON.stringify(initialProps)}' style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #3b82f6; border-radius: 8px; margin-bottom: 8px; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); transition: all 0.2s;">
                     <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-                        <div style="flex: 1; min-width: 200px; display: flex; align-items: center; gap: 12px;">
-                            <i class="fa-solid fa-box" style="color: #94a3b8; font-size: 1rem;"></i>
-                            <select class="form-control sm-stokkarti" style="flex: 1; background: #ffffff; padding: 8px 12px; border-radius: 6px; border: 1px solid #cbd5e1; font-weight: 600; color: #1e293b; font-size: 0.85rem; cursor: pointer; appearance: auto; box-shadow: 0 1px 2px rgba(0,0,0,0.01);">
+                        <div style="flex: 1; min-width: 250px; display: flex; align-items: center; gap: 12px;">
+                            <i class="fa-solid fa-box" style="color: #94a3b8; font-size: 1.1rem;"></i>
+                            <select class="form-control sm-stokkarti" style="flex: 1; background: #ffffff; padding: 10px 14px; border-radius: 6px; border: 1px solid #cbd5e1; font-weight: 600; color: #1e293b; font-size: 0.9rem; cursor: pointer; appearance: auto; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
                                 ${optionsHtml}
                             </select>
                             <input type="hidden" class="sm-miktar" value="${miktar}" />
                             <input type="hidden" class="sm-aciklama" value="${aciklama}" />
                         </div>
-                        <div class="prop-summary" style="font-size: 0.8rem; color: #3b82f6; font-weight: 500; cursor: pointer; padding: 4px 8px; border-radius: 6px; background: #eff6ff; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;" title="Detayları düzenlemek için tıklayın">
-                            ${aciklama ? '<i class="fa-solid fa-pen-to-square"></i> ' + aciklama : '<i class="fa-solid fa-pen-to-square"></i> Detay'}
+                        <div class="prop-summary" style="font-size: 0.85rem; color: #3b82f6; font-weight: 500; cursor: pointer; padding: 6px 12px; border-radius: 6px; background: #eff6ff; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;" title="Detayları düzenlemek için tıklayın">
+                            ${aciklama ? '<i class="fa-solid fa-pen-to-square"></i> ' + aciklama : '<i class="fa-solid fa-pen-to-square"></i> Özellik Seç'}
                         </div>
                         <div>
-                            <button type="button" class="btnRemoveStockMaterial" style="background: transparent; color: #ef4444; border: none; padding: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-size: 1.1rem;" title="Sil" onmouseover="this.style.color='#b91c1c'; this.style.transform='scale(1.1)'" onmouseout="this.style.color='#ef4444'; this.style.transform='scale(1)'"><i class="fa-solid fa-circle-xmark"></i></button>
+                            <button type="button" class="btnRemoveStockMaterial" style="background: transparent; color: #ef4444; border: none; padding: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-size: 1.2rem;" title="Sil" onmouseover="this.style.color='#b91c1c'; this.style.transform='scale(1.1)'" onmouseout="this.style.color='#ef4444'; this.style.transform='scale(1)'"><i class="fa-solid fa-circle-xmark"></i></button>
                         </div>
                     </div>
-                    <div class="stok-detaylari" style="display:none; padding-top: 10px; margin-top: 4px; border-top: 1px dashed #cbd5e1;"></div>
+                    <div class="stok-detaylari" style="display:none; padding-top: 12px; margin-top: 8px; border-top: 1px dashed #cbd5e1;"></div>
                 </div>
             `;
             $('#stockMaterialsContainer').append(trHtml);
@@ -428,7 +438,6 @@
             if (stokKartiId) {
                 newSelect.trigger('change');
             }
-            updateStockMaterialsJson();
         }
 
         $(document).on('click', '#btnAddStockMaterial', function() {
@@ -438,14 +447,7 @@
 
         $(document).on('click', '.btnRemoveStockMaterial', function() {
             $(this).closest('.stock-material-row').remove();
-            updateStockMaterialsJson();
         });
-
-        function getFormTotalQty() {
-            var t = 0; 
-            $('.row-total-qty').each(function(){ t += parseInt($(this).val()) || 0; });
-            return t;
-        }
 
         $(document).on('change', '.sm-stokkarti', function() {
             var select = $(this);
@@ -460,7 +462,6 @@
             if (!stokId) {
                 detayDiv.empty();
                 row.find('.sm-miktar').prop('readonly', false).css('background', '#f8fafc');
-                updateStockMaterialsJson();
                 return;
             }
 
@@ -472,17 +473,24 @@
                                     <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 8px 16px; border-radius: 10px; font-size: 0.85rem; color: #166534; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-boxes-stacked" style="color: #22c55e;"></i> Mevcut: <b style="font-size: 1rem; color: #15803d; margin-left: 4px;">${stok.MevcutMiktar || 0}</b></div>
                                  </div>`;
                 
+                var initialPropsStr = row.attr('data-initial-props');
                 var initProps = {};
-                row.find('.sm-dyn-prop, .sm-ozellik').each(function() {
-                    var k = $(this).data('key');
-                    var v = $(this).val();
-                    if (k && v) initProps[k.toUpperCase()] = v;
-                });
+                if (initialPropsStr) {
+                    try {
+                        initProps = JSON.parse(initialPropsStr);
+                        row.removeAttr('data-initial-props');
+                    } catch(e) {}
+                } else {
+                    row.find('.sm-dyn-prop, .sm-ozellik').each(function() {
+                        var k = $(this).data('key');
+                        var v = $(this).val();
+                        if (k && v) initProps[k.toUpperCase()] = v;
+                    });
+                }
 
                 var cat = (stok.Kategori || "").trim().toUpperCase();
                 var calcFields = [];
                 var isCalculable = false;
-                var totalQty = getFormTotalQty();
 
                 if (cat === "KUMAŞ" || cat === "KUMAS") {
                     isCalculable = true;
@@ -510,7 +518,6 @@
                                 if (o.Key) {
                                     var existingIdx = calcFields.findIndex(c => c.Key === o.Key.toUpperCase());
                                     if (existingIdx > -1) {
-                                        // Stok kartında tanımlanmışsa varsayılan (hardcoded) olanı ez
                                         calcFields[existingIdx] = { Key: o.Key.toUpperCase(), Type: o.Type || 'text', Def: o.Value || '' };
                                     } else {
                                         extraOzellikler.push(o);
@@ -557,7 +564,7 @@
                          var inputHtml = "";
                          if (f.Type === 'select') {
                              var opts = f.Value.split(',');
-                             inputHtml = `<select class="form-control sm-dyn-prop ${calcClass}" data-key="${f.Key}" style="width:100%; padding: 6px 12px; font-size: 0.85rem; border-radius: 8px; font-weight:600;">
+                             inputHtml = `<select class="form-control sm-dyn-prop ${calcClass}" data-key="${f.Key}" style="width:100%; padding: 8px 12px; font-size: 0.85rem; border-radius: 8px; font-weight:600;">
                                             <option value="">Seçiniz</option>`;
                              opts.forEach(function(o) {
                                  var sel = (o.trim() === pVal) ? 'selected' : '';
@@ -567,12 +574,12 @@
                          } else {
                              var typeAttr = f.Type === 'number' ? 'number' : 'text';
                              var stepAttr = f.Type === 'number' ? 'step="any"' : '';
-                             inputHtml = `<input type="${typeAttr}" ${stepAttr} class="form-control sm-dyn-prop ${calcClass}" data-key="${f.Key}" value="${pVal}" placeholder="${f.Value || '...'}" style="width:100%; font-weight:600; padding: 6px 12px; font-size: 0.85rem; border-radius: 8px;" />`;
+                             inputHtml = `<input type="${typeAttr}" ${stepAttr} class="form-control sm-dyn-prop ${calcClass}" data-key="${f.Key}" value="${pVal}" placeholder="${f.Value || '...'}" style="width:100%; font-weight:600; padding: 8px 12px; font-size: 0.85rem; border-radius: 8px;" />`;
                          }
                          
                          detayHtml += `
-                         <div style="flex: 1 1 0; min-width: 120px; max-width: 220px;">
-                             <label style="font-size: 0.75rem; color: #64748b; margin-bottom: 6px; display: block; font-weight: 600;">${f.Key}</label>
+                         <div style="flex: 1 1 0; min-width: 150px; max-width: 250px;">
+                             <label style="font-size: 0.8rem; color: #64748b; margin-bottom: 6px; display: block; font-weight: 600;">${f.Key}</label>
                              ${inputHtml}
                          </div>`;
                     });
@@ -589,89 +596,43 @@
                 detayDiv.slideUp(300, function() { $(this).empty(); });
                 row.find('.sm-miktar').prop('readonly', false).css('background', '#f8fafc');
             }
-            updateStockMaterialsJson();
+            updateStockSummary(row);
         });
 
         $(document).on('input change', '.sm-calc-trigger', function() {
             var row = $(this).closest('.stock-material-row');
-            var container = row.find('.calc-fields-container');
-            var cat = container.data('cat');
             var miktarInput = row.find('.sm-miktar');
-            
-            function getVal(key) {
-                var v = container.find(`.sm-dyn-prop[data-key="${key}"]`).val();
-                return parseFloat(v) || 0;
-            }
-
             var miktar = 0;
-            if (cat === "KUMAŞ" || cat === "KUMAS") {
-                var adet = getFormTotalQty();
-                var metraj = getVal("BİRİM METRAJ");
-                miktar = adet * metraj;
-            } else if (cat === "MALZEME") {
-                // Malzeme için hesap adeti satın alma planlamasından geldiği için burada Miktar = 0 olarak kalır, özellikler kaydedilir.
-                miktar = 0;
-            } else if (cat === "ETİKET" || cat === "ETIKET") {
-                // Etiket için adetler renk tablosundan satın alma planlamasına gidecek. Burada Miktar = 0 kalır.
-                miktar = 0;
-            } else if (cat === "TELA") {
-                var toplam = getFormTotalQty();
-                var birim = getVal("TELA BİRİM");
-                miktar = toplam * birim;
-            }
-
             if (miktarInput.prop('readonly')) {
                 miktarInput.val(Number.isInteger(miktar) ? miktar : miktar.toFixed(3));
             }
-            updateStockMaterialsJson();
+            updateStockSummary(row);
         });
 
         $(document).on('input change', '.sm-miktar, .sm-aciklama, .sm-dyn-prop', function() {
             if (!$(this).hasClass('sm-calc-trigger')) {
-                updateStockMaterialsJson();
+                updateStockSummary($(this).closest('.stock-material-row'));
             }
         });
 
-        function updateStockMaterialsJson() {
-            var materials = [];
-            $('.stock-material-row').each(function() {
-                var row = $(this);
-                var stokId = parseInt(row.find('.sm-stokkarti').val());
-                var miktar = parseFloat(row.find('.sm-miktar').val()) || 0;
-                var aciklama = row.find('.sm-aciklama').val();
-                
-                var dynProps = [];
-                var propStrs = [];
-                row.find('.sm-dyn-prop').each(function() {
-                    var key = $(this).attr('data-key');
-                    var val = $(this).val();
-                    if (val) {
-                        dynProps.push({ Key: key, Value: val });
-                        if (!["HESAP ADETİ", "BİRİM KULLANIM", "FİRE (%)", "BİRİM METRAJ", "TOPLAM SİPARİŞ", "AÇIK ADET", "BİRİM ASORTİ", "LOT BAŞI BEDEN", "TELA BİRİM", "TELA TİPİ"].includes(key.toUpperCase())) {
-                            propStrs.push(key + ": " + val);
-                        }
+        function updateStockSummary(row) {
+            var dynProps = [];
+            var propStrs = [];
+            row.find('.sm-dyn-prop').each(function() {
+                var key = $(this).attr('data-key');
+                var val = $(this).val();
+                if (val) {
+                    dynProps.push({ Key: key, Value: val });
+                    if (!["HESAP ADETİ", "BİRİM KULLANIM", "FİRE (%)", "BİRİM METRAJ", "TOPLAM SİPARİŞ", "AÇIK ADET", "BİRİM ASORTİ", "LOT BAŞI BEDEN", "TELA BİRİM", "TELA TİPİ"].includes(key.toUpperCase())) {
+                        propStrs.push(key + ": " + val);
                     }
-                });
-                
-                var autoAciklama = propStrs.join(' | ');
-                row.find('.sm-aciklama').val(autoAciklama);
-                row.find('.prop-summary').text(autoAciklama);
-                aciklama = autoAciklama;
-                
-                var ozelliklerJsonStr = dynProps.length > 0 ? JSON.stringify(dynProps) : null;
-                
-                if (stokId > 0) {
-                    materials.push({
-                        StokKartiId: stokId,
-                        Miktar: miktar,
-                        Aciklama: aciklama,
-                        OzelliklerJson: ozelliklerJsonStr
-                    });
                 }
             });
-            $('#orderMaterialsJson').val(JSON.stringify(materials));
+            
+            var autoAciklama = propStrs.join(' | ');
+            row.find('.sm-aciklama').val(autoAciklama);
+            row.find('.prop-summary').html(autoAciklama ? '<i class="fa-solid fa-pen-to-square"></i> ' + autoAciklama : '<i class="fa-solid fa-pen-to-square"></i> Özellik Seç');
         }
-        
 
         $(document).on('click', '.stock-material-row', function(e) {
             if ($(e.target).closest('.btnRemoveStockMaterial, .select2-container, .sm-stokkarti, .stok-detaylari').length > 0) return;
@@ -687,12 +648,8 @@
             }
         });
 
-
-
         $(document).ready(function() {
-            if ($('.stock-material-row').length === 0) {
-                addStockMaterialRow();
-            }
+
             var colorOptionsHtml = '<option value="">-- Renk Seçin --</option>';
             var colorsList = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.Colors ?? new List<UretimPlanlama.Models.ColorDef>()));
             colorsList.forEach(function(c) {
@@ -996,12 +953,25 @@
                 return data;
             }
 
-            if ($('.stock-material-row').length === 0) {
-                addStockMaterialRow();
-            }
-            renderSizeCheckboxes($('#sizeTemplateSelector').val() || "standart");
+            // İsteğe bağlı olduğu için başlangıçta boş gelsin
+            renderSizeCheckboxes($('#sizeTemplateSelector').val() || "");
             renderTableHeaders();
             addNewColorRow();
+
+            $("#btnAddAccessory").click(function() {
+                var wrapper = $("#materialsSectionWrapper");
+                
+                if (wrapper.is(":visible")) {
+                    wrapper.slideUp(300);
+                } else {
+                    wrapper.slideDown(300); // Animasyonlu gösterim
+                    
+                    // Kullanıcıya kolaylık olsun diye otomatik olarak ilk malzeme satırını ekleyelim
+                    if ($("#stockMaterialsContainer").children().length === 0) {
+                        $("#btnAddStockMaterial").click();
+                    }
+                }
+            });
 
             $("#btnAddColorRow").click(function() {
                 addNewColorRow();
@@ -1014,16 +984,39 @@
                     form.reportValidity();
                     return;
                 }
-                var materialsJson = $("#orderMaterialsJson").val();
-                if (!materialsJson || materialsJson === "[]") {
-                    showToast("Lütfen 'Kullanılacak Malzemeler (Stoktan Seçim)' bölümünden en az bir malzeme ekleyin.", "danger");
-                    var container = $("#stockMaterialsContainer").parent();
-                    container.addClass("shake");
-                    setTimeout(function() { container.removeClass("shake"); }, 500);
-                    $('html, body').animate({ scrollTop: container.offset().top - 100 }, 500);
-                    return;
-                }
+                
+                // MALZEMELERİ TOPLA
+                var materials = [];
+                $('.stock-material-row').each(function() {
+                    var row = $(this);
+                    var stokId = parseInt(row.find('.sm-stokkarti').val());
+                    var miktar = parseFloat(row.find('.sm-miktar').val()) || 0;
+                    var aciklama = row.find('.sm-aciklama').val();
+                    
+                    var dynProps = [];
+                    row.find('.sm-dyn-prop').each(function() {
+                        var key = $(this).attr('data-key');
+                        var val = $(this).val();
+                        if (val) {
+                            dynProps.push({ Key: key, Value: val });
+                        }
+                    });
+                    var ozelliklerJsonStr = dynProps.length > 0 ? JSON.stringify(dynProps) : null;
+                    
+                    if (stokId > 0) {
+                        materials.push({
+                            StokKartiId: stokId,
+                            Miktar: miktar,
+                            Aciklama: aciklama,
+                            OzelliklerJson: ozelliklerJsonStr
+                        });
+                    }
+                });
+                
+                $("#orderMaterialsJson").val(JSON.stringify(materials));
 
+                var materialsJson = $("#orderMaterialsJson").val();
+                
                 var rowsData = getSavedRowsData();
                 if (rowsData.length === 0) {
                     showToast("Lütfen en az bir renk/satır ekleyin.", "danger");

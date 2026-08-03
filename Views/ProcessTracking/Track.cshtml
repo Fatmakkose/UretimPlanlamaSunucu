@@ -59,78 +59,64 @@
             <a href="/ProcessTracking" style="display: inline-flex; align-items: center; gap: 6px; background: #f1f5f9; color: #475569; padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 0.8rem; text-decoration: none; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);" onmouseover="this.style.background='#e2e8f0'; this.style.color='#0f172a';" onmouseout="this.style.background='#f1f5f9'; this.style.color='#475569';">
                 <i class="fa-solid fa-arrow-left"></i> Geri Dön
             </a>
-            <span style="font-size: 0.8rem; color: #94a3b8; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;">
-                SÜREÇ TAKİP DETAYI
-            </span>
-        </div>
-        <div style="display: flex; align-items: baseline; gap: 8px; user-select: none;">
-            <h2 style="margin: 0; color: #0f172a; padding-bottom: 2px;">@Model.OrderCode</h2>
         </div>
     </div>
 </div>
 
-<ul class="nav nav-tabs" id="trackTabs" style="margin-bottom: 20px; @(ViewBag.Step != null ? "display:none;" : "")">
-    <li class="nav-item">
-        <button class="nav-link active" onclick="switchTab('purchase')" id="purchase-tab">Sevk Onay</button>
-    </li>
-    <li class="nav-item">
-        <button class="nav-link" onclick="switchTab('timeline')" id="timeline-tab" style="background: #fdf4ff; color: #a21caf;">Takvim & Planlama <i class="fa-solid fa-calendar-check"></i></button>
-    </li>
-    <li class="nav-item">
-        <button class="nav-link" onclick="switchTab('cutting')" id="cutting-tab">Kesim Süreci</button>
-    </li>
-    <li class="nav-item">
-        <button class="nav-link" onclick="switchTab('packing')" id="packing-tab">Çeki Listesi</button>
-    </li>
-    <li class="nav-item">
-        <button class="nav-link" onclick="switchTab('fileclosing')" id="fileclosing-tab" style="background: #fdf4ff; color: #db2777;">Dosya Kapama <i class="fa-solid fa-file-signature"></i></button>
-    </li>
-</ul>
-
-<div class="tabs-container">
-    <div class="tab-content" id="trackTabsContent">
-        
-        <!-- BİRLEŞTİRİLMİŞ SİPARİŞ ÖZELLİKLERİ ÜST ALANI -->
-        <div id="orderDetailsCard" style="margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid #e2e8f0;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 14px;">
-                <h3 style="margin: 0; font-weight: 800; color: #0f172a; font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
-                    <i class="fa-solid fa-box-open" style="color: #0ea5e9; font-size: 1.25rem;"></i> Sipariş Özellikleri
-                </h3>
-            </div>
+        <!-- LCW SUPPLIER TARZI ASILI KARTLAR (HANGING CARDS) -->
+        <div style="margin-bottom: 25px; display: flex; gap: 12px; flex-wrap: wrap; z-index: 100; position: sticky; top: -1px; background: rgba(248, 250, 252, 0.95); backdrop-filter: blur(8px); padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,0.05);">
             
-            <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px;">
-                <div style="background: #f8fafc; padding: 10px 14px; border-radius: 8px; border: 1px solid #f1f5f9;">
-                    <div style="font-size: 0.72rem; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.6px;">MODEL</div>
-                    <div style="font-weight: 700; color: #0f172a; font-size: 0.95rem;">@Model.ModelName</div>
+            <!-- Sipariş Kodu -->
+            <div style="flex: 1; min-width: 120px; background: #fff; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03); padding: 10px 14px; border: 1px solid #e2e8f0; position: relative; border-bottom: 3px solid #3b82f6;">
+                <div style="font-size: 0.6rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-hashtag" style="color: #94a3b8;"></i> SİPARİŞ KODU</div>
+                <div style="font-size: 0.85rem; font-weight: 800; color: #0f172a; word-wrap: break-word;">@Model.OrderCode</div>
+            </div>
+
+            <!-- Model -->
+            <div style="flex: 1.5; min-width: 130px; background: #fff; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03); padding: 10px 14px; border: 1px solid #e2e8f0; position: relative; border-bottom: 3px solid #0ea5e9;">
+                <div style="font-size: 0.6rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-barcode" style="color: #94a3b8;"></i> MODEL</div>
+                <div style="font-size: 0.85rem; font-weight: 700; color: #0f172a; word-wrap: break-word;" title="@Model.ModelName">@Model.ModelName</div>
+            </div>
+
+            <!-- Renk -->
+            <div style="flex: 1; min-width: 110px; background: #fff; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03); padding: 10px 14px; border: 1px solid #e2e8f0; position: relative; border-bottom: 3px solid #8b5cf6;">
+                <div style="font-size: 0.6rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-palette" style="color: #94a3b8;"></i> RENK</div>
+                <div style="font-size: 0.85rem; font-weight: 700; color: #0f172a; word-wrap: break-word;" title="@Model.Color">@Model.Color</div>
+            </div>
+
+            <!-- Müşteri -->
+            <div style="flex: 1.5; min-width: 130px; background: #fff; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03); padding: 10px 14px; border: 1px solid #e2e8f0; position: relative; border-bottom: 3px solid #10b981;">
+                <div style="font-size: 0.6rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-building" style="color: #94a3b8;"></i> MÜŞTERİ</div>
+                <div style="font-size: 0.85rem; font-weight: 700; color: #0f172a; word-wrap: break-word;" title="@Model.Customer">@Model.Customer</div>
+            </div>
+
+            <!-- Atölye -->
+            <div style="flex: 1.5; min-width: 130px; background: #fff; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03); padding: 10px 14px; border: 1px solid #e2e8f0; position: relative; border-bottom: 3px solid #d946ef;">
+                <div style="font-size: 0.6rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-industry" style="color: #94a3b8;"></i> ATÖLYE</div>
+                <div style="font-size: 0.85rem; font-weight: 700; color: #0f172a; word-wrap: break-word;">
+                    @{
+                        var atolyeInfo = GetProdVal("prod_dikim_atolyesi");
+                        if (string.IsNullOrEmpty(atolyeInfo)) { atolyeInfo = Model.SewingWorkshop ?? Model.ProductionPlace; }
+                        <text>@(string.IsNullOrEmpty(atolyeInfo) ? "-" : atolyeInfo)</text>
+                    }
                 </div>
-                <div style="background: #f8fafc; padding: 10px 14px; border-radius: 8px; border: 1px solid #f1f5f9;">
-                    <div style="font-size: 0.72rem; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.6px;">RENK</div>
-                    <div style="font-weight: 700; color: #0f172a; font-size: 0.95rem;">@Model.Color</div>
+            </div>
+
+            <!-- Adet -->
+            <div style="flex: 1; min-width: 90px; background: #fffbeb; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03); padding: 10px 14px; border: 1px solid #fef3c7; position: relative; border-bottom: 3px solid #f59e0b;">
+                <div style="font-size: 0.6rem; color: #b45309; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-calculator" style="color: #fbbf24;"></i> ADET</div>
+                <div style="font-size: 0.95rem; font-weight: 800; color: #92400e;">@Model.CalculatedQuantity.ToString("N0")</div>
+            </div>
+
+            <!-- Termin & Revize -->
+            <div style="flex: 1.5; min-width: 140px; background: #fff; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03); padding: 10px 14px; border: 1px solid #e2e8f0; position: relative; border-bottom: 3px solid #ef4444; display: flex; flex-direction: column; justify-content: center; gap: 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="font-size: 0.6rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">TERMİN:</div>
+                    <div style="font-weight: 700; color: #0f172a; font-size: 0.75rem;">@(Model.PlannedPackagingEndDate.HasValue ? Model.PlannedPackagingEndDate.Value.ToString("dd.MM.yyyy") : "-")</div>
                 </div>
-                <div style="background: #f8fafc; padding: 10px 14px; border-radius: 8px; border: 1px solid #f1f5f9;">
-                    <div style="font-size: 0.72rem; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.6px;">MÜŞTERİ</div>
-                    <div style="font-weight: 700; color: #0f172a; font-size: 0.95rem;">@Model.Customer</div>
-                </div>
-                <div style="background: #fdf4ff; padding: 10px 14px; border-radius: 8px; border: 1px solid #fae8ff;">
-                    <div style="font-size: 0.72rem; color: #a21caf; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.6px;">ATÖLYE</div>
-                    <div style="font-weight: 700; color: #701a75; font-size: 0.95rem;">
-                        @{
-                            var atolyeInfo = GetProdVal("prod_dikim_atolyesi");
-                            <text>@(string.IsNullOrEmpty(atolyeInfo) ? "-" : atolyeInfo)</text>
-                        }
-                    </div>
-                </div>
-                <div style="background: #f8fafc; padding: 10px 14px; border-radius: 8px; border: 1px solid #f1f5f9;">
-                    <div style="font-size: 0.72rem; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.6px;">ADET</div>
-                    <div style="font-weight: 700; color: #0f172a; font-size: 0.95rem;">@Model.CalculatedQuantity.ToString("N0")</div>
-                </div>
-                <div style="background: #f0f9ff; padding: 10px 14px; border-radius: 8px; border: 1px solid #e0f2fe;">
-                    <div style="font-size: 0.72rem; color: #0284c7; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.6px;">TERMİN TARİHİ</div>
-                    <div style="font-weight: 700; color: #0c4a6e; font-size: 0.95rem;">@(Model.PlannedPackagingEndDate.HasValue ? Model.PlannedPackagingEndDate.Value.ToString("dd.MM.yyyy") : "-")</div>
-                </div>
-                <div style="background: #fdf2f8; padding: 10px 14px; border-radius: 8px; border: 1px solid #fce7f3;">
-                    <div style="font-size: 0.72rem; color: #db2777; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.6px;">REVİZE TERMİN</div>
-                    <div style="font-weight: 700; color: #9d174d; font-size: 0.95rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="font-size: 0.6rem; color: #dc2626; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">REVİZE:</div>
+                    <div style="font-weight: 700; color: #dc2626; font-size: 0.75rem;">
                         @{
                             var revizeTermin = Model.RevisedInspectionDate.HasValue 
                                 ? Model.RevisedInspectionDate.Value.ToString("dd.MM.yyyy") 
@@ -145,6 +131,10 @@
                                     {
                                         revizeTermin = dtRevize.ToString("dd.MM.yyyy");
                                     }
+                                    else if (DateTime.TryParseExact(revizeTerminStr, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out DateTime revizeTerminExact))
+                                    {
+                                        revizeTermin = revizeTerminExact.ToString("dd.MM.yyyy");
+                                    }
                                     else
                                     {
                                         revizeTermin = revizeTerminStr;
@@ -158,19 +148,44 @@
             </div>
         </div>
 
+<ul class="nav nav-tabs" id="trackTabs" style="margin-bottom: 20px;">
+    <li class="nav-item">
+        <button class="nav-link active" onclick="switchTab('purchase')" id="purchase-tab">Sevk Onay</button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" onclick="switchTab('timeline')" id="timeline-tab" style="background: #fdf4ff; color: #a21caf;">CPS <i class="fa-solid fa-calendar-check"></i></button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" onclick="switchTab('cutting')" id="cutting-tab">Kesim Süreci</button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" onclick="switchTab('packing')" id="packing-tab">Çeki Listesi</button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" onclick="switchTab('fileclosing')" id="fileclosing-tab" style="background: #fdf4ff; color: #db2777;">Dosya Kapama <i class="fa-solid fa-file-signature"></i></button>
+    </li>
+</ul>
+
+<div class="tabs-container">
+    <div class="tab-content" id="trackTabsContent">
+
         <!-- SEVK ONAY (ESKİ SATIN ALMA ONAYI) TAB -->
         <div class="tab-pane active" id="purchase">
-            <div style="border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; margin-top: 0;">
-                <table style="margin: 0; width: 100%; border-collapse: collapse;">
-                    <thead style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
-                        <tr>
-                            <th style="padding: 16px; text-align: left; font-weight: 600; color: #475569; font-size: 0.85rem; border-right: 1px solid #e2e8f0;">MALZEME</th>
-                            <th style="padding: 16px; text-align: right; font-weight: 600; color: #b45309; font-size: 0.85rem; background: #fef08a; border-right: 1px solid #e2e8f0;">PLANLANAN MİKTAR</th>
-                            <th style="padding: 16px; text-align: center; font-weight: 600; color: #0284c7; font-size: 0.85rem; background: #e0f2fe; border-right: 1px solid #e2e8f0;">KNN DEPO</th>
-                            <th style="padding: 16px; text-align: center; font-weight: 600; color: #475569; font-size: 0.85rem;">KARŞILAŞTIRMA</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+            <div style="margin-bottom: 20px; max-width: 1050px; margin-left: auto; margin-right: auto;">
+                <h4 style="margin: 0 0 16px 0; color: #0f172a; font-size: 1.25rem; font-weight: 800; display: flex; align-items: center; gap: 10px; justify-content: center;">
+                    <i class="fa-solid fa-clipboard-check" style="color: #0369a1;"></i> Malzeme Yeterlilik Kontrolü
+                </h4>
+                <div style="background: #fff; border: 1px solid #cbd5e1; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 14px; font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+                        <thead style="background: #e2e8f0; border-bottom: 2px solid #cbd5e1;">
+                            <tr>
+                                <th style="padding: 14px 16px; text-align: left; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.85rem; width: 45%;">MALZEME</th>
+                                <th style="padding: 14px 16px; text-align: right; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.85rem;">PLANLANAN MİKTAR</th>
+                                <th style="padding: 14px 16px; text-align: right; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.85rem;">KNN DEPO</th>
+                                <th style="padding: 14px 16px; text-align: center; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.85rem;">KARŞILAŞTIRMA</th>
+                            </tr>
+                        </thead>
+                        <tbody>
                     @{
                         string ExtractFromOzellikler(string json, string keyContains) {
                             if (string.IsNullOrEmpty(json)) return null;
@@ -354,18 +369,20 @@
                                 ? "STOK YETERLİ" 
                                 : "YETERSİZ STOK (" + fark.ToString("N0") + ")";
 
-                            <tr>
-                                <td style="padding: 16px; border-right: 1px solid #e2e8f0; font-weight: 600; color: #1e293b;">
+                            <tr style="background: #ffffff; border-bottom: 1px solid #f1f5f9; transition: all 0.2s ease;" onmouseover="this.style.background='#f1f5f9'; this.style.boxShadow='inset 4px 0 0 #0ea5e9';" onmouseout="this.style.background='#ffffff'; this.style.boxShadow='none';">
+                                <td style="padding: 12px 16px; color: #1e293b; font-weight: 600;">
                                     @matName
                                 </td>
-                                <td style="padding: 16px; text-align: right; border-right: 1px solid #e2e8f0; font-weight: 800; font-size: 1.1rem; color: #b45309; background: #fffbeb;">
+                                <td style="padding: 12px 16px; text-align: right; color: #64748b; font-weight: 500;">
                                     @planMiktar.ToString("N2")
                                 </td>
-                                <td style="padding: 16px; text-align: center; border-right: 1px solid #e2e8f0; background: #f0f9ff;">
-                                    <input type="text" readonly class="form-control" value="@sevkMiktar.ToString("N2")" style="text-align: center; font-weight: 700; background: white; border: 1px solid #bae6fd; color: #0369a1; width: 140px; margin: 0 auto;" />
+                                <td style="padding: 12px 16px; text-align: right; color: #0f172a; font-weight: 700;">
+                                    @sevkMiktar.ToString("N2")
                                 </td>
-                                <td style="padding: 16px; text-align: center;">
-                                    <span class="badge" style="padding: 8px 14px; font-size: 0.85rem; font-weight: 700; border-radius: 20px; @statusBadgeStyle">@statusBadgeText</span>
+                                <td style="padding: 12px 16px; text-align: center;">
+                                    <span style="font-weight: 700; font-size: 12px; padding: 4px 10px; border-radius: 6px; display: inline-block; @statusBadgeStyle">
+                                        @statusBadgeText
+                                    </span>
                                 </td>
                             </tr>
                         }
@@ -373,20 +390,23 @@
                     else
                     {
                         <tr>
-                            <td colspan="4" style="text-align: center; padding: 40px; color: #64748b;">
-                                <i class="fa-solid fa-boxes-stacked" style="font-size: 2.5rem; margin-bottom: 12px; opacity: 0.5;"></i>
-                                <p style="margin: 0; font-size: 1rem; font-weight: 600;">Bu siparişe tanımlı malzeme bulunmuyor.</p>
+                            <td colspan="4" style="padding: 40px; text-align: center; color: #64748b;">
+                                <i class="fa-solid fa-boxes-stacked" style="font-size: 2rem; margin-bottom: 12px; opacity: 0.4;"></i>
+                                <p style="margin: 0; font-weight: 500;">Bu siparişe ait malzeme kaydı bulunamadı.</p>
                             </td>
                         </tr>
                     }
                     </tbody>
                 </table>
+                </div>
             </div>
-            <div class="text-end mt-3 mb-2" style="display: flex; justify-content: flex-end; gap: 10px;">
-                <button class="btn btn-outline-secondary" style="background: white; border: 1px solid #cbd5e1; color: #475569;" onclick="printDispatchSlip()">
+            <div class="text-end mt-4 mb-2" style="display: flex; justify-content: flex-end; gap: 12px;">
+                <button class="btn" style="background: #ffffff; color: #475569; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 24px; font-weight: 600; font-size: 0.95rem; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); transition: all 0.3s ease; display: inline-flex; align-items: center;" onmouseover="this.style.background='#f8fafc'; this.style.borderColor='#94a3b8'; this.style.color='#0f172a'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='#ffffff'; this.style.borderColor='#cbd5e1'; this.style.color='#475569'; this.style.transform='translateY(0)';" onclick="printDispatchSlip()">
                     <i class="fa-solid fa-print" style="margin-right: 6px;"></i> Çıkış Fişi Yazdır
                 </button>
-                <button class="btn btn-primary" onclick="processSevkExit()">Kaydet ve Devam Et <i class="fa-solid fa-arrow-right" style="margin-left: 8px;"></i></button>
+                <button class="btn" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border: none; border-radius: 8px; padding: 10px 24px; font-weight: 600; font-size: 0.95rem; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2), 0 2px 4px -1px rgba(37, 99, 235, 0.1); transition: all 0.3s ease; display: inline-flex; align-items: center;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 8px -1px rgba(37, 99, 235, 0.3), 0 4px 6px -1px rgba(37, 99, 235, 0.2)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px -1px rgba(37, 99, 235, 0.2), 0 2px 4px -1px rgba(37, 99, 235, 0.1)';" onclick="processSevkExit()">
+                    Kaydet ve Devam Et <i class="fa-solid fa-arrow-right" style="margin-left: 8px;"></i>
+                </button>
             </div>
         </div>
     </div>
@@ -669,18 +689,18 @@
                 <tbody id="cuttingEntryAcik" style="display: none; background: #f0fdf4; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);">
                     <tr>
                         <td style="vertical-align: middle; text-align: center;"><span style="font-size: 0.75rem; color: #166534; font-weight: 800; text-transform: uppercase;">YENİ KAYIT</span></td>
-                        <td style="vertical-align: middle;"><input type="number" id="txtAcikMultiplier" class="form-control form-control-sm" value="1" oninput="calculateAcik()" style="min-width: 60px; max-width: 70px; padding: 4px; text-align: center; font-weight: bold;" /></td>
+                        <td style="vertical-align: middle;"><input type="number" id="txtAcikMultiplier" class="form-control form-control-sm" value="1" oninput="calculateAcik()" style="min-width: 80px; padding: 4px;; text-align: center; font-weight: bold;" /></td>
                         @if (sizesObj.Count > 0) {
                             foreach (var k in sizesObj.Keys) {
-                                <td style="vertical-align: middle;"><input type="number" id="txtAcikSize_@k" class="form-control form-control-sm acik-adet-input-row" data-size="@k" placeholder="0" oninput="calculateAcik()" style="min-width: 55px; max-width: 65px; padding: 4px; text-align: center; font-weight: bold;" /></td>
+                                <td style="vertical-align: middle;"><input type="number" id="txtAcikSize_@k" class="form-control form-control-sm acik-adet-input-row" data-size="@k" value="0" oninput="calculateAcik()" style="min-width: 75px; padding: 4px;; text-align: center; font-weight: bold;" /></td>
                             }
                         } else {
                             <td style="vertical-align: middle;">-</td>
                         }
-                        <td style="vertical-align: middle;"><input type="number" id="txtAcikTotal" class="form-control form-control-sm" readonly style="min-width: 75px; max-width: 85px; padding: 4px; text-align: center; background: #dcfce7; font-weight: bold; color: #166534;" /></td>
-                        <td style="vertical-align: middle;"><input type="number" id="txtAcikMarkerLength" class="form-control form-control-sm" placeholder="0" step="0.01" oninput="calculateAcik()" style="min-width: 75px; max-width: 85px; padding: 4px; text-align: center; font-weight: bold;" /></td>
-                        <td style="vertical-align: middle;"><input type="number" id="txtAcikUnitMeterage" class="form-control form-control-sm" readonly style="min-width: 75px; max-width: 85px; padding: 4px; text-align: center; background: #dcfce7; font-weight: bold; color: #166534;" /></td>
-                        <td style="vertical-align: middle;"><input type="date" id="txtAcikDate" class="form-control form-control-sm" value="@DateTime.Now.ToString("yyyy-MM-dd")" style="min-width: 110px; padding: 4px; font-weight: bold;" /></td>
+                        <td style="vertical-align: middle;"><input type="number" id="txtAcikTotal" class="form-control form-control-sm" readonly style="min-width: 95px; padding: 4px;; text-align: center; background: #dcfce7; font-weight: bold; color: #166534;" /></td>
+                        <td style="vertical-align: middle;"><input type="number" id="txtAcikMarkerLength" class="form-control form-control-sm" value="0" step="0.01" oninput="calculateAcik()" style="min-width: 95px; padding: 4px;; text-align: center; font-weight: bold;" /></td>
+                        <td style="vertical-align: middle;"><input type="number" id="txtAcikUnitMeterage" class="form-control form-control-sm" readonly style="min-width: 95px; padding: 4px;; text-align: center; background: #dcfce7; font-weight: bold; color: #166534;" /></td>
+                        <td style="vertical-align: middle;"><input type="date" id="txtAcikDate" class="form-control form-control-sm" value="@DateTime.Now.ToString("yyyy-MM-dd")" style="min-width: 115px; font-weight: bold;" /></td>
                         <td style="vertical-align: middle; text-align: center;">
                             <div style="display: flex; gap: 4px; justify-content: center;">
                                 <button class="btn btn-success btn-sm" onclick="saveAcikRow()" title="Kaydet"><i class="fa-solid fa-check"></i></button>
@@ -743,18 +763,18 @@
                 <tbody id="cuttingEntryAsorti" style="display: none; background: #f0fdf4; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);">
                     <tr>
                         <td style="vertical-align: middle; text-align: center;"><span style="font-size: 0.75rem; color: #166534; font-weight: 800; text-transform: uppercase;">YENİ KAYIT</span></td>
-                        <td style="vertical-align: middle;"><input type="number" id="txtAsortiMultiplier" class="form-control form-control-sm" value="1" oninput="calculateAsorti()" style="min-width: 60px; max-width: 70px; padding: 4px; text-align: center; font-weight: bold;" /></td>
+                        <td style="vertical-align: middle;"><input type="number" id="txtAsortiMultiplier" class="form-control form-control-sm" value="1" oninput="calculateAsorti()" style="min-width: 80px; padding: 4px;; text-align: center; font-weight: bold;" /></td>
                         @if (asortiObj.Count > 0) {
                             foreach (var kvp in asortiObj) {
-                                <td style="vertical-align: middle;"><input type="number" id="txtAsortiSize_@kvp.Key" class="form-control form-control-sm asorti-input-row" data-size="@kvp.Key" data-asortivalue="@kvp.Value" value="@kvp.Value" readonly style="min-width: 55px; max-width: 65px; padding: 4px; text-align: center; font-weight: bold; background: #f1f5f9; cursor: not-allowed;" /></td>
+                                <td style="vertical-align: middle;"><input type="number" id="txtAsortiSize_@kvp.Key" class="form-control form-control-sm asorti-input-row" data-size="@kvp.Key" data-asortivalue="@kvp.Value" value="@kvp.Value" readonly style="min-width: 75px; padding: 4px;; text-align: center; font-weight: bold; background: #f1f5f9; cursor: not-allowed;" /></td>
                             }
                         } else {
                             <td style="vertical-align: middle;">-</td>
                         }
-                        <td style="vertical-align: middle;"><input type="number" id="txtAsortiTotal" class="form-control form-control-sm" readonly style="min-width: 75px; max-width: 85px; padding: 4px; text-align: center; background: #dcfce7; font-weight: bold; color: #166534;" /></td>
-                        <td style="vertical-align: middle;"><input type="number" id="txtAsortiMarkerLength" class="form-control form-control-sm" placeholder="0" step="0.01" oninput="calculateAsorti()" style="min-width: 75px; max-width: 85px; padding: 4px; text-align: center; font-weight: bold;" /></td>
-                        <td style="vertical-align: middle;"><input type="number" id="txtAsortiUnitMeterage" class="form-control form-control-sm" readonly style="min-width: 75px; max-width: 85px; padding: 4px; text-align: center; background: #dcfce7; font-weight: bold; color: #166534;" /></td>
-                        <td style="vertical-align: middle;"><input type="date" id="txtAsortiDate" class="form-control form-control-sm" value="@DateTime.Now.ToString("yyyy-MM-dd")" style="min-width: 110px; padding: 4px; font-weight: bold;" /></td>
+                        <td style="vertical-align: middle;"><input type="number" id="txtAsortiTotal" class="form-control form-control-sm" readonly style="min-width: 95px; padding: 4px;; text-align: center; background: #dcfce7; font-weight: bold; color: #166534;" /></td>
+                        <td style="vertical-align: middle;"><input type="number" id="txtAsortiMarkerLength" class="form-control form-control-sm" value="0" step="0.01" oninput="calculateAsorti()" style="min-width: 95px; padding: 4px;; text-align: center; font-weight: bold;" /></td>
+                        <td style="vertical-align: middle;"><input type="number" id="txtAsortiUnitMeterage" class="form-control form-control-sm" readonly style="min-width: 95px; padding: 4px;; text-align: center; background: #dcfce7; font-weight: bold; color: #166534;" /></td>
+                        <td style="vertical-align: middle;"><input type="date" id="txtAsortiDate" class="form-control form-control-sm" value="@DateTime.Now.ToString("yyyy-MM-dd")" style="min-width: 115px; font-weight: bold;" /></td>
                         <td style="vertical-align: middle; text-align: center;">
                             <div style="display: flex; gap: 4px; justify-content: center;">
                                 <button class="btn btn-success btn-sm" onclick="saveAsortiRow()" title="Kaydet"><i class="fa-solid fa-check"></i></button>
@@ -821,9 +841,6 @@
                 background-color: transparent !important;
                 border: 1px solid black !important;
             }
-            .d-print-none {
-                display: none !important;
-            }
             /* Prevent other tabs and layout wrappers from taking up space and creating blank pages */
             .tab-content > .tab-pane:not(#packing) {
                 display: none !important;
@@ -835,12 +852,17 @@
             }
         </style>
         <div class="tab-pane" id="packing">
-            <div class="d-print-none" style="display: flex; justify-content: flex-end; width: 100%; margin-bottom: 25px; margin-top: 10px;">
-                <button type="button" onclick="window.print()" style="background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none; padding: 12px 24px; border-radius: 10px; font-weight: 600; font-size: 1.05rem; cursor: pointer; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3); transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 10px;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 15px rgba(37, 99, 235, 0.4)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 10px rgba(37, 99, 235, 0.3)';">
-                    <i class="fa-solid fa-print" style="font-size: 1.2rem;"></i>
-                    Çeki Listesini Yazdır
-                </button>
+            
+            <div style="margin-bottom: 15px; display: flex; gap: 10px; justify-content: flex-end; align-items: center; background: #f8fafc; padding: 12px 20px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="printSection('asorti')"><i class="fa-solid fa-print"></i> Asorti Yazdır</button>
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="printSection('acik')"><i class="fa-solid fa-print"></i> Açık Adet Yazdır</button>
+                <button type="button" class="btn btn-sm btn-primary" onclick="printSection('all')"><i class="fa-solid fa-print"></i> Tümünü Yazdır</button>
             </div>
+            
+            <style>
+                .selected-cell { background-color: #dbeafe !important; outline: 2px solid #3b82f6 !important; }
+            </style>
+
             <div id="printArea" style="background: white; padding: 20px; color: black; font-family: Arial, sans-serif;">
                 <!-- Başlık ve Logolar -->
                 <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 20px;">
@@ -853,24 +875,25 @@
                 <!-- Üst Bilgi Tablosu -->
                 <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
                     <table style="border-collapse: collapse; width: 40%;">
-                        <tr><td style="border: 1px solid black; padding: 4px 8px; font-weight: bold; width: 40%;">MÜMESSİL</td><td style="border: 1px solid black; padding: 4px 8px;" contenteditable="true">KANUNİ TEKSTİL</td></tr>
-                        <tr><td style="border: 1px solid black; padding: 4px 8px; font-weight: bold;">ÜRETİCİ ADI</td><td style="border: 1px solid black; padding: 4px 8px;" contenteditable="true">SADE GİYİM</td></tr>
-                        <tr><td style="border: 1px solid black; padding: 4px 8px; font-weight: bold;">INSPECTION TALEP NO</td><td style="border: 1px solid black; padding: 4px 8px;" contenteditable="true"></td></tr>
+                        <tr><td style="border: 1px solid black; padding: 4px 8px; font-weight: bold; width: 40%;">MÜMESSİL</td><td style="border: 1px solid black; padding: 4px 8px;">KANUNİ TEKSTİL</td></tr>
+                        <tr><td style="border: 1px solid black; padding: 4px 8px; font-weight: bold;">ÜRETİCİ ADI</td><td style="border: 1px solid black; padding: 4px 8px;">SADE GİYİM</td></tr>
+                        <tr><td style="border: 1px solid black; padding: 4px 8px; font-weight: bold;">INSPECTION TALEP NO</td><td style="border: 1px solid black; padding: 4px 8px;"></td></tr>
                     </table>
                     
                     <table style="border-collapse: collapse; width: 30%; text-align: center;">
                         <tr><td style="border: 1px solid black; padding: 4px 8px; font-weight: bold;">INSPECTION TARİHİ</td></tr>
-                        <tr><td style="border: 1px solid black; padding: 4px 8px;" contenteditable="true">@DateTime.Now.ToString("dd.MM.yyyy")</td></tr>
+                        <tr><td style="border: 1px solid black; padding: 4px 8px;">@DateTime.Now.ToString("dd.MM.yyyy")</td></tr>
                     </table>
                 </div>
 
                 <!-- A SORTİLİ BÖLÜMÜ -->
+                <div id="printAsortiArea">
                 @{
                     string asortiSpecialCode = !string.IsNullOrEmpty(Model.AsortiSpecialCode) ? Model.AsortiSpecialCode : (!string.IsNullOrEmpty(Model.OptionCode) ? Model.OptionCode : "");
                     string openSpecialCode = !string.IsNullOrEmpty(Model.OpenSpecialCode) ? Model.OpenSpecialCode : (!string.IsNullOrEmpty(Model.OptionCode) ? Model.OptionCode : "");
                 }
                 <h5 style="text-align: center; font-weight: bold; margin-bottom: 5px;">A SORTİLİ</h5>
-                <table style="border-collapse: collapse; width: 100%; text-align: center; font-size: 0.9rem; margin-bottom: 10px;">
+                <table style="border-collapse: collapse; width: 100%; text-align: center; font-size: 0.9rem; margin-bottom: 30px;">
                     <thead>
                         <tr style="background: #f0f0f0;">
                             <th style="border: 1px solid black; padding: 8px;">SİPARİŞ NUMARASI</th>
@@ -885,33 +908,41 @@
                             <th style="border: 1px solid black; padding: 8px;">ADET</th>
                         </tr>
                     </thead>
-                    <tbody id="asortili-tbody">
+                    <tbody>
                         <tr>
-                            <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@Model.OrderCode</td>
-                            <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">BUB</td>
-                            <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@asortiSpecialCode</td>
-                            <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@Model.Color</td>
-                            <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@Model.ModelName</td>
+                            <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@Model.OrderCode</td>
+                            <td style="border: 1px solid black; padding: 8px; font-weight: bold;">BUB</td>
+                            <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@asortiSpecialCode</td>
+                            <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@Model.Color</td>
+                            <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@Model.ModelName</td>
                             <td style="border: 1px solid black; padding: 8px; background-color: #fefce8; cursor: text;" contenteditable="true" title="Manuel düzenleyebilirsiniz"></td>
-                            <td style="border: 1px solid black; padding: 8px;" contenteditable="true">@packingQty</td>
+                            <td style="border: 1px solid black; padding: 8px;">@packingQty</td>
                             <td style="border: 1px solid black; padding: 8px; background-color: #fefce8; cursor: text;" contenteditable="true" title="Manuel düzenleyebilirsiniz"></td>
                             <td style="border: 1px solid black; padding: 8px; background-color: #fefce8; cursor: text;" contenteditable="true" title="Manuel düzenleyebilirsiniz"></td>
-                            <td style="border: 1px solid black; padding: 8px;" contenteditable="true">@packingQty</td>
+                            <td style="border: 1px solid black; padding: 8px;">@packingQty</td>
                         </tr>
-                        <tr class="asortili-spacer"><td colspan="10" style="border: 1px solid black; padding: 20px;"></td></tr>
-                        <tr id="asortili-totals-row">
+                        <tr><td colspan="10" style="border: 1px solid black; padding: 20px;"></td></tr>
+                        <tr>
                             <td colspan="5" style="border: 1px solid black; padding: 8px; text-align: right; font-weight: bold;">TOPLAM</td>
                             <td style="border: 1px solid black; padding: 8px; font-weight: bold; background-color: #fefce8; cursor: text;" contenteditable="true" title="Manuel düzenleyebilirsiniz"></td>
-                            <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@packingQty</td>
+                            <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@packingQty</td>
                             <td colspan="2" style="border: 1px solid black; padding: 8px;"></td>
-                            <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@packingQty</td>
+                            <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@packingQty</td>
                         </tr>
                     </tbody>
                 </table>
-                <button type="button" class="btn btn-sm btn-outline-primary d-print-none mb-4" onclick="addAsortiliRow()"><i class="fa-solid fa-plus"></i> Satır Ekle</button>
 
+                </div> <!-- End printAsortiArea -->
                 <!-- AÇIK ADET BÖLÜMÜ -->
-                <h5 style="font-weight: bold; margin-bottom: 5px;">AÇIK ADET</h5>
+                <div id="printAcikAdetArea">
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                    <h5 style="font-weight: bold; margin: 0;">AÇIK ADET</h5>
+                    <div class="merge-toolbar no-print" style="display: flex; gap: 8px;">
+                        <button type="button" class="btn btn-sm" style="background: #e2e8f0; color: #475569; border: none; border-radius: 6px; font-weight: 600; padding: 4px 10px; font-size: 0.8rem;" onclick="mergeSelectedCells()"><i class="fa-solid fa-link"></i> Seçili Hücreleri Birleştir</button>
+                        <button type="button" class="btn btn-sm" style="background: #e2e8f0; color: #475569; border: none; border-radius: 6px; font-weight: 600; padding: 4px 10px; font-size: 0.8rem;" onclick="unmergeSelectedCells()"><i class="fa-solid fa-unlink"></i> Hücreyi Ayır</button>
+                    </div>
+                </div>
                 <table style="border-collapse: collapse; width: 100%; text-align: center; font-size: 0.9rem; margin-bottom: 50px;">
                     <thead>
                         <tr style="background: #f0f0f0;">
@@ -927,7 +958,7 @@
                             <th style="border: 1px solid black; padding: 8px;">TOPLAM</th>
                         </tr>
                     </thead>
-                    <tbody id="acikadet-tbody">
+                    <tbody>
                         @{
                             var packingSizesObj = new Dictionary<string, string>();
                             if (!string.IsNullOrEmpty(Model.SizeDistributionJson)) {
@@ -955,284 +986,52 @@
                                 toplamAcikAdet += sAdet;
                                 
                                 <tr>
-                                    @if(isFirst) {
-                                        <td rowspan="@rowSpan" style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@Model.OrderCode</td>
-                                        <td rowspan="@rowSpan" style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">BUB</td>
-                                        <td rowspan="@rowSpan" style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@openSpecialCode</td>
-                                        <td rowspan="@rowSpan" style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@Model.Color</td>
-                                        <td rowspan="@rowSpan" style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@Model.ModelName</td>
-                                        <td rowspan="@rowSpan" style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@Model.OptionCode</td>
-                                        <td rowspan="@rowSpan" style="border: 1px solid black; padding: 8px; font-weight: bold; background-color: #fefce8; cursor: text;" contenteditable="true" title="Manuel düzenleyebilirsiniz"></td>
-                                        isFirst = false;
-                                    }
-                                    <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@kvp.Key</td>
+                                    <td class="mergeable-cell" data-col="0" onclick="toggleMergeSelection(this)" style="border: 1px solid black; padding: 8px; font-weight: bold; cursor: pointer;">@Model.OrderCode</td>
+                                    <td class="mergeable-cell" data-col="1" onclick="toggleMergeSelection(this)" style="border: 1px solid black; padding: 8px; font-weight: bold; cursor: pointer;">BUB</td>
+                                    <td class="mergeable-cell" data-col="2" onclick="toggleMergeSelection(this)" style="border: 1px solid black; padding: 8px; font-weight: bold; cursor: pointer;">@openSpecialCode</td>
+                                    <td class="mergeable-cell" data-col="3" onclick="toggleMergeSelection(this)" style="border: 1px solid black; padding: 8px; font-weight: bold; cursor: pointer;">@Model.Color</td>
+                                    <td class="mergeable-cell" data-col="4" onclick="toggleMergeSelection(this)" style="border: 1px solid black; padding: 8px; font-weight: bold; cursor: pointer;">@Model.ModelName</td>
+                                    <td class="mergeable-cell" data-col="5" onclick="toggleMergeSelection(this)" style="border: 1px solid black; padding: 8px; font-weight: bold; cursor: pointer;"></td>
+                                    <td class="mergeable-cell" data-col="6" onclick="toggleMergeSelection(this)" style="border: 1px solid black; padding: 8px; font-weight: bold; background-color: #fefce8; cursor: pointer;" contenteditable="true" title="Manuel düzenleyebilirsiniz / Seçmek için tıklayın"></td>
+                                    
+                                    <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@kvp.Key</td>
                                     <td style="border: 1px solid black; padding: 8px; background-color: #fefce8; cursor: text;" contenteditable="true" title="Manuel düzenleyebilirsiniz"></td>
-                                    <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@(sAdet > 0 ? sAdet.ToString("N0") : "")</td>
+                                    <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@(sAdet > 0 ? sAdet.ToString("N0") : "")</td>
                                 </tr>
                             }
                         } else {
                             <tr>
-                                <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@Model.OrderCode</td>
-                                <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">BUB</td>
-                                <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@openSpecialCode</td>
-                                <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@Model.Color</td>
-                                <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@Model.ModelName</td>
-                                <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@Model.OptionCode</td>
+                                <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@Model.OrderCode</td>
+                                <td style="border: 1px solid black; padding: 8px; font-weight: bold;">BUB</td>
+                                <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@openSpecialCode</td>
+                                <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@Model.Color</td>
+                                <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@Model.ModelName</td>
+                                <td style="border: 1px solid black; padding: 8px;"></td>
                                 <td style="border: 1px solid black; padding: 8px; background-color: #fefce8; cursor: text;" contenteditable="true" title="Manuel düzenleyebilirsiniz"></td>
-                                <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">-</td>
+                                <td style="border: 1px solid black; padding: 8px; font-weight: bold;">-</td>
                                 <td style="border: 1px solid black; padding: 8px; background-color: #fefce8; cursor: text;" contenteditable="true" title="Manuel düzenleyebilirsiniz"></td>
-                                <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">-</td>
+                                <td style="border: 1px solid black; padding: 8px; font-weight: bold;">-</td>
                             </tr>
                         }
-                        <tr class="acikadet-spacer"><td colspan="10" style="display:none;"></td></tr>
-                        <tr id="acikadet-totals-row-1">
+                        <tr>
                             <td colspan="6" style="border: 1px solid black;"></td>
                             <td colspan="2" style="border: 1px solid black; padding: 8px; text-align: right; font-weight: bold;">TOPLAM ADET</td>
-                            <td colspan="2" style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true">@(toplamAcikAdet > 0 ? toplamAcikAdet.ToString("N0") : "")</td>
+                            <td colspan="2" style="border: 1px solid black; padding: 8px; font-weight: bold;">@(toplamAcikAdet > 0 ? toplamAcikAdet.ToString("N0") : "")</td>
                         </tr>
-                        <tr id="acikadet-totals-row-2">
+                        <tr>
                             <td colspan="6" style="border: 1px solid black;"></td>
                             <td colspan="2" style="border: 1px solid black; padding: 8px; text-align: right; font-weight: bold;">TOPLAM KOLİ SAYISI</td>
                             <td colspan="2" style="border: 1px solid black; padding: 8px; font-weight: bold; background-color: #fefce8; cursor: text;" contenteditable="true" title="Manuel düzenleyebilirsiniz"></td>
                         </tr>
                     </tbody>
                 </table>
-                <div class="d-flex mb-4 d-print-none">
-                    <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="addAcikAdetRow()"><i class="fa-solid fa-plus"></i> Satır Ekle</button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleAcikAdetMerge()"><i class="fa-solid fa-object-ungroup"></i> Sütunları Ayır / Birleştir</button>
-                </div>
                 
+                </div> <!-- End printAcikAdetArea -->
                 <div style="margin-top: 50px;">
                     <p style="border-top: 1px solid black; display: inline-block; padding-top: 5px;">ÜRETİCİ SORUMLUSU / İMZA</p>
                 </div>
             </div>
-            
-            <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    var asortiliTbody = document.getElementById("asortili-tbody");
-                    if(asortiliTbody) {
-                        asortiliTbody.addEventListener("input", function(e) {
-                            if(e.target && e.target.nodeName === "TD") {
-                                var tr = e.target.closest("tr");
-                                if(tr.classList.contains("asortili-spacer") || tr.id === "asortili-totals-row") return;
-                                
-                                var tds = tr.querySelectorAll("td");
-                                if(tds.length === 10) {
-                                    var tkStr = tds[5].innerText.replace(',', '.');
-                                    var lotIciStr = tds[7].innerText.replace(',', '.');
-                                    var koliIciStr = tds[8].innerText.replace(',', '.');
-
-                                    var tk = parseFloat(tkStr) || 0;
-                                    var lotIciAdet = parseFloat(lotIciStr) || 0;
-                                    var koliIciLot = parseFloat(koliIciStr) || 0;
-                                    
-                                    // LOT ADETİ = TOPLAM KOLİ * LOT İÇİ ADETİ
-                                    var lotAdeti = tk * lotIciAdet;
-                                    tds[6].innerText = lotAdeti > 0 ? lotAdeti : "";
-                                    
-                                    // ADET = LOT İÇİ ADETİ * LOT ADETİ
-                                    var adet = lotIciAdet * lotAdeti;
-                                    tds[9].innerText = adet > 0 ? adet : "";
-                                    
-                                    calcAsortiliTotals();
-                                }
-                            }
-                        });
-                    }
-                    
-                    var acikadetTbody = document.getElementById("acikadet-tbody");
-                    if(acikadetTbody) {
-                        acikadetTbody.addEventListener("input", function(e) {
-                            if(e.target && e.target.nodeName === "TD") {
-                                var tr = e.target.closest("tr");
-                                if(tr.classList.contains("acikadet-spacer") || tr.id === "acikadet-totals-row-1" || tr.id === "acikadet-totals-row-2") return;
-                                calcAcikAdetTotals();
-                            }
-                        });
-                    }
-                });
-
-                function calcAsortiliTotals() {
-                    var tbody = document.getElementById("asortili-tbody");
-                    var trs = tbody.querySelectorAll("tr:not(.asortili-spacer):not(#asortili-totals-row)");
-                    var totalKoli = 0, totalLot = 0, totalAdet = 0;
-                    
-                    trs.forEach(function(tr) {
-                        var tds = tr.querySelectorAll("td");
-                        if(tds.length === 10) {
-                            var tkStr = tds[5].innerText.replace(',', '.');
-                            var lotStr = tds[6].innerText.replace(',', '.');
-                            var adetStr = tds[9].innerText.replace(',', '.');
-
-                            totalKoli += parseFloat(tkStr) || 0;
-                            totalLot += parseFloat(lotStr) || 0;
-                            totalAdet += parseFloat(adetStr) || 0;
-                        }
-                    });
-                    
-                    var totalRow = document.getElementById("asortili-totals-row");
-                    if(totalRow) {
-                        var totalTds = totalRow.querySelectorAll("td");
-                        totalTds[1].innerText = totalKoli > 0 ? totalKoli : "";
-                        totalTds[2].innerText = totalLot > 0 ? totalLot : "";
-                        totalTds[4].innerText = totalAdet > 0 ? totalAdet : "";
-                    }
-                }
-
-                function addAsortiliRow() {
-                    var tbody = document.getElementById("asortili-tbody");
-                    var newRow = document.createElement("tr");
-                    newRow.innerHTML = `
-                        <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true"></td>
-                        <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true"></td>
-                        <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true"></td>
-                        <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true"></td>
-                        <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true"></td>
-                        <td style="border: 1px solid black; padding: 8px; background-color: #fefce8; cursor: text;" contenteditable="true"></td>
-                        <td style="border: 1px solid black; padding: 8px;" contenteditable="true"></td>
-                        <td style="border: 1px solid black; padding: 8px; background-color: #fefce8; cursor: text;" contenteditable="true"></td>
-                        <td style="border: 1px solid black; padding: 8px; background-color: #fefce8; cursor: text;" contenteditable="true"></td>
-                        <td style="border: 1px solid black; padding: 8px;" contenteditable="true"></td>
-                    `;
-                    var lastSpacer = tbody.querySelector(".asortili-spacer");
-                    if(lastSpacer) tbody.insertBefore(newRow, lastSpacer);
-                    else tbody.appendChild(newRow);
-                }
-
-                function addAcikAdetRow() {
-                    var tbody = document.getElementById("acikadet-tbody");
-                    var newRow = document.createElement("tr");
-                    newRow.innerHTML = `
-                        <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true"></td>
-                        <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true"></td>
-                        <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true"></td>
-                        <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true"></td>
-                        <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true"></td>
-                        <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true"></td>
-                        <td style="border: 1px solid black; padding: 8px; background-color: #fefce8; cursor: text;" contenteditable="true"></td>
-                        <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true"></td>
-                        <td style="border: 1px solid black; padding: 8px; background-color: #fefce8; cursor: text;" contenteditable="true"></td>
-                        <td style="border: 1px solid black; padding: 8px; font-weight: bold;" contenteditable="true"></td>
-                    `;
-                    var lastSpacer = tbody.querySelector(".acikadet-spacer");
-                    if(lastSpacer) tbody.insertBefore(newRow, lastSpacer);
-                    else tbody.appendChild(newRow);
-                }
-
-                function toggleAcikAdetMerge() {
-                    var tbody = document.getElementById("acikadet-tbody");
-                    if (!tbody) return;
-                    var rows = Array.from(tbody.querySelectorAll("tr:not(.acikadet-spacer):not(#acikadet-totals-row-1):not(#acikadet-totals-row-2)"));
-                    
-                    var isMerged = rows.some(r => r.cells[0] && r.cells[0].rowSpan > 1);
-                    
-                    if (isMerged) {
-                        // UNMERGE
-                        rows.forEach((tr, rowIndex) => {
-                            if (tr.cells[0] && tr.cells[0].rowSpan > 1) {
-                                var rowSpan = tr.cells[0].rowSpan;
-                                var sharedTds = [];
-                                for (var c = 0; c < 7; c++) {
-                                    sharedTds.push(tr.cells[c]);
-                                    tr.cells[c].removeAttribute("rowSpan");
-                                }
-                                
-                                for (var i = 1; i < rowSpan; i++) {
-                                    var nextRow = rows[rowIndex + i];
-                                    if(nextRow) {
-                                        for (var c = 6; c >= 0; c--) {
-                                            var clone = sharedTds[c].cloneNode(true);
-                                            nextRow.insertBefore(clone, nextRow.cells[0]);
-                                        }
-                                    }
-                                }
-                            }
-                        });
-                    } else {
-                        // MERGE identical first 7 columns
-                        var i = 0;
-                        while (i < rows.length) {
-                            if (rows[i].cells.length < 7) { i++; continue; }
-                            var matchCount = 1;
-                            for (var j = i + 1; j < rows.length; j++) {
-                                if (rows[j].cells.length < 7) break;
-                                var same = true;
-                                for (var c = 0; c < 7; c++) {
-                                    if (rows[i].cells[c].innerText.trim() !== rows[j].cells[c].innerText.trim()) {
-                                        same = false;
-                                        break;
-                                    }
-                                }
-                                if (same) matchCount++;
-                                else break;
-                            }
-                            
-                            if (matchCount > 1) {
-                                for (var c = 0; c < 7; c++) {
-                                    rows[i].cells[c].rowSpan = matchCount;
-                                }
-                                for (var j = i + 1; j < i + matchCount; j++) {
-                                    for (var c = 0; c < 7; c++) {
-                                        rows[j].deleteCell(0);
-                                    }
-                                }
-                            }
-                            i += matchCount;
-                        }
-                    }
-                    calcAcikAdetTotals();
-                }
-
-                function calcAcikAdetTotals() {
-                    var tbody = document.getElementById("acikadet-tbody");
-                    if (!tbody) return;
-                    var rows = Array.from(tbody.querySelectorAll("tr:not(.acikadet-spacer):not(#acikadet-totals-row-1):not(#acikadet-totals-row-2)"));
-                    
-                    var currentKoliSayisi = 0;
-                    var grandTotalAdet = 0;
-                    var grandTotalKoli = 0;
-                    
-                    rows.forEach(tr => {
-                        var koliSayisiCell, koliIciAdetCell, toplamCell;
-                        
-                        if (tr.cells.length === 10) {
-                            koliSayisiCell = tr.cells[6];
-                            koliIciAdetCell = tr.cells[8];
-                            toplamCell = tr.cells[9];
-                            
-                            var ksStr = koliSayisiCell.innerText.replace(',', '.');
-                            currentKoliSayisi = parseFloat(ksStr) || 0;
-                            grandTotalKoli += currentKoliSayisi;
-                        } else if (tr.cells.length === 3) {
-                            koliIciAdetCell = tr.cells[1];
-                            toplamCell = tr.cells[2];
-                        } else {
-                            return;
-                        }
-                        
-                        var kIciStr = koliIciAdetCell.innerText.replace(',', '.');
-                        var koliIciAdet = parseFloat(kIciStr) || 0;
-                        var toplam = currentKoliSayisi * koliIciAdet;
-                        
-                        toplamCell.innerText = toplam > 0 ? toplam : "";
-                        grandTotalAdet += toplam;
-                    });
-                    
-                    var totalsRow1 = document.getElementById("acikadet-totals-row-1");
-                    if (totalsRow1) {
-                        var cells = totalsRow1.querySelectorAll("td");
-                        cells[cells.length - 1].innerText = grandTotalAdet > 0 ? grandTotalAdet : "";
-                    }
-                    
-                    var totalsRow2 = document.getElementById("acikadet-totals-row-2");
-                    if (totalsRow2) {
-                        var cells = totalsRow2.querySelectorAll("td");
-                        cells[cells.length - 1].innerText = grandTotalKoli > 0 ? grandTotalKoli : "";
-                    }
-                }
-            </script>
-            
-            <div class="text-end mt-3 mb-2 d-print-none">
+            <div class="text-end mt-3 mb-2">
                 <button class="btn btn-primary" onclick="switchTab('reports')">Kaydet ve Devam Et <i class="fa-solid fa-arrow-right" style="margin-left: 8px;"></i></button>
             </div>
         </div>
@@ -1285,8 +1084,6 @@
                 // Numune
                 AddTimelineItem("sample_kumas_ytesti", "sample", "Kumaş Y-Testi Onayı", "fa-vial", "#8b5cf6", GetSD("sample_kumas_ytesti"), GetSD("sample_kumas_ytesti_actual"));
                 AddTimelineItem("sample_tuse_renk", "sample", "K-Tuşe Renk Onayı", "fa-palette", "#8b5cf6", GetSD("sample_tuse_renk"), GetSD("sample_tuse_renk_actual"));
-                AddTimelineItem("sample_lot_onayi", "sample", "Lot Onayı", "fa-check-double", "#8b5cf6", GetSD("sample_lot_onayi"), GetSD("sample_lot_onayi_actual"));
-                AddTimelineItem("sample_dikis_ipi_onayi", "sample", "Dikiş İpi Onayı", "fa-thread", "#8b5cf6", GetSD("sample_dikis_ipi_onayi"), GetSD("sample_dikis_ipi_onayi_actual"));
                 AddTimelineItem("sample_dugme_renk", "sample", "Düğme Renk Kalite", "fa-circle-dot", "#8b5cf6", GetSD("sample_dugme_renk"), GetSD("sample_dugme_renk_actual"));
                 AddTimelineItem("sample_pp_onay", "sample", "PP Onay", "fa-shirt", "#8b5cf6", GetSD("sample_pp_onay"), GetSD("sample_pp_onay_actual"));
 
@@ -1599,19 +1396,22 @@
             </div>
 
             <!-- Takvim Performans Raporu -->
-            <h5 style="margin-top: 40px; margin-bottom: 16px; color: #0f172a; font-weight: 700;"><i class="fa-solid fa-chart-line" style="color: var(--primary-color);"></i> Takvim Performans Raporu</h5>
-            <div style="background: white; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                <table class="table table-hover" style="margin-bottom: 0;">
-                    <thead style="background: #f8fafc;">
-                        <tr>
-                            <th style="color: #475569; font-weight: 600; font-size: 0.85rem; padding: 12px 16px;">AŞAMA ADI</th>
-                            <th style="color: #475569; font-weight: 600; font-size: 0.85rem; padding: 12px 16px;">PLANLANAN</th>
-                            <th style="color: #475569; font-weight: 600; font-size: 0.85rem; padding: 12px 16px;">GERÇEKLEŞEN</th>
-                            <th style="color: #475569; font-weight: 600; font-size: 0.85rem; padding: 12px 16px;">DURUM</th>
-                            <th style="color: #475569; font-weight: 600; font-size: 0.85rem; padding: 12px 16px;">GECİKME / ERKEN</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+            <div style="max-width: 900px; margin: 60px auto 40px auto;">
+                <h5 style="text-align: center; margin-bottom: 24px; color: #475569; font-weight: 500; letter-spacing: 1px; font-size: 1.1rem; text-transform: uppercase;">
+                    <i class="fa-solid fa-chart-line" style="color: var(--primary-color); margin-right: 8px;"></i> Takvim Performans Raporu
+                </h5>
+                <div style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.01); border: 1px solid #f8fafc;">
+                    <table class="table" style="margin-bottom: 0; font-size: 0.9rem;">
+                        <thead style="background: #ffffff; border-bottom: 2px solid #f1f5f9;">
+                            <tr>
+                                <th style="color: #94a3b8; font-weight: 500; font-size: 0.75rem; padding: 16px; border: none; letter-spacing: 0.5px;">AŞAMA ADI</th>
+                                <th style="color: #94a3b8; font-weight: 500; font-size: 0.75rem; padding: 16px; border: none; letter-spacing: 0.5px;">PLANLANAN</th>
+                                <th style="color: #94a3b8; font-weight: 500; font-size: 0.75rem; padding: 16px; border: none; letter-spacing: 0.5px;">GERÇEKLEŞEN</th>
+                                <th style="color: #94a3b8; font-weight: 500; font-size: 0.75rem; padding: 16px; border: none; letter-spacing: 0.5px;">DURUM</th>
+                                <th style="color: #94a3b8; font-weight: 500; font-size: 0.75rem; padding: 16px; border: none; letter-spacing: 0.5px;">GECİKME / ERKEN</th>
+                            </tr>
+                        </thead>
+                        <tbody>
                         @{
                             int totalDelayDays = 0;
                             int totalEarlyDays = 0;
@@ -1629,25 +1429,25 @@
                             else if (item.EarlyDays > 0) detailText = $"{item.EarlyDays} Gün Erken";
                             else if (item.ActualDate != null) detailText = "Zamanında";
 
-                            <tr>
-                                <td style="padding: 12px 16px; font-weight: 600; color: #1e293b;">@item.Title</td>
-                                <td style="padding: 12px 16px; color: #475569;">@(item.PlanDate?.ToString("dd.MM.yyyy") ?? "-")</td>
-                                <td style="padding: 12px 16px; color: #475569;">@(item.ActualDate?.ToString("dd.MM.yyyy") ?? "-")</td>
-                                <td style="padding: 12px 16px;">
-                                    <span style="display: inline-flex; align-items: center; gap: 6px; color: @statusColor; font-weight: 600; font-size: 0.85rem;">
-                                        <i class="fa-solid fa-circle" style="font-size: 0.5rem;"></i> @statusText
+                            <tr style="border-bottom: 1px solid #f8fafc; transition: all 0.2s ease;" onmouseover="this.style.background='#fcfcfd'" onmouseout="this.style.background='transparent'">
+                                <td style="padding: 16px; font-weight: 500; color: #334155; border: none;">@item.Title</td>
+                                <td style="padding: 16px; color: #64748b; border: none;">@(item.PlanDate?.ToString("dd.MM.yyyy") ?? "-")</td>
+                                <td style="padding: 16px; color: #64748b; border: none;">@(item.ActualDate?.ToString("dd.MM.yyyy") ?? "-")</td>
+                                <td style="padding: 16px; border: none;">
+                                    <span style="display: inline-flex; align-items: center; gap: 6px; color: @statusColor; font-weight: 500; font-size: 0.85rem;">
+                                        <i class="fa-solid fa-circle" style="font-size: 0.4rem;"></i> @statusText
                                     </span>
                                 </td>
-                                <td style="padding: 12px 16px; font-weight: 700; color: @statusColor; font-size: 0.9rem;">
+                                <td style="padding: 16px; font-weight: 600; color: @statusColor; font-size: 0.85rem; border: none;">
                                     @detailText
                                 </td>
                             </tr>
                         }
                     </tbody>
-                    <tfoot style="background: #f1f5f9;">
+                    <tfoot style="background: #ffffff; border-top: 2px solid #f1f5f9;">
                         <tr>
-                            <td colspan="4" style="padding: 16px; text-align: right; font-weight: 700; color: #0f172a; font-size: 0.95rem;">TOPLAM NET GECİKME:</td>
-                            <td style="padding: 16px; font-weight: 800; font-size: 1.1rem; color: @(totalDelayDays - totalEarlyDays > 0 ? "#ef4444" : "#10b981")">
+                            <td colspan="4" style="padding: 20px 16px; text-align: right; font-weight: 500; color: #64748b; font-size: 0.85rem; letter-spacing: 0.5px; border: none;">TOPLAM NET GECİKME</td>
+                            <td style="padding: 20px 16px; font-weight: 700; font-size: 1rem; color: @(totalDelayDays - totalEarlyDays > 0 ? "#ef4444" : "#10b981"); border: none;">
                                 @{
                                     int netDelay = totalDelayDays - totalEarlyDays;
                                     if (netDelay > 0) {
@@ -1662,6 +1462,7 @@
                         </tr>
                     </tfoot>
                 </table>
+            </div>
             </div>
         </div>
 
@@ -1690,21 +1491,19 @@
         }
 
         $(document).ready(function() {
-            var serverStep = '@ViewBag.Step';
-            if (serverStep && serverStep !== '') {
-                if ($('#' + serverStep + '-tab').length) {
-                    switchTab(serverStep);
-                }
-            } else if (window.location.hash) {
-                var tabId = window.location.hash.substring(1);
-                if ($('#' + tabId + '-tab').length) {
-                    switchTab(tabId);
-                }
-            }
-
             renderCuttingTable();
             renderPlannedCuttingComparison();
             
+            var serverStep = '@ViewBag.Step';
+            if (serverStep && serverStep !== '') {
+                $('#trackTabs').hide();
+                switchTab(serverStep);
+            } else if (window.location.hash) {
+                // Restore active tab from hash if no serverStep is provided
+                var tabId = window.location.hash.substring(1);
+                switchTab(tabId);
+            }
+
             // Initial comparison calculation
             $('input[id^="actual_qty_"]').each(function() {
                 var funcStr = $(this).attr('oninput');
@@ -1713,6 +1512,13 @@
                 }
             });
 
+            // Restore active tab from hash
+            if (window.location.hash) {
+                var tabId = window.location.hash.substring(1);
+                if ($('#' + tabId + '-tab').length) {
+                    switchTab(tabId);
+                }
+            }
         });
 
         // --- TAB SWITCH LOGIC ---
@@ -2564,13 +2370,12 @@
             '<' + 'body>' +
             '    <div class="header">' +
             '        <h2>KNN DEPO - MALZEME ÇIKIŞ FİŞİ</h2>' +
-            '        <div class="sub-header">Sipariş No: <strong>@Model.OrderCode</strong></div>' +
             '    </div>' +
             '    <div class="info-box">' +
             '        <div>' +
-            '            <strong>Müşteri:</strong> @Model.Customer <br/>' +
+            '            <strong>Sipariş No:</strong> @Model.OrderCode <br/>' +
             '            <strong>Model:</strong> @Model.ModelName <br/>' +
-            '            <strong>Planlanan Miktar:</strong> @Model.CalculatedQuantity' +
+            '            <strong>Renk:</strong> @Model.Color' +
             '        </div>' +
             '        <div style="text-align: right;">' +
             '            <strong>Tarih:</strong> ' + dateStr + ' <br/>' +
@@ -2587,19 +2392,38 @@
             '        <tbody>';
             
             var itemsFound = false;
+
+            function parseTrNum(str) {
+                if(!str) return 0;
+                str = str.trim().replace(/\./g, '').replace(',', '.');
+                return parseFloat(str) || 0;
+            }
+            
+            function formatTrNum(num) {
+                return num.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+
             $('#purchase tbody tr').each(function() {
-                if ($(this).find('.badge').text().includes('STOK YETERLİ')) {
+                if ($(this).find('td').length < 4) return;
+                
+                var matName = $(this).find('td:eq(0)').text().trim();
+                var planStr = $(this).find('td:eq(1)').text().trim();
+                var depoStr = $(this).find('td:eq(2)').text().trim();
+                
+                var planQty = parseTrNum(planStr);
+                var depoQty = parseTrNum(depoStr);
+                
+                if (depoQty > 0) {
                     itemsFound = true;
-                    var matName = $(this).find('td:eq(0)').text().trim();
-                    var qty = $(this).find('td:eq(1)').text().trim();
-                    printHtml += '<tr><td>' + matName + '</td><td class="right"><strong>' + qty + '</strong></td></tr>';
+                    var printQty = Math.min(planQty, depoQty);
+                    printHtml += '<tr><td>' + matName + '</td><td class="right"><strong>' + formatTrNum(printQty) + '</strong></td></tr>';
                 }
             });
 
             printHtml += '        <'+'/tbody>    <'+'/table>';
             
             if (!itemsFound) {
-                printHtml += '    <p style="text-align:center; margin-top: 30px; color: #dc2626; font-weight: bold;">Çıkış yapılacak (stoğu yeterli) malzeme bulunamadı.</p>';
+                printHtml += '    <p style="text-align:center; margin-top: 30px; color: #dc2626; font-weight: bold;">Çıkış yapılacak malzeme bulunamadı.</p>';
             }
             
             printHtml += '    <div class="footer">' +
@@ -2617,110 +2441,107 @@
                 printWin.print(); 
             }, 500);
         }
+function printSection(section) {
+    var printAsorti = document.getElementById('printAsortiArea');
+    var printAcik = document.getElementById('printAcikAdetArea');
+    
+    var origAsorti = printAsorti.style.display;
+    var origAcik = printAcik.style.display;
+    
+    if (section === 'asorti') {
+        printAcik.style.display = 'none';
+    } else if (section === 'acik') {
+        printAsorti.style.display = 'none';
+    }
+    
+    // Geçici olarak media print style
+    var style = document.createElement('style');
+    style.innerHTML = '@@media print { .no-print, .btn, .nav-link, .color-tabs, .sidebar, .main-header, .header-container { display: none !important; } }';
+    document.head.appendChild(style);
+    
+    window.print();
+    
+    printAsorti.style.display = origAsorti;
+    printAcik.style.display = origAcik;
+    document.head.removeChild(style);
+}
 
-        // --- EXCEL MERGE LOGIC FOR ÇEKİ LİSTESİ ---
-        $(document).ready(function() {
-            // Make cells selectable
-            $(document).on('mousedown', '#asortili-tbody td, #acikadet-tbody td', function(e) {
-                // Ignore empty spacer rows
-                if ($(this).parent().hasClass('asortili-spacer') || $(this).parent().hasClass('acikadet-spacer')) return;
-                // Toggle selection on click
-                $(this).toggleClass('selected-cell');
-                updateToolbar();
-            });
+function toggleMergeSelection(el) {
+    if (el.classList.contains('selected-cell')) {
+        el.classList.remove('selected-cell');
+    } else {
+        el.classList.add('selected-cell');
+    }
+}
 
-            // Update toolbar visibility
-            function updateToolbar() {
-                var selectedCount = $('.selected-cell').length;
-                if (selectedCount > 0) {
-                    $('#merge-toolbar').fadeIn();
-                    if (selectedCount === 1) {
-                        var cell = $('.selected-cell').first();
-                        var rs = parseInt(cell.attr('rowspan') || 1);
-                        var cs = parseInt(cell.attr('colspan') || 1);
-                        if (rs > 1 || cs > 1) {
-                            $('#btnUnmergeCells').show();
-                            $('#btnMergeCells').hide();
-                        } else {
-                            $('#btnUnmergeCells').hide();
-                            $('#btnMergeCells').hide();
-                        }
-                    } else {
-                        $('#btnMergeCells').show();
-                        $('#btnUnmergeCells').hide();
+function mergeSelectedCells() {
+    var selected = Array.from(document.querySelectorAll('.selected-cell'));
+    if (selected.length < 2) {
+        alert('Lütfen birleştirmek için aynı sütundan en az iki hücre seçin.');
+        return;
+    }
+    
+    // Sort by DOM order (row index)
+    selected.sort(function(a, b) {
+        return a.closest('tr').rowIndex - b.closest('tr').rowIndex;
+    });
+
+    var first = selected[0];
+    var colId = first.getAttribute('data-col');
+    
+    // Check if they are all in the same column
+    for (var i = 1; i < selected.length; i++) {
+        if (selected[i].getAttribute('data-col') !== colId) {
+            alert('Lütfen aynı sütundaki hücreleri seçin.');
+            return;
+        }
+    }
+    
+    var totalRowspan = 0;
+    
+    for (var i = 0; i < selected.length; i++) {
+        var cell = selected[i];
+        var rSpan = parseInt(cell.getAttribute('rowspan')) || 1;
+        totalRowspan += rSpan;
+        
+        if (i > 0) {
+            cell.style.display = 'none';
+        }
+        cell.classList.remove('selected-cell');
+    }
+    
+    first.setAttribute('rowspan', totalRowspan);
+}
+
+function unmergeSelectedCells() {
+    var selected = document.querySelectorAll('.selected-cell');
+    if (selected.length === 0) {
+        alert('Lütfen ayırmak için daha önce birleştirilmiş bir hücreyi seçin.');
+        return;
+    }
+    
+    for(var k = 0; k < selected.length; k++) {
+        var first = selected[k];
+        var rowspan = parseInt(first.getAttribute('rowspan')) || 1;
+        
+        if (rowspan > 1) {
+            first.setAttribute('rowspan', 1);
+            var colIdx = first.getAttribute('data-col');
+            
+            var tr = first.closest('tr');
+            for (var i = 1; i < rowspan; i++) {
+                tr = tr.nextElementSibling;
+                if (tr) {
+                    var hiddenCell = tr.querySelector('.mergeable-cell[data-col="' + colIdx + '"]');
+                    if (hiddenCell) {
+                        hiddenCell.style.display = '';
+                        hiddenCell.setAttribute('rowspan', 1);
                     }
-                } else {
-                    $('#merge-toolbar').fadeOut();
                 }
             }
-
-            // Merge button click
-            $('#btnMergeCells').click(function() {
-                var selected = $('.selected-cell');
-                if (selected.length < 2) return;
-
-                // Sort cells by their position in DOM to find top-left
-                var sorted = selected.toArray().sort(function(a, b) {
-                    var rowA = $(a).parent().index();
-                    var rowB = $(b).parent().index();
-                    if (rowA !== rowB) return rowA - rowB;
-                    return $(a).index() - $(b).index();
-                });
-
-                var primary = $(sorted[0]);
-                var primaryId = primary.attr('id');
-                if (!primaryId) {
-                    primaryId = 'merge_' + Math.random().toString(36).substr(2, 9);
-                    primary.attr('id', primaryId);
-                }
-
-                var rows = new Set();
-                var cols = new Set();
-                $(sorted).each(function() {
-                    rows.add($(this).parent().index());
-                    cols.add($(this).index());
-                });
-
-                primary.attr('rowspan', rows.size);
-                primary.attr('colspan', cols.size);
-
-                // Hide others
-                for (var i = 1; i < sorted.length; i++) {
-                    $(sorted[i]).addClass('merged-hidden').attr('data-merged-by', primaryId).removeClass('selected-cell');
-                }
-                
-                primary.removeClass('selected-cell');
-                updateToolbar();
-            });
-
-            // Unmerge button click
-            $('#btnUnmergeCells').click(function() {
-                var primary = $('.selected-cell').first();
-                if (!primary.length) return;
-
-                var primaryId = primary.attr('id');
-                primary.attr('rowspan', 1);
-                primary.attr('colspan', 1);
-                
-                if (primaryId) {
-                    $('[data-merged-by="' + primaryId + '"]').removeClass('merged-hidden').removeAttr('data-merged-by');
-                }
-                
-                primary.removeClass('selected-cell');
-                updateToolbar();
-            });
-        });
-    </script>
-    <style>
-        .selected-cell { background-color: #bae6fd !important; outline: 2px solid #0284c7; z-index: 10; position: relative; }
-        .merged-hidden { display: none !important; }
-        #merge-toolbar {
-            position: fixed; bottom: 20px; right: 20px; background: white; padding: 10px; border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15); z-index: 9999; display: none; gap: 8px; border: 1px solid #e2e8f0;
         }
-    </style>
-    <div id="merge-toolbar" class="d-print-none">
-        <button id="btnMergeCells" class="btn btn-sm btn-primary"><i class="fa-solid fa-compress"></i> Birleştir</button>
-        <button id="btnUnmergeCells" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-expand"></i> Ayır</button>
-    </div>
+        first.classList.remove('selected-cell');
+    }
+}
+    </script>
 }

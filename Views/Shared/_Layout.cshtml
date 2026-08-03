@@ -19,85 +19,20 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
-<body>    <div class="wrapper">
-        <header class="top-navbar">
-            <div class="navbar-logo">
-                <a href="javascript:void(0)" id="logoMenuToggle" title="Menüyü Aç/Kapat">
-                    <img src="~/images/yeni_logo.png" alt=" Kanuni Tekstil Logo " asp-append-version="true" />
+<body>
+    <div class="wrapper modern-layout topbar-layout">
+        <!-- YENİ ÜST BAR (TOPBAR) -->
+        <header class="main-topbar">
+            <!-- Sol Kısım: Logo -->
+            <div class="topbar-left">
+                <a href="#" id="topbarMenuToggle" title="Menüyü Aç/Kapat">
+                    <div class="topbar-logo">
+                        <img src="~/images/yeni_logo.png" alt="Kanuni Tekstil Logo" asp-append-version="true" />
+                    </div>
                 </a>
             </div>
-            
-            <ul class="navbar-menu" id="mainNavbarMenu">
-                <li><a href="/" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Home" || ViewContext.RouteData.Values["Controller"] == null ? "active" : "")"><i class="fa-solid fa-house" style="width: 20px;"></i> Ana Sayfa</a></li>
-                @if ((await AuthorizationService.AuthorizeAsync(User, "SiparisAccess")).Succeeded)
-                {
-                    <li><a href="/Order" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Order" ? "active" : "")"><i class="fa-solid fa-file-invoice" style="width: 20px;"></i> Siparişler</a></li>
-                }
-                
-                @if ((await AuthorizationService.AuthorizeAsync(User, "PlanlamaAccess")).Succeeded)
-                {
-                    <li><a href="/Planning" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Planning" && (ViewContext.RouteData.Values["Action"]?.ToString() == "Index" || ViewContext.RouteData.Values["Action"]?.ToString() == "Plan") ? "active" : "")"><i class="fa-solid fa-calendar-days" style="width: 20px;"></i> Planlama</a></li>
-                }
 
-                @if ((await AuthorizationService.AuthorizeAsync(User, "SurecAccess")).Succeeded)
-                {
-                    <li>
-                        <a href="#" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "ProcessTracking" ? "active" : "")"><i class="fa-solid fa-chart-line" style="width: 20px;"></i> Süreç Takibi <i class="fa-solid fa-chevron-down"></i></a>
-                        <ul class="submenu" style="width: 220px;">
-                            <li><a href="/ProcessTracking"><i class="fa-solid fa-list"></i> Tüm Süreçler</a></li>
-                            <li><a href="/ProcessTracking/Index?step=purchase"><i class="fa-solid fa-truck"></i> Sevk Onay</a></li>
-                            <li><a href="/ProcessTracking/Index?step=timeline"><i class="fa-solid fa-calendar-check"></i> Takvim & Planlama</a></li>
-                            <li><a href="/ProcessTracking/Index?step=cutting"><i class="fa-solid fa-scissors"></i> Kesim Süreci</a></li>
-                            <li><a href="/ProcessTracking/Index?step=packing"><i class="fa-solid fa-box"></i> Çeki Listesi</a></li>
-                            <li><a href="/ProcessTracking/Index?step=fileclosing"><i class="fa-solid fa-file-signature"></i> Dosya Kapama</a></li>
-                        </ul>
-                    </li>
-                    <li><a href="/WorkshopCapacity" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "WorkshopCapacity" ? "active" : "")"><i class="fa-solid fa-industry" style="width: 20px;"></i> Atölye Takibi</a></li>
-                }
-
-                @if ((await AuthorizationService.AuthorizeAsync(User, "RaporAccess")).Succeeded)
-                {
-                    <li>
-                        <a href="#" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Finance" ? "active" : "")"><i class="fa-solid fa-coins" style="width: 20px;"></i> Cari Yönetimi <i class="fa-solid fa-chevron-down"></i></a>
-                        <ul class="submenu" style="width: 250px;">
-                            <li><a href="/Finance/Definitions"><i class="fa-solid fa-address-book"></i> Cari Tanımı</a></li>
-                            <li><a href="/Finance/Purchase"><i class="fa-solid fa-cart-arrow-down"></i> Alış İşlemleri</a></li>
-                            <li><a href="/Finance/Sales"><i class="fa-solid fa-money-bill-trend-up"></i> Satış İşlemleri</a></li>
-                            <li><a href="/Finance/Reports"><i class="fa-solid fa-list-check"></i> Cari Hareketleri (Raporlar)</a></li>
-                        </ul>
-                    </li>
-                }
-                
-                @if ((await AuthorizationService.AuthorizeAsync(User, "DepoAccess")).Succeeded)
-                {
-                    <li>
-                        <a href="#" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Stock" ? "active" : "")"><i class="fa-solid fa-boxes-stacked" style="width: 20px;"></i> Stok Yönetimi <i class="fa-solid fa-chevron-down"></i></a>
-                        <ul class="submenu" style="width: 200px;">
-                            <li><a href="/Stock/Definitions"><i class="fa-solid fa-box-open"></i> Stok Tanımı</a></li>
-                            <li><a href="/Stock/Movements"><i class="fa-solid fa-arrow-right-arrow-left"></i> Stok Hareketleri</a></li>
-                            <li><a href="/Stock/Warehouse"><i class="fa-solid fa-warehouse"></i> Depo</a></li>
-                        </ul>
-                    </li>
-                }
-                
-                @if (User.IsInRole("Admin"))
-                {
-                    <li>
-                        <a href="#" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Definitions" || ViewContext.RouteData.Values["Controller"]?.ToString() == "ColorDef" || ViewContext.RouteData.Values["Controller"]?.ToString() == "Authorization" ? "active" : "")"><i class="fa-solid fa-gears" style="width: 20px;"></i> Yönetim <i class="fa-solid fa-chevron-down"></i></a>
-                        <ul class="submenu">
-                            <li><a href="/Authorization" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Authorization" ? "active" : "")"><i class="fa-solid fa-user-shield"></i> Yetkilendirme</a></li>
-                            <li class="divider"></li>
-                            <li><a href="/ColorDef/Index" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "ColorDef" ? "active" : "")"><i class="fa-solid fa-palette"></i> Renk Tanımı</a></li>
-                            <li><a href="/Definitions/Workshops" class="@(ViewContext.RouteData.Values["Action"]?.ToString() == "Workshops" ? "active" : "")"><i class="fa-solid fa-industry"></i> Atölye Tanımı</a></li>
-                            <li><a href="/Definitions/Fabricators" class="@(ViewContext.RouteData.Values["Action"]?.ToString() == "Fabricators" ? "active" : "")"><i class="fa-solid fa-truck"></i> Kumaşçı Tanımı</a></li>
-                            <li><a href="/Definitions/Customers" class="@(ViewContext.RouteData.Values["Action"]?.ToString() == "Customers" ? "active" : "")"><i class="fa-solid fa-building"></i> Müşteri Tanımı</a></li>
-                            <li><a href="/Definitions/Companies" class="@(ViewContext.RouteData.Values["Action"]?.ToString() == "Companies" ? "active" : "")"><i class="fa-solid fa-building-user"></i> Firma Tanımı</a></li>
-                            <li><a href="/Definitions/Brands" class="@(ViewContext.RouteData.Values["Action"]?.ToString() == "Brands" ? "active" : "")"><i class="fa-solid fa-copyright"></i> Marka Tanımı</a></li>
-                        </ul>
-                    </li>
-                }
-            </ul>
-
+            <!-- Sağ Kısım: Bildirimler -->
             <div class="topbar-right">
                 <div class="notification-container">
                     <button class="bell-btn" id="notificationBellBtn">
@@ -117,26 +52,134 @@
                         </div>
                     </div>
                 </div>
-                <div class="user-profile dropdown" id="userProfileDropdown">
-                    <img src="https://ui-avatars.com/api/?name=@fullName&background=0047bb&color=fff" alt="User Profile" />
-                    <div class="user-info">
-                        <span class="user-name">@fullName</span>
-                        <span class="user-role">@roleTitle</span>
-                    </div>
-                    <i class="fa-solid fa-chevron-down"></i>
-                    
-                    <div class="dropdown-menu" style="display: none;">
-                        <a href="/Settings/Profile"><i class="fa-solid fa-user"></i> Profili Düzenle</a>
-                        <div class="dropdown-divider"></div>
-                        <a href="/Account/Logout" class="logout-link"><i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap</a>
-                    </div>
-                </div>
             </div>
         </header>
 
-        <main class="main-content">
-            @RenderBody()
-        </main>
+        <div class="main-container">
+            <!-- AÇILIR KAPANIR LACİVERT BAR (İKONLAR) -->
+            <aside class="dropdown-sidebar" id="dropdownSidebar" style="display: none;">
+                <nav class="sidebar-nav">
+                    <ul id="sidebarNavMenu">
+                        <li>
+                            <a href="/" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Home" || ViewContext.RouteData.Values["Controller"] == null ? "active" : "")" title="Ana Sayfa">
+                                <i class="fa-solid fa-house menu-icon"></i>
+                                <span class="nav-text">Ana Sayfa</span>
+                            </a>
+                        </li>
+                        
+                        @if ((await AuthorizationService.AuthorizeAsync(User, "SiparisAccess")).Succeeded)
+                        {
+                            <li>
+                                <a href="/Order" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Order" ? "active" : "")" title="Siparişler">
+                                    <i class="fa-solid fa-file-invoice menu-icon"></i>
+                                    <span class="nav-text">Siparişler</span>
+                                </a>
+                            </li>
+                        }
+                        
+                        @if ((await AuthorizationService.AuthorizeAsync(User, "PlanlamaAccess")).Succeeded)
+                        {
+                            <li>
+                                <a href="/Planning" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Planning" ? "active" : "")" title="Planlama">
+                                    <i class="fa-solid fa-calendar-days menu-icon"></i>
+                                    <span class="nav-text">Planlama</span>
+                                </a>
+                            </li>
+                        }
+
+                        @if ((await AuthorizationService.AuthorizeAsync(User, "SurecAccess")).Succeeded)
+                        {
+                            <li class="has-submenu">
+                                <a href="#" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "ProcessTracking" ? "active" : "")" title="Süreç Takibi">
+                                    <i class="fa-solid fa-chart-line menu-icon"></i>
+                                    <span class="nav-text">Süreç Takibi</span>
+                                    <i class="fa-solid fa-chevron-right chevron"></i>
+                                </a>
+                                <ul class="submenu">
+                                    <li><a href="/ProcessTracking"><i class="fa-solid fa-list menu-icon"></i><span class="nav-text">Tüm Süreçler</span></a></li>
+                                    <li><a href="/ProcessTracking/Index?step=purchase"><i class="fa-solid fa-truck menu-icon"></i><span class="nav-text">Sevk Onay</span></a></li>
+                                    <li><a href="/ProcessTracking/Index?step=timeline"><i class="fa-solid fa-calendar-check menu-icon"></i><span class="nav-text">CPS</span></a></li>
+                                    <li><a href="/ProcessTracking/Index?step=cutting"><i class="fa-solid fa-scissors menu-icon"></i><span class="nav-text">Kesim Süreci</span></a></li>
+                                    <li><a href="/ProcessTracking/Index?step=packing"><i class="fa-solid fa-box menu-icon"></i><span class="nav-text">Çeki Listesi</span></a></li>
+                                    <li><a href="/ProcessTracking/Index?step=fileclosing"><i class="fa-solid fa-file-signature menu-icon"></i><span class="nav-text">Dosya Kapama</span></a></li>
+                                </ul>
+                            </li>
+                            <li>
+                                <a href="/WorkshopCapacity" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "WorkshopCapacity" ? "active" : "")" title="Atölye Takibi">
+                                    <i class="fa-solid fa-industry menu-icon"></i>
+                                    <span class="nav-text">Atölye Takibi</span>
+                                </a>
+                            </li>
+                        }
+
+                        @if ((await AuthorizationService.AuthorizeAsync(User, "RaporAccess")).Succeeded)
+                        {
+                            <li class="has-submenu">
+                                <a href="#" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Finance" ? "active" : "")" title="Cari Yönetimi">
+                                    <i class="fa-solid fa-coins menu-icon"></i>
+                                    <span class="nav-text">Cari Yönetimi</span>
+                                    <i class="fa-solid fa-chevron-right chevron"></i>
+                                </a>
+                                <ul class="submenu">
+                                    <li><a href="/Finance/Definitions"><i class="fa-solid fa-address-book menu-icon"></i><span class="nav-text">Cari Tanımı</span></a></li>
+                                    <li><a href="/Finance/Purchase"><i class="fa-solid fa-cart-arrow-down menu-icon"></i><span class="nav-text">Alış İşlemleri</span></a></li>
+                                    <li><a href="/Finance/Sales"><i class="fa-solid fa-money-bill-trend-up menu-icon"></i><span class="nav-text">Satış İşlemleri</span></a></li>
+                                    <li><a href="/Finance/Reports"><i class="fa-solid fa-list-check menu-icon"></i><span class="nav-text">Raporlar</span></a></li>
+                                </ul>
+                            </li>
+                        }
+                        
+                        @if ((await AuthorizationService.AuthorizeAsync(User, "DepoAccess")).Succeeded)
+                        {
+                            <li class="has-submenu">
+                                <a href="#" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Stock" ? "active" : "")" title="Stok Yönetimi">
+                                    <i class="fa-solid fa-boxes-stacked menu-icon"></i>
+                                    <span class="nav-text">Stok Yönetimi</span>
+                                    <i class="fa-solid fa-chevron-right chevron"></i>
+                                </a>
+                                <ul class="submenu">
+                                    <li><a href="/Stock/Definitions"><i class="fa-solid fa-box-open menu-icon"></i><span class="nav-text">Stok Tanımı</span></a></li>
+                                    <li><a href="/Stock/Movements"><i class="fa-solid fa-arrow-right-arrow-left menu-icon"></i><span class="nav-text">Hareketler</span></a></li>
+                                    <li><a href="/Stock/Warehouse"><i class="fa-solid fa-warehouse menu-icon"></i><span class="nav-text">Depo</span></a></li>
+                                </ul>
+                            </li>
+                        }
+                        
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <li class="has-submenu">
+                                <a href="#" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Definitions" || ViewContext.RouteData.Values["Controller"]?.ToString() == "ColorDef" || ViewContext.RouteData.Values["Controller"]?.ToString() == "Authorization" ? "active" : "")" title="Yönetim">
+                                    <i class="fa-solid fa-gears menu-icon"></i>
+                                    <span class="nav-text">Yönetim</span>
+                                    <i class="fa-solid fa-chevron-right chevron"></i>
+                                </a>
+                                <ul class="submenu">
+                                    <li><a href="/Authorization" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Authorization" ? "active" : "")"><i class="fa-solid fa-user-shield menu-icon"></i><span class="nav-text">Yetkilendirme</span></a></li>
+                                    <li><a href="/ColorDef/Index" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "ColorDef" ? "active" : "")"><i class="fa-solid fa-palette menu-icon"></i><span class="nav-text">Renk Tanımı</span></a></li>
+                                    <li><a href="/Definitions/Workshops" class="@(ViewContext.RouteData.Values["Action"]?.ToString() == "Workshops" ? "active" : "")"><i class="fa-solid fa-industry menu-icon"></i><span class="nav-text">Atölye Tanımı</span></a></li>
+                                    <li><a href="/Definitions/Fabricators" class="@(ViewContext.RouteData.Values["Action"]?.ToString() == "Fabricators" ? "active" : "")"><i class="fa-solid fa-truck menu-icon"></i><span class="nav-text">Kumaşçı Tanımı</span></a></li>
+                                    <li><a href="/Definitions/Customers" class="@(ViewContext.RouteData.Values["Action"]?.ToString() == "Customers" ? "active" : "")"><i class="fa-solid fa-building menu-icon"></i><span class="nav-text">Müşteri Tanımı</span></a></li>
+                                    <li><a href="/Definitions/Companies" class="@(ViewContext.RouteData.Values["Action"]?.ToString() == "Companies" ? "active" : "")"><i class="fa-solid fa-building-user menu-icon"></i><span class="nav-text">Firma Tanımı</span></a></li>
+                                    <li><a href="/Definitions/Brands" class="@(ViewContext.RouteData.Values["Action"]?.ToString() == "Brands" ? "active" : "")"><i class="fa-solid fa-copyright menu-icon"></i><span class="nav-text">Marka Tanımı</span></a></li>
+                                </ul>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+
+                <div class="sidebar-profile" title="Profil: @fullName">
+                    <img src="https://ui-avatars.com/api/?name=@fullName&background=fff&color=1e1e2d" alt="Profile" id="sidebarProfileImg" />
+                    <span class="nav-text">@fullName</span>
+                </div>
+            </aside>
+
+            <!-- ANA İÇERİK -->
+            <div class="main-content-wrapper">
+                <main class="main-content">
+                    @RenderBody()
+                </main>
+            </div>
+        </div>
     </div>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
@@ -145,64 +188,47 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script>
         $(document).ready(function() {
-            // Açılır menüler (dropdown), üst gezinti çubuğunda CSS hover ile stillendirilmiştir
-
-            
-            $('#userProfileDropdown').click(function(e) {
-                e.stopPropagation();
-                const $dropdownMenu = $(this).find('.dropdown-menu');
-                const isOpen = $dropdownMenu.is(':visible');
-                
-                // Diğer açılır menüleri kapat
-                $('#notificationDropdown').fadeOut(150);
-                $('#notificationBellBtn').removeClass('active');
-                
-                if (isOpen) {
-                    $dropdownMenu.fadeOut(150);
-                    $(this).removeClass('active');
-                } else {
-                    $dropdownMenu.fadeIn(150);
-                    $(this).addClass('active');
-                }
-            });
-
-            $('#userProfileDropdown .dropdown-menu').click(function(e) {
-                e.stopPropagation();
-            });
-
-            // Logo menü aç/kapat
-            $('#logoMenuToggle').click(function(e) {
+            // TOPBAR - İKONLARI AŞAĞI DOĞRU AÇMA/KAPAMA (LOGOYLA)
+            $('#topbarMenuToggle').click(function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                $('#mainNavbarMenu').toggleClass('show-menu');
+                // .dropdown-sidebar div'ini yavaşça aşağıya süzülerek aç/kapat
+                $('#dropdownSidebar').slideToggle(300);
+            });
+
+            // Alt menüleri (accordion) açıp kapama
+            $('.has-submenu > a').click(function(e) {
+                e.preventDefault();
+                var $submenu = $(this).siblings('.submenu');
+                var $icon = $(this).find('.chevron');
                 
-                // Diğerlerini kapat
-                $('#userProfileDropdown .dropdown-menu').fadeOut(150);
-                $('#userProfileDropdown').removeClass('active');
-                $('#notificationDropdown').fadeOut(150);
-                $('#notificationBellBtn').removeClass('active');
+                // Toggle clicked submenu
+                $submenu.slideToggle(200);
+                if ($icon.hasClass('fa-chevron-right')) {
+                    $icon.removeClass('fa-chevron-right').addClass('fa-chevron-down');
+                } else {
+                    $icon.removeClass('fa-chevron-down').addClass('fa-chevron-right');
+                }
+                
+                // Close other submenus
+                $(this).parent().siblings().find('.submenu').slideUp(200);
+                $(this).parent().siblings().find('.chevron').removeClass('fa-chevron-down').addClass('fa-chevron-right');
             });
 
-            $(document).click(function() {
-                $('#userProfileDropdown .dropdown-menu').fadeOut(150);
-                $('#userProfileDropdown').removeClass('active');
-                $('#notificationDropdown').fadeOut(150);
-                $('#notificationBellBtn').removeClass('active');
-                $('#mainNavbarMenu').removeClass('show-menu');
-            });
-
-            $('#mainNavbarMenu').click(function(e) {
-                e.stopPropagation();
-            });
-            
-            // Alt menüleri accordion gibi aç/kapat
-            $('#mainNavbarMenu > li > a').click(function(e) {
-                if ($(this).siblings('.submenu').length > 0) {
-                    e.preventDefault();
-                    $(this).siblings('.submenu').slideToggle(200);
-                    $(this).parent().siblings().find('.submenu').slideUp(200);
+            // Menü dışına tıklandığında menüyü kapat
+            $(document).click(function(e) {
+                if (!$(e.target).closest('#dropdownSidebar').length && !$(e.target).closest('#topbarMenuToggle').length) {
+                    $('#dropdownSidebar').slideUp(300);
                 }
             });
+
+            // Gereksiz bildirim aç/kapat bloğu silindi (çakışmayı önlemek için)
+
+            $(document).click(function() {
+                $('#notificationDropdown').fadeOut(150);
+                $('#notificationBellBtn').removeClass('active');
+            });
+
 
             // --- Gerçek Zamanlı Bildirim Sistemi JS ---
             const $bellBtn = $('#notificationBellBtn');

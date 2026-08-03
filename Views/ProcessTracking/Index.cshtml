@@ -2,11 +2,11 @@
 @{
     string stepParam = ViewBag.Step as string;
     string pageTitle = "Süreç Takip Listesi";
-    if (stepParam == "purchase") pageTitle = "Sevk Onay - Sipariş Seçimi";
-    else if (stepParam == "timeline") pageTitle = "Takvim & Planlama - Sipariş Seçimi";
-    else if (stepParam == "cutting") pageTitle = "Kesim Süreci - Sipariş Seçimi";
-    else if (stepParam == "packing") pageTitle = "Çeki Listesi - Sipariş Seçimi";
-    else if (stepParam == "fileclosing") pageTitle = "Dosya Kapama - Sipariş Seçimi";
+    if (stepParam == "purchase") pageTitle = "Sevk Onay";
+    else if (stepParam == "timeline") pageTitle = "CPS";
+    else if (stepParam == "cutting") pageTitle = "Kesim Süreci";
+    else if (stepParam == "packing") pageTitle = "Çeki Listesi";
+    else if (stepParam == "fileclosing") pageTitle = "Dosya Kapama";
     
     string queryStr = !string.IsNullOrEmpty(stepParam) ? "?step=" + stepParam : "";
 

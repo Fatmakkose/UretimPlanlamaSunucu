@@ -44,233 +44,280 @@ button {
     min-height: 100vh;
 }
 
-/* Üst Gezinti Çubuğu (Navbar) */
-.top-navbar {
-    height: 40px;
-    width: 100%;
-    background: var(--primary-color);
-    border-bottom: none;
-    box-shadow: none;
-    position: fixed;
-    top: 0;
-    left: 0;
+/* --- MODERN SIDEBAR LAYOUT (Kapsül ve Açılır Panel) --- */
+
+.modern-layout {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 40px;
-    z-index: 1000;
-}
-
-.top-navbar::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    background: rgba(0, 0, 0, 0.15);
-}
-
-.navbar-logo {
-    display: flex;
-    align-items: center;
-    margin-right: 24px;
-}
-
-.navbar-logo a {
-    display: flex;
-    align-items: center;
-    text-decoration: none;
-}
-
-.navbar-logo img {
-    max-height: 28px;
-    width: auto;
-    object-fit: contain;
-    transition: opacity 0.2s ease, transform 0.2s ease;
-    background-color: #ffffff;
-    padding: 4px 12px;
-    border-radius: 6px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-}
-
-.navbar-logo img:hover {
-    opacity: 0.95;
-    transform: scale(1.05);
-}
-
-.navbar-menu {
-    display: flex;
-    visibility: hidden;
-    opacity: 0;
-    transform: translateY(-15px) scale(0.96);
-    transform-origin: top left;
-    pointer-events: none;
-    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-
-    position: absolute;
-    top: 40px;
-    left: 24px;
-    background: rgba(255, 255, 255, 0.98);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(226, 232, 240, 0.8);
-    border-top: none;
-    border-radius: 0 0 16px 16px;
-    box-shadow: 0 20px 40px -10px rgba(0, 71, 187, 0.1), 0 10px 20px -5px rgba(0, 0, 0, 0.05);
     flex-direction: column;
-    width: 280px;
-    padding: 12px 0;
-    gap: 2px;
+    min-height: 100vh;
+    background: #f1f5f9;
+}
+
+/* 1) YENİ ÜST ÇUBUK (TOPBAR) */
+.main-topbar {
+    width: 100%;
+    height: 55px; /* Daraltılmış Üst Bar */
+    background: #0047bb; /* LCW Kurumsal Mavisi */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 30px;
+    box-shadow: 0 4px 15px rgba(0, 71, 187, 0.2);
     z-index: 1000;
-    max-height: calc(100vh - 80px);
-    overflow-y: auto;
+    position: relative;
 }
 
-/* Navbar Menü Scrollbar Görünümü */
-.navbar-menu::-webkit-scrollbar {
-    width: 6px;
+.topbar-left {
+    display: flex;
+    align-items: center;
 }
 
-.navbar-menu::-webkit-scrollbar-track {
+.topbar-logo {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s;
+    overflow: hidden; /* Dışa taşan siyahlık vs varsa kes */
+}
+
+.topbar-logo img {
+    width: 80%;
+    height: 80%;
+    object-fit: contain; /* Logoyu merkeze oturt ve kesilmesini engelle */
+    border: none !important;
+    outline: none !important;
     background: transparent;
 }
 
-.navbar-menu::-webkit-scrollbar-thumb {
-    background-color: rgba(0, 0, 0, 0.15);
+.topbar-logo:hover {
+    transform: scale(1.05);
+}
+
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+/* 2) AÇILIR KAPANIR LACİVERT BAR (DROPDOWN SIDEBAR) */
+.main-container {
+    display: flex;
+    flex: 1;
+    position: relative;
+}
+
+.dropdown-sidebar {
+    position: absolute;
+    top: 0;
+    left: 22px; /* Logo ile hizalı */
+    width: 70px;
+    background: #0047bb; /* Üst Bar ile Aynı Renk (LCW Kurumsal Mavisi) */
+    border-radius: 0 0 25px 25px;
+    display: flex;
+    flex-direction: column;
+    padding: 15px 0 25px 0;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    z-index: 999;
+    transition: width 0.3s ease; /* Hover'da genişleme */
+    overflow-x: hidden;
+    overflow-y: auto;
+    max-height: calc(100vh - 75px);
+}
+
+.dropdown-sidebar:hover {
+    width: 260px; /* Metinlerin ve alt menülerin görünmesi için genişle */
+}
+
+/* Scrollbar özelleştirmesi */
+.dropdown-sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+.dropdown-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
     border-radius: 10px;
 }
 
-.navbar-menu::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(0, 0, 0, 0.25);
+.sidebar-nav {
+    flex: 1;
+    width: 100%;
 }
 
-.navbar-menu.show-menu {
-    visibility: visible;
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    pointer-events: auto;
+.sidebar-nav > ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
-.navbar-menu li {
+.sidebar-nav > ul > li {
+    width: 100%;
+    padding: 0 13px; /* 70px kapalı halinde (70 - 26 = 44px buton) */
+}
+
+.sidebar-nav > ul > li > a {
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 44px;
+    text-decoration: none;
+    border-radius: 22px;
+    transition: all 0.3s ease;
+    padding: 0 12px; /* İkonun tam ortalanması için */
     position: relative;
+}
+
+.sidebar-nav > ul > li > a i.menu-icon {
+    min-width: 20px;
+    font-size: 1.1rem;
+    text-align: center;
+}
+
+.sidebar-nav > ul > li > a .nav-text {
+    margin-left: 15px;
+    white-space: nowrap;
+    opacity: 0; /* Kapalıyken gizli */
+    transition: opacity 0.3s ease;
+}
+
+.dropdown-sidebar:hover .sidebar-nav > ul > li > a .nav-text {
+    opacity: 1; /* Açıkken görünür */
+}
+
+.sidebar-nav > ul > li.has-submenu > a i.chevron {
+    position: absolute;
+    right: 15px;
+    font-size: 0.85rem;
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.dropdown-sidebar:hover .sidebar-nav > ul > li.has-submenu > a i.chevron {
+    opacity: 1;
+}
+
+.sidebar-nav > ul > li > a:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.sidebar-nav > ul > li > a.active {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.2); /* Active state */
+}
+
+/* Submenu Styles */
+ul.submenu {
+    display: none;
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 12px;
+    margin-top: 5px;
+    padding: 5px 0;
+    list-style: none;
+    flex-direction: column;
+}
+
+.submenu li {
+    padding: 0 5px 0 15px;
+    width: 100%;
+}
+
+.submenu li > a {
+    height: 38px;
+    border-radius: 19px;
+    font-size: 0.95rem;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    padding: 0 12px;
+}
+
+.submenu li > a:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.submenu li > a.active {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.submenu li > a i.menu-icon {
+    min-width: 20px;
+    font-size: 1rem;
+    text-align: center;
+}
+
+.submenu li > a .nav-text {
+    margin-left: 10px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.dropdown-sidebar:hover .submenu li > a .nav-text {
+    opacity: 1;
+}
+
+.sidebar-profile {
+    margin-top: 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 0 13px;
+    position: relative;
+}
+
+.sidebar-profile img {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #334155;
+    transition: border-color 0.3s ease;
+    flex-shrink: 0;
+}
+
+.sidebar-profile .nav-text {
+    margin-left: 15px;
+    color: #fff;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.dropdown-sidebar:hover .sidebar-profile .nav-text {
+    opacity: 1;
+}
+
+.sidebar-profile:hover img {
+    border-color: #0047bb;
+}
+
+/* 3) Ana İçerik */
+.main-content-wrapper {
+    flex-grow: 1;
+    margin-left: 0;
     display: flex;
     flex-direction: column;
     width: 100%;
 }
 
-.navbar-menu>li>a {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    padding: 12px 24px;
-    color: var(--text-main);
-    text-decoration: none;
-    font-weight: 500;
-    font-size: 0.95rem;
-    letter-spacing: 0.2px;
-    transition: background-color 0.2s ease, color 0.2s ease;
-    gap: 10px;
-    border-left: 3px solid transparent;
-}
-
-.navbar-menu>li>a>i.fa-chevron-down {
-    margin-left: auto;
-}
-
-.navbar-menu>li>a::after {
-    display: none;
-}
-
-.navbar-menu>li>a:hover {
-    background-color: #f8fafc;
-    color: var(--primary-color);
-}
-
-.navbar-menu>li>a.active {
-    background-color: rgba(0, 71, 187, 0.05);
-    color: var(--primary-color);
-    font-weight: 600;
-    border-left: 3px solid var(--primary-color);
-}
-
-/* Alt Menü / Açılır Menü (Dropdown) */
-.navbar-menu .submenu {
-    display: none;
-    position: static;
-    background: #f8fafc;
-    border: none;
-    border-radius: 0;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
-    width: 100% !important;
-    padding: 8px 0;
-    margin: 0;
-}
-
-.navbar-menu .submenu li {
-    margin: 0;
-    display: block;
-    width: 100%;
-}
-
-.navbar-menu .submenu a {
-    display: flex;
-    align-items: center;
-    padding: 10px 24px 10px 44px;
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    border-radius: 0;
-    width: 100%;
-    margin: 0;
-    gap: 12px;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    border-left: 3px solid transparent;
-}
-
-.navbar-menu .submenu a::after {
-    display: none;
-}
-
-.navbar-menu .submenu a i {
-    width: 16px;
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    transition: color 0.2s ease;
-}
-
-.navbar-menu .submenu a:hover {
-    background-color: rgba(0, 71, 187, 0.05);
-    color: var(--primary-color);
-    transform: none;
-}
-
-.navbar-menu .submenu a:hover i {
-    color: var(--primary-color);
-}
-
-.navbar-menu .submenu a.active {
-    background-color: transparent;
-    color: var(--primary-color);
-    font-weight: 600;
-}
-
-.navbar-menu .submenu .divider {
-    border-top: 1px solid var(--border-color);
-    margin: 6px 24px;
-}
-
-.navbar-menu a i {
-    font-size: 0.75rem;
-    transition: transform 0.2s ease;
-}
-
-/* Ana İçerik */
 .main-content {
+    padding: 10px 30px 30px 30px; /* Üstbarla olan mesafeyi azalttık */
     flex-grow: 1;
-    margin-left: 0;
-    padding: 60px 40px 40px 40px;
-    /* Sabit navbar için boşluk */
 }
 
 .topbar-left {

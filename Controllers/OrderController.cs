@@ -63,36 +63,6 @@ namespace UretimPlanlama.Controllers
                 order.Status = "Yeni Kayıt";
                 order.FabricStatus = "Bekleniyor";
                 
-                if (!string.IsNullOrEmpty(order.OrderMaterialsJson))
-                {
-                    try
-                    {
-                        var materials = System.Text.Json.JsonSerializer.Deserialize<List<OrderMaterial>>(order.OrderMaterialsJson);
-                        if (materials != null)
-                        {
-                            foreach (var mat in materials)
-                            {
-                                if (!string.IsNullOrEmpty(mat.OzelliklerJson))
-                                {
-                                    var varyantAdi = mat.OzelliklerJson.Trim();
-                                    var varyant = _context.StokVaryantlar.FirstOrDefault(v => v.StokKartiId == mat.StokKartiId && v.VaryantAdi == varyantAdi);
-                                    if (varyant == null)
-                                    {
-                                        varyant = new StokVaryant { StokKartiId = mat.StokKartiId, VaryantAdi = varyantAdi, MevcutMiktar = 0 };
-                                        _context.StokVaryantlar.Add(varyant);
-                                        _context.SaveChanges();
-                                    }
-                                    mat.StokVaryantId = varyant.Id;
-                                }
-                                order.OrderMaterials.Add(mat);
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new Exception("OrderMaterials JSON Deserialization failed: " + ex.Message + " | JSON: " + order.OrderMaterialsJson, ex);
-                    }
-                }
 
                 _context.Add(order);
                 _context.SaveChanges();
@@ -131,38 +101,7 @@ namespace UretimPlanlama.Controllers
                     order.Status = "Yeni Kayıt";
                     order.FabricStatus = "Bekleniyor";
                     
-                    if (!string.IsNullOrEmpty(order.OrderMaterialsJson))
-                    {
-                        try
-                        {
-                            var materials = System.Text.Json.JsonSerializer.Deserialize<List<OrderMaterial>>(order.OrderMaterialsJson);
-                            if (materials != null)
-                            {
-                                foreach (var mat in materials)
-                                {
-                                    if (!string.IsNullOrEmpty(mat.OzelliklerJson))
-                                    {
-                                        var varyantAdi = mat.OzelliklerJson.Trim();
-                                        var varyant = _context.StokVaryantlar.FirstOrDefault(v => v.StokKartiId == mat.StokKartiId && v.VaryantAdi == varyantAdi);
-                                        if (varyant == null)
-                                        {
-                                            varyant = new StokVaryant { StokKartiId = mat.StokKartiId, VaryantAdi = varyantAdi, MevcutMiktar = 0 };
-                                            _context.StokVaryantlar.Add(varyant);
-                                            _context.SaveChanges();
-                                        }
-                                        mat.StokVaryantId = varyant.Id;
-                                    }
-                                    mat.OrderId = order.Id; // Will be set by EF when order is saved, but we add to collection
-                                    order.OrderMaterials.Add(mat);
-                                }
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            throw new Exception("OrderMaterials JSON Deserialization failed: " + ex.Message + " | JSON: " + order.OrderMaterialsJson, ex);
-                        }
-                    }
-                    
+
                     _context.Add(order);
                 }
                 _context.SaveChanges();
@@ -497,42 +436,6 @@ namespace UretimPlanlama.Controllers
                 existingOrder.VatAmount = updatedOrder.VatAmount;
                 existingOrder.TotalAmountWithVat = updatedOrder.TotalAmountWithVat;
 
-                // Sipariş malzemelerini güncelle (OrderMaterialsJson'dan)
-                if (updatedOrder.OrderMaterialsJson != null)
-                {
-                    try
-                    {
-                        var newMaterials = System.Text.Json.JsonSerializer.Deserialize<List<OrderMaterial>>(updatedOrder.OrderMaterialsJson);
-                        
-                        _context.OrderMaterials.RemoveRange(existingOrder.OrderMaterials);
-                        existingOrder.OrderMaterials.Clear();
-                        
-                        if (newMaterials != null)
-                        {
-                            foreach (var mat in newMaterials)
-                            {
-                                if (!string.IsNullOrEmpty(mat.OzelliklerJson))
-                                {
-                                    var varyantAdi = mat.OzelliklerJson.Trim();
-                                    var varyant = _context.StokVaryantlar.FirstOrDefault(v => v.StokKartiId == mat.StokKartiId && v.VaryantAdi == varyantAdi);
-                                    if (varyant == null)
-                                    {
-                                        varyant = new StokVaryant { StokKartiId = mat.StokKartiId, VaryantAdi = varyantAdi, MevcutMiktar = 0 };
-                                        _context.StokVaryantlar.Add(varyant);
-                                        _context.SaveChanges();
-                                    }
-                                    mat.StokVaryantId = varyant.Id;
-                                }
-                                mat.OrderId = existingOrder.Id;
-                                existingOrder.OrderMaterials.Add(mat);
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new Exception("OrderMaterials JSON Deserialization failed in Edit: " + ex.Message + " | JSON: " + updatedOrder.OrderMaterialsJson, ex);
-                    }
-                }
 
                 _context.SaveChanges();
                 TempData["SuccessMessage"] = "Sipariş güncellendi";
@@ -589,6 +492,101 @@ namespace UretimPlanlama.Controllers
                 return Json(new { success = true });
             }
             return Json(new { success = false, message = "Sipariş bulunamadı." });
+        }
+        [HttpGet]
+        public IActionResult Materials(int id)
+        {
+            if (!User.HasPermission("View") && !User.HasPermission("Write"))
+            {
+                return RedirectToAction("AccessDenied", "Account");
+            }
+
+            var order = _context.Orders
+                .Include(o => o.OrderMaterials)
+                    .ThenInclude(m => m.StokKarti)
+                .Include(o => o.OrderMaterials)
+                    .ThenInclude(m => m.StokVaryant)
+                .FirstOrDefault(o => o.Id == id);
+
+            if (order == null)
+            {
+                return NotFound();
+            }
+
+            ViewBag.StokKartlari = _context.StokKartlari.Where(s => s.Aktif).OrderBy(s => s.StokAdi).ToList();
+
+            if (order.OrderMaterials != null && order.OrderMaterials.Any())
+            {
+                var materialsData = order.OrderMaterials.Select(m => new
+                {
+                    m.StokKartiId,
+                    m.Miktar,
+                    m.Aciklama,
+                    m.OzelliklerJson
+                }).ToList();
+                order.OrderMaterialsJson = System.Text.Json.JsonSerializer.Serialize(materialsData);
+            }
+            else
+            {
+                order.OrderMaterialsJson = "[]";
+            }
+
+            return View(order);
+        }
+
+        [HttpPost]
+        public IActionResult SaveMaterials([FromBody] Order orderModel)
+        {
+            if (!User.HasPermission("Write"))
+            {
+                return Json(new { success = false, message = "Yetkiniz yetersiz." });
+            }
+
+            try
+            {
+                var existingOrder = _context.Orders.Include(o => o.OrderMaterials).FirstOrDefault(o => o.Id == orderModel.Id);
+                if (existingOrder == null)
+                {
+                    return Json(new { success = false, message = "Sipariş bulunamadı." });
+                }
+
+                if (orderModel.OrderMaterialsJson != null)
+                {
+                    var newMaterials = System.Text.Json.JsonSerializer.Deserialize<List<OrderMaterial>>(orderModel.OrderMaterialsJson);
+                    
+                    _context.OrderMaterials.RemoveRange(existingOrder.OrderMaterials);
+                    existingOrder.OrderMaterials.Clear();
+                    
+                    if (newMaterials != null)
+                    {
+                        foreach (var mat in newMaterials)
+                        {
+                            if (!string.IsNullOrEmpty(mat.OzelliklerJson))
+                            {
+                                var varyantAdi = mat.OzelliklerJson.Trim();
+                                var varyant = _context.StokVaryantlar.FirstOrDefault(v => v.StokKartiId == mat.StokKartiId && v.VaryantAdi == varyantAdi);
+                                if (varyant == null)
+                                {
+                                    varyant = new StokVaryant { StokKartiId = mat.StokKartiId, VaryantAdi = varyantAdi, MevcutMiktar = 0 };
+                                    _context.StokVaryantlar.Add(varyant);
+                                    _context.SaveChanges();
+                                }
+                                mat.StokVaryantId = varyant.Id;
+                            }
+                            mat.OrderId = existingOrder.Id;
+                            existingOrder.OrderMaterials.Add(mat);
+                        }
+                    }
+                }
+                
+                _context.SaveChanges();
+                TempData["SuccessMessage"] = "Malzemeler güncellendi";
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
         }
 
         [HttpPost]
