@@ -323,20 +323,20 @@
 
 
             <div style="width: 100%; margin-bottom: 24px; margin-top: 24px;">
-                <h4 style="margin: 0 0 16px 0; padding: 12px 16px; background: #e2e8f0; border-radius: 8px; font-size: 1.05rem; color: #1e293b; font-weight: 700; letter-spacing: -0.2px; display: flex; align-items: center;"><i class="fa-solid fa-palette" style="margin-right: 10px; font-size: 1.2rem; color: #3b82f6;"></i> Renk ve Beden Dağılımları</h4>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color); flex-wrap:wrap; gap:16px;">
-                    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; flex:1;">
-                        <label style="font-weight: 600; font-size: 0.9rem; color: #1e293b; margin:0;"><i class="fa-solid fa-ruler"></i> Beden Şablonu:</label>
-                        <select id="sizeTemplateSelector" class="form-control" style="width: 170px; padding: 6px 12px; font-size: 0.85rem; border-radius: 6px; font-weight:600; background:#f8fafc; border:1px solid #cbd5e1;">
-                            <option value="">-- Şablon Seçin --</option>
-                            <option value="standart">XS,S,M,L..</option>
-                            <option value="numerik">34,36,38..</option>
-                        </select>
-                        <div id="sizeCheckboxesContainer" style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-left: 12px; padding-left: 12px; border-left: 2px solid #e2e8f0;">
-                            <!-- Checkboxes dynamically populated -->
-                        </div>
-                    </div>
+                <div style="margin: 0 0 16px 0; padding: 12px 16px; background: #e2e8f0; border-radius: 8px; display: flex; align-items: center; justify-content: space-between;">
+                    <h4 style="margin: 0; font-size: 1.05rem; color: #1e293b; font-weight: 700; letter-spacing: -0.2px; display: flex; align-items: center;"><i class="fa-solid fa-palette" style="margin-right: 10px; font-size: 1.2rem; color: #3b82f6;"></i> Renk ve Beden Dağılımları</h4>
                     <button type="button" id="btnAddColorRow" class="btn-planner" style="padding: 8px 16px; font-size: 0.9rem; white-space:nowrap; background: linear-gradient(135deg, #10b981, #059669) !important; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3) !important;"><i class="fa-solid fa-plus"></i> Yeni Renk Ekle</button>
+                </div>
+                <div style="display: flex; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color); flex-wrap:wrap; gap:16px;">
+                    <label style="font-weight: 600; font-size: 0.9rem; color: #1e293b; margin:0;"><i class="fa-solid fa-ruler"></i> Beden Şablonu:</label>
+                    <select id="sizeTemplateSelector" class="form-control" style="width: 170px; padding: 6px 12px; font-size: 0.85rem; border-radius: 6px; font-weight:600; background:#f8fafc; border:1px solid #cbd5e1;">
+                        <option value="">-- Şablon Seçin --</option>
+                        <option value="standart">XS,S,M,L..</option>
+                        <option value="numerik">34,36,38..</option>
+                    </select>
+                    <div id="sizeCheckboxesContainer" style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-left: 12px; padding-left: 12px; border-left: 2px solid #e2e8f0;">
+                        <!-- Checkboxes dynamically populated -->
+                    </div>
                 </div>
 
                 <!-- Renk Kartları Konteyneri -->
@@ -358,9 +358,9 @@
                 </div>
 
                 <div style="margin-top: 40px;">
-                    <h4 style="margin: 0 0 16px 0; padding: 12px 16px; background: #e2e8f0; border-radius: 8px; font-size: 1.05rem; color: #1e293b; font-weight: 700; letter-spacing: -0.2px; display: flex; align-items: center;"><i class="fa-solid fa-gem" style="margin-right: 10px; font-size: 1.2rem; color: #f59e0b;"></i> Aksesuar Ekleme</h4>
-                    <div style="display: flex; justify-content: center;">
-                        <button type="button" id="btnAddAccessory" class="btn-planner" style="padding: 10px 24px; font-size: 0.95rem; white-space:nowrap; background: linear-gradient(135deg, #f59e0b, #d97706) !important; box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.3) !important;"><i class="fa-solid fa-plus"></i> Aksesuar Ekle</button>
+                    <div style="margin: 0 0 16px 0; padding: 12px 16px; background: #e2e8f0; border-radius: 8px; display: flex; align-items: center; justify-content: space-between;">
+                        <h4 style="margin: 0; font-size: 1.05rem; color: #1e293b; font-weight: 700; letter-spacing: -0.2px; display: flex; align-items: center;"><i class="fa-solid fa-gem" style="margin-right: 10px; font-size: 1.2rem; color: #f59e0b;"></i> Aksesuar Ekleme</h4>
+                        <button type="button" id="btnAddAccessory" class="btn-planner" style="padding: 8px 16px; font-size: 0.9rem; white-space:nowrap; background: linear-gradient(135deg, #10b981, #059669) !important; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3) !important;"><i class="fa-solid fa-plus"></i> Aksesuar Ekle</button>
                     </div>
                 </div>
 
@@ -830,9 +830,7 @@
                 
                 $('#colorsContainer').empty();
                 
-                if (data.length === 0) {
-                    addNewColorRow();
-                } else {
+                if (data.length > 0) {
                     data.forEach(d => addNewColorRow(d));
                 }
             });
@@ -852,9 +850,7 @@
                 
                 $('#colorsContainer').empty();
                 
-                if (data.length === 0) {
-                    addNewColorRow();
-                } else {
+                if (data.length > 0) {
                     data.forEach(d => addNewColorRow(d));
                 }
             });
@@ -956,7 +952,6 @@
             // İsteğe bağlı olduğu için başlangıçta boş gelsin
             renderSizeCheckboxes($('#sizeTemplateSelector').val() || "");
             renderTableHeaders();
-            addNewColorRow();
 
             $("#btnAddAccessory").click(function() {
                 var wrapper = $("#materialsSectionWrapper");

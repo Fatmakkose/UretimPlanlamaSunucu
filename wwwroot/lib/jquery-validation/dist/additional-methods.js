@@ -27,7 +27,8 @@
 		.replace( /[.(),;:!?%#$'\"_+=\/\-“”’]*/g, "" );
 	}
 
-	$.validator.addMethod( "maxWords", function( value, element, params ) {
+	$.validator.addMethod("maxWords", function (value, 
+		, params) {
 		return this.optional( element ) || stripHtml( value ).match( /\b\w+\b/g ).length <= params;
 	}, $.validator.format( "Please enter {0} words or less." ) );
 

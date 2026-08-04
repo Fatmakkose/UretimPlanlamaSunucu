@@ -152,7 +152,7 @@
                         
                         if (orderGroup.Count() == 1)
                         {
-                            <tr class="order-row main-order-row hover-row" data-kpi-status="@groupKpiBucket" style="border-bottom: 1px solid #f1f5f9; background: #fff; cursor: pointer;" onclick="window.location.href='/Planning/Plan/@firstOrder.Id'">
+                            <tr class="order-row main-order-row hover-row" data-kpi-status="@groupKpiBucket" style="border-bottom: 1px solid #f1f5f9; background: #fff; cursor: pointer;" onclick="if(window.parent.appTabs) { window.parent.appTabs.openNewTab('@firstOrder.OrderCode', '/Planning/Plan/@firstOrder.Id', 'fa-solid fa-calendar-check'); } else { window.location.href='/Planning/Plan/@firstOrder.Id'; }">
                                 <td style="padding-left: 24px;">
                                     <span style="background-color: var(--primary-color); color: white; padding: 4px 12px; border-radius: 9999px; font-weight: 600; display: inline-block;">@firstOrder.OrderCode</span>
                                 </td>
@@ -192,7 +192,7 @@
                                     @firstOrder.CalculatedQuantity.ToString("N0") <span style="font-weight: 500; font-size: 0.7rem; color: #64748b;">Adet</span>
                                 </td>
                                 <td style="text-align: center; padding-right: 24px;">
-                                    <a href="/Planning/Plan/@firstOrder.Id" class="action-btn" onclick="event.stopPropagation();"><i class="fa-solid fa-calendar-check"></i> Planla</a>
+                                    <a href="/Planning/Plan/@firstOrder.Id" class="action-btn" onclick="event.stopPropagation(); if(window.parent.appTabs) { window.parent.appTabs.openNewTab('@firstOrder.OrderCode', this.href, 'fa-solid fa-calendar-check'); event.preventDefault(); }"><i class="fa-solid fa-calendar-check"></i> Planla</a>
                                 </td>
                             </tr>
                         }
@@ -236,7 +236,7 @@
 
                             foreach (var order in orderGroup)
                             {
-                                <tr class="order-row @groupClass hover-row" style="display: none; background: #f8fafc; border-bottom: 1px dashed #cbd5e1; cursor: pointer;" onclick="window.location.href='/Planning/Plan/@order.Id'">
+                                <tr class="order-row @groupClass hover-row" style="display: none; background: #f8fafc; border-bottom: 1px dashed #cbd5e1; cursor: pointer;" onclick="if(window.parent.appTabs) { window.parent.appTabs.openNewTab('@order.OrderCode', '/Planning/Plan/@order.Id', 'fa-solid fa-calendar-check'); } else { window.location.href='/Planning/Plan/@order.Id'; }">
                                     <td style="padding-left: 50px;">
                                         <span style="font-size:0.8rem; color:#94a3b8;"><i class="fa-solid fa-arrow-turn-up fa-rotate-90"></i></span>
                                     </td>
@@ -269,7 +269,7 @@
                                         @order.CalculatedQuantity.ToString("N0") <span style="font-weight: 500; font-size: 0.7rem; color: #64748b;">Adet</span>
                                     </td>
                                     <td style="text-align: center; padding-right: 24px;">
-                                        <a href="/Planning/Plan/@order.Id" class="action-btn" onclick="event.stopPropagation();"><i class="fa-solid fa-calendar-check"></i> Planla</a>
+                                        <a href="/Planning/Plan/@order.Id" class="action-btn" onclick="event.stopPropagation(); if(window.parent.appTabs) { window.parent.appTabs.openNewTab('@order.OrderCode', this.href, 'fa-solid fa-calendar-check'); event.preventDefault(); }"><i class="fa-solid fa-calendar-check"></i> Planla</a>
                                     </td>
                                 </tr>
                             }

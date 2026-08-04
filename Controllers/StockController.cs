@@ -129,8 +129,8 @@ namespace UretimPlanlama.Controllers
                         _ => "STK"
                     };
                     var lastCode = _context.StokKartlari
-                        .Where(s => s.StokKodu.StartsWith(prefix))
-                        .OrderByDescending(s => s.Id)
+                        .Where(s => s.StokKodu.StartsWith(prefix + "-"))
+                        .OrderByDescending(s => s.StokKodu)
                         .Select(s => s.StokKodu)
                         .FirstOrDefault();
 
@@ -166,7 +166,8 @@ namespace UretimPlanlama.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                var msg = ex.InnerException?.Message ?? ex.Message;
+                return Json(new { success = false, message = msg });
             }
         }
 
@@ -193,8 +194,8 @@ namespace UretimPlanlama.Controllers
                         _ => "STK"
                     };
                     var lastCode = _context.StokKartlari
-                        .Where(s => s.StokKodu.StartsWith(prefix))
-                        .OrderByDescending(s => s.Id)
+                        .Where(s => s.StokKodu.StartsWith(prefix + "-"))
+                        .OrderByDescending(s => s.StokKodu)
                         .Select(s => s.StokKodu)
                         .FirstOrDefault();
 

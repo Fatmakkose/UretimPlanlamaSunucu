@@ -1,6 +1,6 @@
 @model UretimPlanlama.Models.Order
 @{
-    ViewData["Title"] = "Süreç Takip Detay";
+    ViewData["Title"] = "Süreç Takip:" + Model.OrderCode;
     var stokKartlari = ViewBag.StokKartlari as List<UretimPlanlama.Models.StokKarti> ?? new List<UretimPlanlama.Models.StokKarti>();
     var workshops = ViewBag.Workshops as List<UretimPlanlama.Models.Workshop> ?? new List<UretimPlanlama.Models.Workshop>();
 
@@ -454,10 +454,10 @@
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
         border: 1px solid #f1f5f9;
     }
-    .tab-pane {
+    .tab-content > .tab-pane {
         display: none;
     }
-    .tab-pane.active {
+    .tab-content > .tab-pane.active {
         display: block;
         animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
@@ -1523,8 +1523,8 @@
 
         // --- TAB SWITCH LOGIC ---
         function switchTab(tabId) {
-            $('.nav-link').removeClass('active');
-            $('.tab-pane').removeClass('active');
+            $('#trackTabs .nav-link').removeClass('active');
+            $('#trackTabsContent > .tab-pane').removeClass('active');
             
             $('#' + tabId + '-tab').addClass('active');
             $('#' + tabId).addClass('active');

@@ -150,7 +150,7 @@
 
 <div class="dashboard-header" style="margin-bottom: 25px;">
     <div class="header-title">
-        <h1 style="font-size: 1.4rem; margin: 0; color: var(--text-main);">Sipariş Yönetimi</h1>
+        <h1 style="font-size: 1.8rem; margin: 0; color: var(--text-main);">Sipariş Yönetimi</h1>
     </div>
     <div class="header-actions" style="display: flex; gap: 12px;">
     </div>
@@ -233,7 +233,7 @@
             <a href="/Order/ExportToExcel" class="btn-secondary" style="display: flex; align-items: center; gap: 8px; background: white; border: 1px solid #cbd5e1; padding: 8px 16px; border-radius: 6px; font-weight: 600; color: #334155; cursor: pointer; text-decoration: none;">
                 <i class="fa-solid fa-download"></i> Excel Dışa Aktar
             </a>
-            <a href="/Order/Create?returnUrl=%2FOrder%2FIndex" class="btn-planner" style="background-color: #0369a1; border: none; color: white; display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(3, 105, 161, 0.2); text-decoration: none;">
+            <a href="/Order/Create?returnUrl=%2FOrder%2FIndex" class="btn-planner" style="background-color: #0369a1; border: none; color: white; display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(3, 105, 161, 0.2); text-decoration: none;" onclick="if(window.parent.appTabs) { window.parent.appTabs.openNewTab('Yeni Sipariş', this.href, 'fa-solid fa-plus'); event.preventDefault(); }">
                 <i class="fa-solid fa-plus"></i> Yeni Sipariş
             </a>
         </div>
@@ -1434,7 +1434,11 @@ tableHtml += '<th style="padding: 8px; border-left: 1px solid var(--border-color
                                     // Model Detayları & Aksesuarlar (Dinamik HTML)
                                     var accHtml = '';
                                     var materials = [];
-                                    try { materials = JSON.parse(order.orderMaterialsJson || "[]") || []; } catch(e){ materials = []; }
+                                    if (order.orderMaterialsJson) {
+                                         try { materials = JSON.parse(order.orderMaterialsJson); } catch(e){}
+                                    } else if (order.orderMaterials) {
+                                         materials = order.orderMaterials;
+                                    }
                                     
                                     var purData = {};
                                     try { purData = JSON.parse(order.purchasingMaterialsJson || "{}") || {}; } catch(e){}

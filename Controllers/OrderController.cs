@@ -63,6 +63,21 @@ namespace UretimPlanlama.Controllers
                 order.Status = "Yeni Kayıt";
                 order.FabricStatus = "Bekleniyor";
                 
+                if (!string.IsNullOrEmpty(order.OrderMaterialsJson))
+                {
+                    try
+                    {
+                        var materialsList = System.Text.Json.JsonSerializer.Deserialize<List<OrderMaterial>>(order.OrderMaterialsJson);
+                        if (materialsList != null)
+                        {
+                            foreach (var mat in materialsList)
+                            {
+                                order.OrderMaterials.Add(mat);
+                            }
+                        }
+                    }
+                    catch {}
+                }
 
                 _context.Add(order);
                 _context.SaveChanges();
@@ -101,6 +116,21 @@ namespace UretimPlanlama.Controllers
                     order.Status = "Yeni Kayıt";
                     order.FabricStatus = "Bekleniyor";
                     
+                    if (!string.IsNullOrEmpty(order.OrderMaterialsJson))
+                    {
+                        try
+                        {
+                            var materialsList = System.Text.Json.JsonSerializer.Deserialize<List<OrderMaterial>>(order.OrderMaterialsJson);
+                            if (materialsList != null)
+                            {
+                                foreach (var mat in materialsList)
+                                {
+                                    order.OrderMaterials.Add(mat);
+                                }
+                            }
+                        }
+                        catch {}
+                    }
 
                     _context.Add(order);
                 }
@@ -428,6 +458,27 @@ namespace UretimPlanlama.Controllers
                 existingOrder.HasYokeLabel = updatedOrder.HasYokeLabel;
                 existingOrder.HasFifLabel = updatedOrder.HasFifLabel;
                 existingOrder.HasOtherCard = updatedOrder.HasOtherCard;
+
+                if (!string.IsNullOrEmpty(updatedOrder.OrderMaterialsJson))
+                {
+                    try
+                    {
+                        var updatedMaterials = System.Text.Json.JsonSerializer.Deserialize<List<OrderMaterial>>(updatedOrder.OrderMaterialsJson) ?? new List<OrderMaterial>();
+                        
+                        if (existingOrder.OrderMaterials != null && existingOrder.OrderMaterials.Any())
+                        {
+                            _context.OrderMaterials.RemoveRange(existingOrder.OrderMaterials);
+                            existingOrder.OrderMaterials.Clear();
+                        }
+                        
+                        foreach (var mat in updatedMaterials)
+                        {
+                            mat.OrderId = existingOrder.Id;
+                            existingOrder.OrderMaterials.Add(mat);
+                        }
+                    }
+                    catch {}
+                }
 
                 // Finansal özellikleri güncelle
                 existingOrder.ComponentUnitPrice = updatedOrder.ComponentUnitPrice;

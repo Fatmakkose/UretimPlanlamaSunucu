@@ -11,6 +11,11 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
+    <script>
+        if (window.self !== window.top) {
+            document.documentElement.classList.add('in-iframe');
+        }
+    </script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Kanuni Tekstil</title>
@@ -30,6 +35,17 @@
                         <img src="~/images/yeni_logo.png" alt="Kanuni Tekstil Logo" asp-append-version="true" />
                     </div>
                 </a>
+            </div>
+
+            <!-- ORTA KISIM: SEKMELER -->
+            <div id="tab-system-header" class="tab-system-header" style="flex-grow: 1; margin: 0 20px; height: 100%;">
+                <div class="tab-list" id="tab-list">
+                    <!-- İlk açılış sekmesi (Ana Sayfa) -->
+                    <div class="tab-item active" data-tab-id="main-tab" onclick="appTabs.switchTab('main-tab')">
+                        <i class="fa-solid fa-house tab-icon"></i>
+                        <span class="tab-title" id="main-tab-title">Ana Sayfa</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Sağ Kısım: Bildirimler -->
@@ -174,10 +190,16 @@
             </aside>
 
             <!-- ANA İÇERİK -->
-            <div class="main-content-wrapper">
-                <main class="main-content">
-                    @RenderBody()
-                </main>
+            <div class="main-content-wrapper" id="main-content-wrapper">
+                
+                <!-- Sekme İçerikleri -->
+                <div id="tab-system-content" class="tab-system-content">
+                    <div class="tab-pane active" id="pane-main-tab">
+                        <main class="main-content">
+                            @RenderBody()
+                        </main>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
