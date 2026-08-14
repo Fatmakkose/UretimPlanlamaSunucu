@@ -248,75 +248,120 @@
         <div style="margin-bottom: 16px;">
         <div style="display: flex; flex-direction: column; gap: 24px; margin-bottom: 16px;">
             
-            <!-- Üst Kısım: Genel Bilgiler -->
-            <div style="width: 100%; margin: 0 auto;">
-                <h4 style="margin: 0 0 16px 0; padding: 12px 16px; background: #e2e8f0; border-radius: 8px; font-size: 1.05rem; color: #1e293b; font-weight: 700; letter-spacing: -0.2px; display: flex; align-items: center;"><i class="fa-solid fa-circle-info" style="margin-right: 10px; font-size: 1.2rem; color: #10b981;"></i> Genel Bilgiler</h4>
+            <!-- Üst Kısım: Genel Bilgiler ve Görsel -->
+            <div style="width: 100%; margin: 0 auto; display: flex; gap: 20px;">
                 
-                <div class="genel-bilgiler-grid" style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px;">
-                    <style>
-                        .genel-bilgiler-grid .form-group { margin-bottom: 0; }
-                        .genel-bilgiler-grid label { font-size: 0.75rem; font-weight: 600; color: #475569; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; display: block; }
-                        .genel-bilgiler-grid input, .genel-bilgiler-grid select { font-size: 0.8rem; padding: 4px 8px; height: 32px; border-radius: 6px; width: 100%; border: 1px solid #cbd5e1; }
-                        .genel-bilgiler-grid input:focus, .genel-bilgiler-grid select:focus { border-color: #3b82f6; outline: none; }
-                    </style>
-                    <div class="form-group">
-                        <label>Sipariş Tarihi</label>
-                        <input name="OrderDate" class="form-control" type="date" required value="@DateTime.Now.ToString("yyyy-MM-dd")" />
-                    </div>
-                    <div class="form-group">
-                        <label>Sipariş Kodu (PO) </label>
-                        <input name="OrderCode" class="form-control" />
-                    </div>
+                <!-- Sol Taraf: Genel Bilgiler -->
+                <div style="flex: 1.5;">
+                    <h4 style="margin: 0 0 16px 0; padding: 12px 16px; background: #e2e8f0; border-radius: 8px; font-size: 1.05rem; color: #1e293b; font-weight: 700; letter-spacing: -0.2px; display: flex; align-items: center;"><i class="fa-solid fa-circle-info" style="margin-right: 10px; font-size: 1.2rem; color: #10b981;"></i> Genel Bilgiler</h4>
                     
-                    <div class="form-group">
-                        <label>Müşteri (Buyer)</label>
-                        <select name="Customer" class="form-control" required>
-                            <option value="">-- Müşteri Seçin --</option>
-                            @if (ViewBag.Customers != null)
-                            {
-                                foreach (var c in (List<UretimPlanlama.Models.Customer>)ViewBag.Customers)
+                    <div class="genel-bilgiler-grid" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px;">
+                        <style>
+                            .genel-bilgiler-grid .form-group { margin-bottom: 0; }
+                            .genel-bilgiler-grid label { font-size: 0.75rem; font-weight: 600; color: #475569; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; display: block; }
+                            .genel-bilgiler-grid input, .genel-bilgiler-grid select { font-size: 0.8rem; padding: 4px 8px; height: 32px; border-radius: 6px; width: 100%; border: 1px solid #cbd5e1; }
+                            .genel-bilgiler-grid input:focus, .genel-bilgiler-grid select:focus { border-color: #3b82f6; outline: none; }
+                        </style>
+                        <div class="form-group" style="display: none;">
+                            <label>Sipariş Tarihi</label>
+                            <input name="OrderDate" class="form-control" type="date" required value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                        </div>
+                        <div class="form-group">
+                            <label>Sipariş Kodu (PO) </label>
+                            <input name="OrderCode" class="form-control" />
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Müşteri (Buyer)</label>
+                            <select name="Customer" class="form-control" required>
+                                <option value="">-- Müşteri Seçin --</option>
+                                @if (ViewBag.Customers != null)
                                 {
-                                    <option value="@c.Name">@c.Name</option>
+                                    foreach (var c in (List<UretimPlanlama.Models.Customer>)ViewBag.Customers)
+                                    {
+                                        <option value="@c.Name">@c.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Model Adı</label>
+                            <input name="ModelName" class="form-control" placeholder="Örn: Basic Sweatshirt" required />
+                        </div>
+                        
+                        <div class="form-group" style="display: none;">
+                            <label>Renk / Option</label>
+                            <input name="Color" class="form-control" id="commonColor" />
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Marka</label>
+                            <select name="Brand" class="form-control">
+                               <option value="">-- Marka Seçin --</option>
+                               @if(ViewBag.Brands != null)
+                               {
+                                   foreach(var brand in (List<UretimPlanlama.Models.Brand>)ViewBag.Brands)
+                                   {
+                                       <option value="@brand.Name">@brand.Name</option>
+                                   }
+                               }
+                           </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Model Detay</label>
+                            <input name="GoodsDescription" class="form-control" placeholder="Örn: Örme Erkek Sweatshirt" />
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Sezon</label>
+                            <input name="Season" class="form-control" placeholder="Örn: 2026 İlkbahar / Yaz" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sağ Taraf: Sipariş Görseli -->
+                <div style="flex: 1;">
+                    <h4 style="margin: 0 0 16px 0; padding: 12px 16px; background: #e2e8f0; border-radius: 8px; font-size: 1.05rem; color: #1e293b; font-weight: 700; letter-spacing: -0.2px; display: flex; align-items: center;"><i class="fa-solid fa-image" style="margin-right: 10px; font-size: 1.2rem; color: #3b82f6;"></i> Sipariş Görseli</h4>
+                    <div id="orderImageUploadBox" style="border: 2px dashed #cbd5e1; border-radius: 8px; height: calc(100% - 60px); min-height: 120px; display: flex; align-items: center; justify-content: center; background: #f8fafc; cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('orderImageInput').click();" onmouseover="this.style.borderColor='#3b82f6'; this.style.background='#eff6ff';" onmouseout="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc';">
+                        <div style="text-align: center; color: #64748b;">
+                            <i class="fa-solid fa-cloud-arrow-up" style="font-size: 2rem; margin-bottom: 8px; color: #94a3b8;"></i>
+                            <div style="font-size: 0.85rem; font-weight: 600;">Görsel Ekle</div>
+                        </div>
+                        <input type="file" id="orderImageInput" name="OrderImage" accept="image/*" style="display: none;" onchange="previewOrderImage(this)" />
+                    </div>
+                    <img id="orderImagePreview" style="display: none; width: 100%; height: calc(100% - 60px); min-height: 120px; object-fit: contain; border-radius: 8px; border: 1px solid #cbd5e1; cursor: pointer; background: #f8fafc;" onclick="document.getElementById('orderImageInput').click();" title="Değiştirmek için tıklayın" />
+                    <script>
+                        function previewOrderImage(input) {
+                            if (input.files && input.files[0]) {
+                                var reader = new FileReader();
+                                reader.onload = function(e) {
+                                    $('#orderImagePreview').attr('src', e.target.result).show();
+                                    $('#orderImageUploadBox').hide();
+                                }
+                                reader.readAsDataURL(input.files[0]);
+                            }
+                        }
+
+                        // Panodan (clipboard) ekran görüntüsü yapıştırma desteği
+                        document.addEventListener('paste', function (e) {
+                            var items = (e.clipboardData || e.originalEvent.clipboardData).items;
+                            for (var i = 0; i < items.length; i++) {
+                                var item = items[i];
+                                if (item.kind === 'file' && item.type.indexOf('image/') !== -1) {
+                                    var blob = item.getAsFile();
+                                    var dataTransfer = new DataTransfer();
+                                    var file = new File([blob], "pasted-image.png", { type: item.type });
+                                    dataTransfer.items.add(file);
+                                    
+                                    var fileInput = document.getElementById('orderImageInput');
+                                    fileInput.files = dataTransfer.files;
+                                    previewOrderImage(fileInput);
+                                    e.preventDefault();
+                                    break;
                                 }
                             }
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Model Adı</label>
-                        <input name="ModelName" class="form-control" placeholder="Örn: Basic Sweatshirt" required />
-                    </div>
-                    
-                    <div class="form-group" style="display: none;">
-                        <label>Renk / Option</label>
-                        <input name="Color" class="form-control" id="commonColor" />
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Marka</label>
-                        <select name="Brand" class="form-control">
-                           <option value="">-- Marka Seçin --</option>
-                           @if(ViewBag.Brands != null)
-                           {
-                               foreach(var brand in (List<UretimPlanlama.Models.Brand>)ViewBag.Brands)
-                               {
-                                   <option value="@brand.Name">@brand.Name</option>
-                               }
-                           }
-                       </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Model Detay</label>
-                        <input name="GoodsDescription" class="form-control" placeholder="Örn: Örme Erkek Sweatshirt" />
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Teslim Yeri</label>
-                        <input name="DeliveryPlace" class="form-control" value="LCWaikiki Depoları" />
-                    </div>
-                    <div class="form-group">
-                        <label>Sezon</label>
-                        <input name="Season" class="form-control" placeholder="Örn: 2026 İlkbahar / Yaz" />
-                    </div>
+                        });
+                    </script>
                 </div>
             </div>
 
@@ -327,17 +372,7 @@
                     <h4 style="margin: 0; font-size: 1.05rem; color: #1e293b; font-weight: 700; letter-spacing: -0.2px; display: flex; align-items: center;"><i class="fa-solid fa-palette" style="margin-right: 10px; font-size: 1.2rem; color: #3b82f6;"></i> Renk ve Beden Dağılımları</h4>
                     <button type="button" id="btnAddColorRow" class="btn-planner" style="padding: 8px 16px; font-size: 0.9rem; white-space:nowrap; background: linear-gradient(135deg, #10b981, #059669) !important; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3) !important;"><i class="fa-solid fa-plus"></i> Yeni Renk Ekle</button>
                 </div>
-                <div style="display: flex; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color); flex-wrap:wrap; gap:16px;">
-                    <label style="font-weight: 600; font-size: 0.9rem; color: #1e293b; margin:0;"><i class="fa-solid fa-ruler"></i> Beden Şablonu:</label>
-                    <select id="sizeTemplateSelector" class="form-control" style="width: 170px; padding: 6px 12px; font-size: 0.85rem; border-radius: 6px; font-weight:600; background:#f8fafc; border:1px solid #cbd5e1;">
-                        <option value="">-- Şablon Seçin --</option>
-                        <option value="standart">XS,S,M,L..</option>
-                        <option value="numerik">34,36,38..</option>
-                    </select>
-                    <div id="sizeCheckboxesContainer" style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-left: 12px; padding-left: 12px; border-left: 2px solid #e2e8f0;">
-                        <!-- Checkboxes dynamically populated -->
-                    </div>
-                </div>
+
 
                 <!-- Renk Kartları Konteyneri -->
                 <div id="colorsContainer">
@@ -394,6 +429,28 @@
 
 
     </form>
+
+    <!-- Toplu Stok Seçim Modalı -->
+    <div id="bulkStockModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1050; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 12px; width: 90%; max-width: 800px; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #e2e8f0; background: #f8fafc;">
+                <h5 style="margin: 0; color: #1e293b; font-weight: 700; font-size: 1.1rem;"><i class="fa-solid fa-list-check" style="color: #3b82f6; margin-right: 8px;"></i> Toplu Stok Seçimi</h5>
+                <button type="button" onclick="$('#bulkStockModal').css('display', 'none');" style="background: transparent; border: none; font-size: 1.5rem; color: #64748b; cursor: pointer;">&times;</button>
+            </div>
+            <div style="padding: 16px; border-bottom: 1px solid #e2e8f0;">
+                <input type="text" id="bulkStockSearch" class="form-control" placeholder="Stok Adı, Kodu veya Kategori ara..." style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.95rem;">
+            </div>
+            <div style="flex: 1; overflow-y: auto; padding: 16px; background: #fcfcfd;">
+                <div id="bulkStockList" style="display: flex; flex-direction: column; gap: 8px;">
+                    <!-- Javascript ile doldurulacak -->
+                </div>
+            </div>
+            <div style="padding: 16px 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 12px; background: #f8fafc;">
+                <button type="button" onclick="$('#bulkStockModal').css('display', 'none');" class="btn-secondary" style="padding: 10px 20px;">İptal</button>
+                <button type="button" id="btnBulkAddStock" class="btn-planner" style="padding: 10px 24px; background: linear-gradient(135deg, #10b981, #059669);"><i class="fa-solid fa-check"></i> Seçilenleri Ekle (<span id="bulkStockCount">0</span>)</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
@@ -408,7 +465,12 @@
             let optionsHtml = '<option value="">-- Stok Seçin --</option>';
             stokKartlariList.forEach(s => {
                 const selected = s.Id == stokKartiId ? 'selected' : '';
-                optionsHtml += `<option value="${s.Id}" ${selected}>${s.StokAdi} (${s.StokKodu}) - Mevcut: ${s.MevcutMiktar}</option>`;
+                const hasVariants = s.Varyantlar && s.Varyantlar.length > 0;
+                let text = `${s.StokAdi} (${s.StokKodu})`;
+                if (hasVariants) {
+                    text += ` - (Varyantlı Ürün)`;
+                }
+                optionsHtml += `<option value="${s.Id}" ${selected}>${text}</option>`;
             });
 
             const trHtml = `
@@ -440,9 +502,68 @@
             }
         }
 
+        function renderBulkStockList(filterText = '') {
+            const listContainer = $('#bulkStockList');
+            listContainer.empty();
+            filterText = filterText.toLowerCase();
+            
+            let count = 0;
+            stokKartlariList.forEach(s => {
+                const searchStr = `${s.StokAdi} ${s.StokKodu} ${s.Kategori}`.toLowerCase();
+                if (filterText === '' || searchStr.includes(filterText)) {
+                    count++;
+                    const html = `
+                        <label style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc';" onmouseout="this.style.borderColor='#e2e8f0'; this.style.background='white';">
+                            <input type="checkbox" class="bulk-stock-cb" value="${s.Id}" style="width: 18px; height: 18px; cursor: pointer;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: #1e293b; font-size: 0.95rem;">${s.StokAdi} <span style="font-size: 0.8rem; color: #64748b; margin-left: 6px;">(${s.StokKodu})</span></div>
+                                <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">Kategori: <b style="color: #475569;">${s.Kategori || '-'}</b></div>
+                            </div>
+                        </label>
+                    `;
+                    listContainer.append(html);
+                }
+            });
+            
+            if (count === 0) {
+                listContainer.append('<div style="text-align: center; padding: 20px; color: #94a3b8;"><i class="fa-solid fa-circle-exclamation" style="font-size: 2rem; margin-bottom: 10px;"></i><br>Kriterlere uygun stok bulunamadı.</div>');
+            }
+            updateBulkCount();
+        }
+
+        function updateBulkCount() {
+            const checkedCount = $('.bulk-stock-cb:checked').length;
+            $('#bulkStockCount').text(checkedCount);
+        }
+
+        $(document).on('change', '.bulk-stock-cb', function() {
+            updateBulkCount();
+        });
+
+        $(document).on('input', '#bulkStockSearch', function() {
+            renderBulkStockList($(this).val());
+        });
+
         $(document).on('click', '#btnAddStockMaterial', function() {
             $('#stockMaterialsContainer .stok-detaylari').slideUp(200);
-            addStockMaterialRow();
+            $('#bulkStockSearch').val('');
+            renderBulkStockList();
+            $('#bulkStockModal').css('display', 'flex');
+        });
+        
+        $(document).on('click', '#btnBulkAddStock', function() {
+            $('.bulk-stock-cb:checked').each(function() {
+                const stokId = $(this).val();
+                addStockMaterialRow(stokId);
+            });
+            $('#bulkStockModal').css('display', 'none');
+            
+            // Eğer eklenen satırlar varsa, sayfanın en altına doğru kaydır
+            if ($('.bulk-stock-cb:checked').length > 0) {
+                $('html, body').animate({
+                    scrollTop: $("#btnAddStockMaterial").offset().top - 100
+                }, 500);
+            }
         });
 
         $(document).on('click', '.btnRemoveStockMaterial', function() {
@@ -470,7 +591,6 @@
                 var detayHtml = `<div style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
                                     <div style="background: #f1f5f9; padding: 8px 16px; border-radius: 10px; font-size: 0.85rem; color: #475569; display: flex; align-items: center; gap: 8px; border: 1px solid #e2e8f0;"><i class="fa-solid fa-tag" style="color: #94a3b8;"></i> Kategori: <b style="color: #1e293b; margin-left: 4px;">${stok.Kategori || '-'}</b></div> 
                                     <div style="background: #f1f5f9; padding: 8px 16px; border-radius: 10px; font-size: 0.85rem; color: #475569; display: flex; align-items: center; gap: 8px; border: 1px solid #e2e8f0;"><i class="fa-solid fa-ruler" style="color: #94a3b8;"></i> Birim: <b style="color: #1e293b; margin-left: 4px;">${stok.Birim || '-'}</b></div> 
-                                    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 8px 16px; border-radius: 10px; font-size: 0.85rem; color: #166534; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-boxes-stacked" style="color: #22c55e;"></i> Mevcut: <b style="font-size: 1rem; color: #15803d; margin-left: 4px;">${stok.MevcutMiktar || 0}</b></div>
                                  </div>`;
                 
                 var initialPropsStr = row.attr('data-initial-props');
@@ -501,7 +621,7 @@
                     calcFields.push({ Key: "FİRE (%)", Type: "number", Def: "0" });
                 } else if (cat === "ETİKET" || cat === "ETIKET") {
                     isCalculable = true;
-                    calcFields.push({ Key: "FİRE (%)", Type: "number", Def: "0" });
+                    calcFields.push({ Key: "FİRE (%)", Type: "number", Def: "2" });
                 } else if (cat === "TELA") {
                     isCalculable = true;
                     calcFields.push({ Key: "TELA BİRİM", Type: "select", Def: "0.000,0.010,0.020,0.030,0.033,0.045,0.046,0.047" });
@@ -615,6 +735,51 @@
             }
         });
 
+        $(document).on('input change', '.sm-dyn-prop, .sm-calc-trigger', function() {
+            var row = $(this).closest('.stock-material-row');
+            
+            // Varyant stok sorgusu
+            var stokId = row.find('.sm-stokkarti').val();
+            if (stokId) {
+                var stok = stokKartlariList.find(s => s.Id == stokId);
+                if (stok && stok.Varyantlar && stok.Varyantlar.length > 0) {
+                    var props = [];
+                    row.find('.sm-dyn-prop, .sm-ozellik').each(function() {
+                        var k = $(this).data('key');
+                        var v = $(this).val();
+                        if (k && v) {
+                            props.push({ Key: k, Value: v });
+                        }
+                    });
+                    
+                    if (props.length > 0) {
+                        var varyantAdi = JSON.stringify(props);
+                        var match = stok.Varyantlar.find(v => v.VaryantAdi === varyantAdi);
+                        if (match) {
+                            row.find('.stok-detay-mevcut').text(match.MevcutMiktar);
+                        } else {
+                            row.find('.stok-detay-mevcut').text('Tanımsız (0)');
+                        }
+                    } else {
+                        row.find('.stok-detay-mevcut').text('Varyant Seçimi Bekleniyor');
+                    }
+                }
+            }
+
+            var summaryArr = [];
+            row.find('.sm-dyn-prop').each(function() {
+                var k = $(this).data('key');
+                var v = $(this).val();
+                if (k && v) {
+                    summaryArr.push(`${k}: ${v}`);
+                }
+            });
+            var sumText = summaryArr.length > 0 ? '<i class="fa-solid fa-pen-to-square"></i> ' + summaryArr.join(" | ") : '<i class="fa-solid fa-pen-to-square"></i> Özellik Seç';
+            row.find('.prop-summary').html(sumText);
+            row.find('.sm-aciklama').val(summaryArr.join(" | "));
+            
+        });
+
         function updateStockSummary(row) {
             var dynProps = [];
             var propStrs = [];
@@ -663,29 +828,14 @@
             });
 
             var sizeTemplates = {
-                standart: ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL", "6XL"],
-                genis_standart: ["XS", "S", "M", "L", "XL", "2XL", "3XL"],
-                buyuk_beden: ["3XL", "4XL", "5XL", "6XL"],
-                cocuk: ["2 Yaş", "4 Yaş", "6 Yaş", "8 Yaş", "10 Yaş", "12 Yaş"],
-                numerik: ["34", "36", "38", "40", "42", "44", "46", "48"],
+                beden: ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL", "6XL"],
+                numara: ["32", "34", "36", "38", "40", "42", "44", "46", "48"],
                 ozel: []
             };
 
-            var activeSizes = [];
-            
-            function renderSizeCheckboxes(templateName) {
-                var sizes = sizeTemplates[templateName] || [];
-                var html = "";
-                sizes.forEach(function(s) {
-                    var isChecked = activeSizes.includes(s) ? "checked" : "";
-                    html += `<label style="display:flex; align-items:center; gap:4px; font-size:0.85rem; font-weight:600; cursor:pointer; user-select:none; background:#ffffff; padding:4px 8px; border-radius:4px; border:1px solid #cbd5e1;"><input type="checkbox" class="size-selector-cb" value="` + s + `" ` + isChecked + ` style="cursor:pointer;" /> ` + s + `</label>`;
-                });
-                $('#sizeCheckboxesContainer').html(html);
-            }
-
-            function renderTableHeaders() {
-                var sizeCount = activeSizes.length;
-                window.cachedThAcik = `
+            function renderRowTableHeaders(activeRowSizes) {
+                var sizeCount = activeRowSizes.length;
+                var thAcik = `
                 <tr>
                     <th rowspan="2" style="width:110px; min-width:110px; vertical-align:middle; text-align:center;">Özel Kod</th>
                     <th rowspan="2" style="width:110px; min-width:110px; vertical-align:middle; text-align:center;">Özel Renk K.</th>
@@ -707,14 +857,14 @@
                 </tr>
                 <tr>`;
 
-                activeSizes.forEach(s => {
-                    window.cachedThAcik += `<th style="width:75px; min-width:75px; text-align:center; padding: 4px;">` + s + `</th>`;
+                activeRowSizes.forEach(s => {
+                    thAcik += `<th style="width:75px; min-width:75px; text-align:center; padding: 4px;">` + s + `</th>`;
                     thAsorti += `<th style="width:75px; min-width:75px; text-align:center; padding: 4px;">` + s + `</th>`;
                 });
 
-                window.cachedThAcik += `</tr>`;
+                thAcik += `</tr>`;
                 thAsorti += `</tr>`;
-                window.cachedThAsorti = thAsorti;
+                return { thAcik, thAsorti };
             }
 
             var rowCounter = 0;
@@ -737,14 +887,23 @@
                 var openSizes = (savedData && savedData.openSizes) ? savedData.openSizes : {};
                 var asortiSizes = (savedData && savedData.asortiSizes) ? savedData.asortiSizes : {};
 
+                var templateId = savedData ? (savedData.templateId || "") : "";
+                var activeRowSizes = [];
+                if (savedData && Object.keys(openSizes).length > 0) {
+                    Object.keys(openSizes).forEach(k => { if (!activeRowSizes.includes(k)) activeRowSizes.push(k); });
+                    Object.keys(asortiSizes).forEach(k => { if (!activeRowSizes.includes(k)) activeRowSizes.push(k); });
+                }
+
                 var trAcikSizesHtml = "";
                 var trAsortiSizesHtml = "";
-                activeSizes.forEach(s => {
+                activeRowSizes.forEach(s => {
                     var oVal = openSizes[s] || "";
                     var aVal = asortiSizes[s] || "";
                     trAcikSizesHtml += `<td><input type="number" min="0" data-size="` + s + `" class="form-control form-control-sm size-input open-size no-spinner" style="text-align:center; font-weight:600; padding:4px;" value="` + oVal + `" /></td>`;
                     trAsortiSizesHtml += `<td><input type="number" min="0" data-size="` + s + `" class="form-control form-control-sm size-input asorti-size no-spinner" style="text-align:center; font-weight:600; padding:4px;" value="` + aVal + `" /></td>`;
                 });
+
+                var thData = renderRowTableHeaders(activeRowSizes);
 
                 $('.color-tables').slideUp(300);
                 $('.toggle-icon').removeClass('fa-chevron-up').addClass('fa-chevron-down');
@@ -760,6 +919,14 @@
                             <label style="font-size: 0.75rem; color: #64748b; font-weight: 600; display: block; margin-bottom: 4px;">Kumaşçı</label>
                             <select class="form-control form-control-sm row-fabricator">${fabricatorOptionsHtml}</select>
                         </div>
+                        <div style="width: 150px;">
+                            <label style="font-size: 0.75rem; color: #64748b; font-weight: 600; display: block; margin-bottom: 4px;"><i class="fa-solid fa-ruler"></i> Beden Şablonu</label>
+                            <select class="form-control form-control-sm row-size-template" style="font-weight:600;">
+                                <option value="">-- Şablon --</option>
+                                <option value="beden">Beden (XS..6XL)</option>
+                                <option value="numara">Numara (32..48)</option>
+                            </select>
+                        </div>
                         <div style="width: 110px;">
                             <label style="font-size: 0.75rem; color: #64748b; font-weight: 600; display: block; margin-bottom: 4px;">Birim Fiyatı</label>
                             <input type="number" step="0.01" class="form-control form-control-sm row-unit-price" placeholder="0.00" value="${unitPrice}" />
@@ -768,44 +935,58 @@
                             <label style="font-size: 0.75rem; color: #64748b; font-weight: 600; display: block; margin-bottom: 4px;">Revize Termin</label>
                             <input type="date" class="form-control form-control-sm row-revised-inspection-date" value="${revisedInspectionDate}" />
                         </div>
-                        <div style="margin-left: auto; display: flex; gap: 8px;">
-                            <button type="button" class="btnToggleCard" style="margin-top: 22px; background: #ffffff; color: #64748b; border: 1px solid #cbd5e1; border-radius: 8px; width: 34px; height: 34px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#ffffff'"><i class="fa-solid fa-chevron-up toggle-icon"></i></button>
-                            <button type="button" class="btnRemoveRow" style="margin-top: 22px; background: #ffffff; color: #ef4444; border: 1px solid #fee2e2; border-radius: 8px; width: 34px; height: 34px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#ffffff'"><i class="fa-solid fa-trash"></i></button>
+                        <div style="display: flex; gap: 12px; margin-left: auto; align-items: center; margin-right: 8px; text-align: right; background: #ffffff; padding: 4px 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                            <div>
+                                <div style="font-size: 0.65rem; color: #64748b; font-weight: 700; text-transform: uppercase;">Açık Adet</div>
+                                <div class="card-summary-acik" style="font-size: 1.1rem; color: #0284c7; font-weight: 800;">0</div>
+                            </div>
+                            <div style="width: 1px; height: 24px; background: #cbd5e1;"></div>
+                            <div>
+                                <div style="font-size: 0.65rem; color: #64748b; font-weight: 700; text-transform: uppercase;">Asorti Adet</div>
+                                <div class="card-summary-asorti" style="font-size: 1.1rem; color: #16a34a; font-weight: 800;">0</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" class="btnToggleCard" style="margin-top: 10px; background: #ffffff; color: #64748b; border: 1px solid #cbd5e1; border-radius: 8px; width: 34px; height: 34px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#ffffff'"><i class="fa-solid fa-chevron-up toggle-icon"></i></button>
+                            <button type="button" class="btnRemoveRow" style="margin-top: 10px; background: #ffffff; color: #ef4444; border: 1px solid #fee2e2; border-radius: 8px; width: 34px; height: 34px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#ffffff'"><i class="fa-solid fa-trash"></i></button>
                         </div>
                     </div>
                     
                     <div class="color-tables" style="padding: 16px 20px; overflow-x: auto;">
-                        <table class="table table-bordered table-sm" style="min-width: 700px; margin-bottom: 16px;">
-                            <thead style="background: #f8fafc; color: #0369a1; font-size: 0.75rem;">
-                                ${window.cachedThAcik}
-                            </thead>
-                            <tbody>
-                                <tr class="acik-row" data-rid="${rId}">
-                                    <td><input type="text" class="form-control form-control-sm row-open-special-code" placeholder="Örn: ACK" value="${openSpecialCode}" /></td>
-                                    <td><input type="text" class="form-control form-control-sm row-open-color-code" placeholder="Örn: R-01" value="${openColorCode}" /></td>
-                                    <td><input type="date" class="form-control form-control-sm row-inspection-date" value="${inspectionDate}" /></td>
-                                    ${trAcikSizesHtml}
-                                    <td style="vertical-align:middle; text-align:center; font-weight:800; color:#0284c7; font-size:0.95rem;" class="row-acik-total">0</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        <div class="row-size-checkboxes-container" style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 12px;"></div>
+                        <div class="row-tables-wrapper">
+                            <table class="table table-bordered table-sm" style="min-width: 700px; margin-bottom: 16px;">
+                                <thead class="thead-acik" style="background: #f8fafc; color: #0369a1; font-size: 0.75rem;">
+                                    ${thData.thAcik}
+                                </thead>
+                                <tbody>
+                                    <tr class="acik-row" data-rid="${rId}">
+                                        <td><input type="text" class="form-control form-control-sm row-open-special-code" placeholder="Örn: ACK" value="${openSpecialCode}" /></td>
+                                        <td><input type="text" class="form-control form-control-sm row-open-color-code" placeholder="Örn: R-01" value="${openColorCode}" /></td>
+                                        <td><input type="date" class="form-control form-control-sm row-inspection-date" value="${inspectionDate}" /></td>
+                                        ${trAcikSizesHtml}
+                                        <td style="vertical-align:middle; text-align:center; font-weight:800; color:#0284c7; font-size:0.95rem;" class="row-acik-total">0</td>
+                                    </tr>
+                                </tbody>
+                            </table>
 
-                        <table class="table table-bordered table-sm" style="min-width: 700px; margin-bottom: 0;">
-                            <thead style="background: #f8fafc; color: #15803d; font-size: 0.75rem;">
-                                ${window.cachedThAsorti}
-                            </thead>
-                            <tbody>
-                                <tr class="asorti-row" data-rid="${rId}">
-                                    <td><input type="text" class="form-control form-control-sm row-asorti-special-code" placeholder="Örn: ASR" value="${asortiSpecialCode}" /></td>
-                                    <td><input type="text" class="form-control form-control-sm row-asorti-color-code" placeholder="Örn: R-01" value="${asortiColorCode}" /></td>
-                                    <td><input type="date" class="form-control form-control-sm row-asorti-inspection-date" value="${asortiInspectionDate}" /></td>
-                                    ${trAsortiSizesHtml}
-                                    <td style="vertical-align:middle; text-align:center; font-weight:700; color:#475569;" class="row-asorti-ratio-total">0</td>
-                                    <td><input type="number" min="0" class="form-control form-control-sm row-asorti-count" value="${asortiCount}" style="text-align:center; font-weight:700;" /></td>
-                                    <td style="vertical-align:middle; text-align:center; font-weight:800; color:#16a34a; font-size:0.95rem;" class="row-asorti-total">0</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                            <table class="table table-bordered table-sm" style="min-width: 700px; margin-bottom: 0;">
+                                <thead class="thead-asorti" style="background: #f8fafc; color: #15803d; font-size: 0.75rem;">
+                                    ${thData.thAsorti}
+                                </thead>
+                                <tbody>
+                                    <tr class="asorti-row" data-rid="${rId}">
+                                        <td><input type="text" class="form-control form-control-sm row-asorti-special-code" placeholder="Örn: ASR" value="${asortiSpecialCode}" /></td>
+                                        <td><input type="text" class="form-control form-control-sm row-asorti-color-code" placeholder="Örn: R-01" value="${asortiColorCode}" /></td>
+                                        <td><input type="date" class="form-control form-control-sm row-asorti-inspection-date" value="${asortiInspectionDate}" /></td>
+                                        ${trAsortiSizesHtml}
+                                        <td style="vertical-align:middle; text-align:center; font-weight:700; color:#475569;" class="row-asorti-ratio-total">0</td>
+                                        <td><input type="number" min="0" class="form-control form-control-sm row-asorti-count" value="${asortiCount}" style="text-align:center; font-weight:700;" /></td>
+                                        <td style="vertical-align:middle; text-align:center; font-weight:800; color:#16a34a; font-size:0.95rem;" class="row-asorti-total">0</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
                 `;
@@ -814,46 +995,90 @@
 
                 if (color) $card.find('.row-color').val(color);
                 if (fabricator) $card.find('.row-fabricator').val(fabricator);
+                if (templateId) {
+                    $card.find('.row-size-template').val(templateId);
+                    renderRowSizeCheckboxes($card, templateId, activeRowSizes);
+                } else if (activeRowSizes.length > 0) {
+                    $card.find('.row-size-template').val('ozel');
+                    renderRowSizeCheckboxes($card, 'ozel', activeRowSizes);
+                }
 
                 $('#colorsContainer').append($card);
                 
                 calcRowTotal(rId);
             }
 
-            $(document).on('change', '#sizeTemplateSelector', function() {
+            function renderRowSizeCheckboxes($card, templateName, activeRowSizes) {
+                var sizes = sizeTemplates[templateName] || [];
+                var html = "";
+                sizes.forEach(function(s) {
+                    var isChecked = activeRowSizes.includes(s) ? "checked" : "";
+                    html += `<label style="display:flex; align-items:center; gap:4px; font-size:0.85rem; font-weight:600; cursor:pointer; user-select:none; background:#ffffff; padding:4px 8px; border-radius:4px; border:1px solid #cbd5e1;"><input type="checkbox" class="row-size-selector-cb" value="` + s + `" ` + isChecked + ` style="cursor:pointer;" /> ` + s + `</label>`;
+                });
+                $card.find('.row-size-checkboxes-container').html(html);
+            }
+
+            $(document).on('change', '.row-size-template', function() {
                 var val = $(this).val();
-                activeSizes = [];
-                
-                var data = getSavedRowsData();
-                renderSizeCheckboxes(val);
-                renderTableHeaders();
-                
-                $('#colorsContainer').empty();
-                
-                if (data.length > 0) {
-                    data.forEach(d => addNewColorRow(d));
-                }
+                var $card = $(this).closest('.color-card');
+                renderRowSizeCheckboxes($card, val, []);
+                rebuildRowTables($card, []);
             });
 
-            $(document).on('change', '.size-selector-cb', function() {
+            $(document).on('change', '.row-size-selector-cb', function() {
+                var $card = $(this).closest('.color-card');
                 var checkedSizes = [];
-                $('.size-selector-cb:checked').each(function() {
+                $card.find('.row-size-selector-cb:checked').each(function() {
                     checkedSizes.push($(this).val());
                 });
                 
-                var templateSizes = sizeTemplates[$('#sizeTemplateSelector').val()] || [];
-                // Sort by template order
-                activeSizes = checkedSizes.sort((a,b) => templateSizes.indexOf(a) - templateSizes.indexOf(b));
-
-                var data = getSavedRowsData();
-                renderTableHeaders();
+                var templateSizes = sizeTemplates[$card.find('.row-size-template').val()] || [];
+                var activeRowSizes = checkedSizes.sort((a,b) => templateSizes.indexOf(a) - templateSizes.indexOf(b));
                 
-                $('#colorsContainer').empty();
-                
-                if (data.length > 0) {
-                    data.forEach(d => addNewColorRow(d));
-                }
+                rebuildRowTables($card, activeRowSizes);
             });
+
+            function rebuildRowTables($card, activeRowSizes) {
+                var rId = $card.data('rid');
+                var $acikRow = $card.find('.acik-row');
+                var $asortiRow = $card.find('.asorti-row');
+
+                var oldOpenSizes = {};
+                $acikRow.find('.open-size').each(function() {
+                    var s = $(this).data('size');
+                    var v = $(this).val();
+                    if (v) oldOpenSizes[s] = v;
+                });
+
+                var oldAsortiSizes = {};
+                $asortiRow.find('.asorti-size').each(function() {
+                    var s = $(this).data('size');
+                    var v = $(this).val();
+                    if (v) oldAsortiSizes[s] = v;
+                });
+
+                var trAcikSizesHtml = "";
+                var trAsortiSizesHtml = "";
+                activeRowSizes.forEach(s => {
+                    var oVal = oldOpenSizes[s] || "";
+                    var aVal = oldAsortiSizes[s] || "";
+                    trAcikSizesHtml += `<td><input type="number" min="0" data-size="` + s + `" class="form-control form-control-sm size-input open-size no-spinner" style="text-align:center; font-weight:600; padding:4px;" value="` + oVal + `" /></td>`;
+                    trAsortiSizesHtml += `<td><input type="number" min="0" data-size="` + s + `" class="form-control form-control-sm size-input asorti-size no-spinner" style="text-align:center; font-weight:600; padding:4px;" value="` + aVal + `" /></td>`;
+                });
+
+                var thData = renderRowTableHeaders(activeRowSizes);
+                
+                $card.find('.thead-acik').html(thData.thAcik);
+                $card.find('.thead-asorti').html(thData.thAsorti);
+
+                $acikRow.find('td').slice(3, -1).remove();
+                $(trAcikSizesHtml).insertAfter($acikRow.find('td').eq(2));
+
+                $asortiRow.find('td').slice(3, -3).remove();
+                $(trAsortiSizesHtml).insertAfter($asortiRow.find('td').eq(2));
+
+                calcRowTotal(rId);
+            }
             $(document).on('click', '.color-header', function(e) {
                 if ($(e.target).closest('input, select, button').length > 0 && !$(e.target).closest('.btnToggleCard').length) return;
                 var $card = $(this).closest('.color-card');
@@ -872,6 +1097,9 @@
                 var rId = $(this).closest('.color-card').data('rid');
                 $('.color-card[data-rid="' + rId + '"]').remove();
                 calcGrandTotals();
+                if ($('.color-card').length === 0) {
+                    $('#sizeTemplateWrapper').css('display', 'none');
+                }
             });
 
             $(document).on('input', '.size-input, .row-asorti-count', function() {
@@ -886,6 +1114,7 @@
                 var openTotal = 0;
                 $acikRow.find('.open-size').each(function() { openTotal += parseInt($(this).val()) || 0; });
                 $acikRow.find('.row-acik-total').text(openTotal);
+                $('.color-card[data-rid="' + rId + '"]').find('.card-summary-acik').text(openTotal);
 
                 var asortiRatioTotal = 0;
                 $asortiRow.find('.asorti-size').each(function() { asortiRatioTotal += parseInt($(this).val()) || 0; });
@@ -894,6 +1123,7 @@
                 var asortiMultiplier = parseInt($asortiRow.find('.row-asorti-count').val()) || 0;
                 var asortiTotal = asortiRatioTotal * asortiMultiplier;
                 $asortiRow.find('.row-asorti-total').text(asortiTotal);
+                $('.color-card[data-rid="' + rId + '"]').find('.card-summary-asorti').text(asortiTotal);
 
                 calcGrandTotals();
             }
@@ -949,10 +1179,6 @@
                 return data;
             }
 
-            // İsteğe bağlı olduğu için başlangıçta boş gelsin
-            renderSizeCheckboxes($('#sizeTemplateSelector').val() || "");
-            renderTableHeaders();
-
             $("#btnAddAccessory").click(function() {
                 var wrapper = $("#materialsSectionWrapper");
                 
@@ -969,6 +1195,7 @@
             });
 
             $("#btnAddColorRow").click(function() {
+                $("#sizeTemplateWrapper").css("display", "flex");
                 addNewColorRow();
             });
 
@@ -1111,22 +1338,52 @@
                     orders.push(orderObj);
                 });
 
-                $.ajax({
-                    url: '/Order/CreateMultiple',
-                    type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify(orders),
-                    success: function(res) {
-                        if (res.success) {
-                            window.location.href = '/Planning/Index';
-                        } else {
-                            showToast("Hata: " + res.message, "danger");
-                        }
-                    },
-                    error: function() {
-                        showToast("Kayıt sırasında sunucu hatası oluştu.", "danger");
+                var processSubmit = function(imageUrl) {
+                    if (imageUrl) {
+                        orders.forEach(function(o) { o.ImageUrl = imageUrl; });
                     }
-                });
+                    $.ajax({
+                        url: '/Order/CreateMultiple',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify(orders),
+                        success: function(res) {
+                            if (res.success) {
+                                window.location.href = '/Planning/Index';
+                            } else {
+                                showToast("Hata: " + res.message, "danger");
+                            }
+                        },
+                        error: function() {
+                            showToast("Kayıt sırasında sunucu hatası oluştu.", "danger");
+                        }
+                    });
+                };
+
+                var imgInput = document.getElementById('orderImageInput');
+                if (imgInput && imgInput.files && imgInput.files.length > 0) {
+                    var imgData = new FormData();
+                    imgData.append("OrderImage", imgInput.files[0]);
+                    $.ajax({
+                        url: '/Order/UploadOrderImage',
+                        type: 'POST',
+                        data: imgData,
+                        processData: false,
+                        contentType: false,
+                        success: function(uploadRes) {
+                            if (uploadRes.success) {
+                                processSubmit(uploadRes.imageUrl);
+                            } else {
+                                showToast("Görsel yüklenemedi: " + uploadRes.message, "danger");
+                            }
+                        },
+                        error: function() {
+                            showToast("Görsel yüklenirken sunucu hatası oluştu.", "danger");
+                        }
+                    });
+                } else {
+                    processSubmit(null);
+                }
             });
 
 

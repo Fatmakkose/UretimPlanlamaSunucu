@@ -26,7 +26,7 @@ namespace UretimPlanlama.Controllers
             SyncWorkshopsToCariHesaplar();
             var hesaplar = _context.CariHesaplar.OrderByDescending(h => h.OlusturmaTarihi).ToList();
             ViewBag.Orders = _context.Orders.OrderByDescending(o => o.OrderDate).ToList();
-            ViewBag.StokKartlari = _context.StokKartlari.Where(s => s.Aktif).OrderBy(s => s.StokAdi).ToList();
+            ViewBag.StokKartlari = _context.StokKartlari.Include(s => s.Varyantlar).Where(s => s.Aktif).OrderBy(s => s.StokAdi).ToList();
             return View(hesaplar);
         }
 
@@ -42,7 +42,7 @@ namespace UretimPlanlama.Controllers
 
             SyncWorkshopsToCariHesaplar();
             ViewBag.CariHesaplar = _context.CariHesaplar.Where(c => c.Aktif).OrderBy(c => c.HesapAdi).ToList();
-            ViewBag.StokKartlari = _context.StokKartlari.Where(s => s.Aktif).OrderBy(s => s.StokAdi).ToList();
+            ViewBag.StokKartlari = _context.StokKartlari.Include(s => s.Varyantlar).Where(s => s.Aktif).OrderBy(s => s.StokAdi).ToList();
             ViewBag.Orders = _context.Orders.Where(o => o.Status != "Tamamlandı" && o.Status != "İptal Edildi").OrderByDescending(o => o.OrderDate).ToList();
 
             // Yeni belge no üretimi (YYYYMM_001 formatında)
@@ -74,6 +74,15 @@ namespace UretimPlanlama.Controllers
             if (!User.HasPermission("Write"))
                 return Json(new { success = false, message = "Yetkiniz yetersiz." });
 
+            if (!string.IsNullOrWhiteSpace(model.BelgeNo))
+            {
+                var existingBelge = _context.CariHareketler.Any(c => c.BelgeNo == model.BelgeNo && c.IslemTipi == "Alış");
+                if (existingBelge)
+                {
+                    return Json(new { success = false, message = "Bu Belge No (Fatura/Fiş No) sistemde zaten kayıtlı. Lütfen farklı bir numara giriniz." });
+                }
+            }
+
             using var transaction = _context.Database.BeginTransaction();
             try
             {
@@ -84,7 +93,8 @@ namespace UretimPlanlama.Controllers
                 cari.Bakiye += model.Tutar;
                 _context.CariHesaplar.Update(cari);
 
-                string finalAciklama = model.Aciklama ?? $"{model.BelgeNo} nolu alış işlemi";
+                string belgesi = !string.IsNullOrWhiteSpace(model.BelgeNo) ? $"{model.BelgeNo} nolu" : "Belgesiz";
+                string finalAciklama = model.Aciklama ?? $"{belgesi} alış işlemi";
                 if (model.OrderId.HasValue)
                 {
                     var order = _context.Orders.Find(model.OrderId.Value);

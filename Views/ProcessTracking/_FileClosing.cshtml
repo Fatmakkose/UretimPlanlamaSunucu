@@ -158,7 +158,7 @@
     decimal productionYield = Model.CalculatedQuantity > 0 ? (kesimToplam / Model.CalculatedQuantity) * 100 : 0;
 }
 
-<div class="tab-pane fc-dashboard" id="fileclosing">
+<div class="tab-pane fc-dashboard @(ViewBag.Step as string == "fileclosing" ? "active" : "")" id="fileclosing">
     <div class="fc-header">
         <div>
             <h1 class="fc-title">Dosya Kapama Özeti</h1>

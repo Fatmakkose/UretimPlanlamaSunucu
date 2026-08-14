@@ -41,6 +41,28 @@
     <div style="margin-top: 32px; padding-top: 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 12px;">
         <button type="button" id="btnSaveMaterials" class="btn-planner" style="padding: 10px 24px; font-size: 1rem;"><i class="fa-solid fa-save" style="margin-right: 8px;"></i> Kaydet</button>
     </div>
+
+    <!-- Toplu Stok Seçim Modalı -->
+    <div id="bulkStockModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1050; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 12px; width: 90%; max-width: 800px; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #e2e8f0; background: #f8fafc;">
+                <h5 style="margin: 0; color: #1e293b; font-weight: 700; font-size: 1.1rem;"><i class="fa-solid fa-list-check" style="color: #3b82f6; margin-right: 8px;"></i> Toplu Stok Seçimi</h5>
+                <button type="button" onclick="$('#bulkStockModal').css('display', 'none');" style="background: transparent; border: none; font-size: 1.5rem; color: #64748b; cursor: pointer;">&times;</button>
+            </div>
+            <div style="padding: 16px; border-bottom: 1px solid #e2e8f0;">
+                <input type="text" id="bulkStockSearch" class="form-control" placeholder="Stok Adı, Kodu veya Kategori ara..." style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.95rem;">
+            </div>
+            <div style="flex: 1; overflow-y: auto; padding: 16px; background: #fcfcfd;">
+                <div id="bulkStockList" style="display: flex; flex-direction: column; gap: 8px;">
+                    <!-- Javascript ile doldurulacak -->
+                </div>
+            </div>
+            <div style="padding: 16px 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 12px; background: #f8fafc;">
+                <button type="button" onclick="$('#bulkStockModal').css('display', 'none');" class="btn-secondary" style="padding: 10px 20px;">İptal</button>
+                <button type="button" id="btnBulkAddStock" class="btn-planner" style="padding: 10px 24px; background: linear-gradient(135deg, #10b981, #059669);"><i class="fa-solid fa-check"></i> Seçilenleri Ekle (<span id="bulkStockCount">0</span>)</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
@@ -55,7 +77,12 @@
             let optionsHtml = '<option value="">-- Stok Seçin --</option>';
             stokKartlariList.forEach(s => {
                 const selected = s.Id == stokKartiId ? 'selected' : '';
-                optionsHtml += `<option value="${s.Id}" ${selected}>${s.StokAdi} (${s.StokKodu}) - Mevcut: ${s.MevcutMiktar}</option>`;
+                const hasVariants = s.Varyantlar && s.Varyantlar.length > 0;
+                let text = `${s.StokAdi} (${s.StokKodu})`;
+                if (hasVariants) {
+                    text += ` - (Varyantlı Ürün)`;
+                }
+                optionsHtml += `<option value="${s.Id}" ${selected}>${text}</option>`;
             });
 
             const trHtml = `
@@ -87,9 +114,67 @@
             }
         }
 
+        function renderBulkStockList(filterText = '') {
+            const listContainer = $('#bulkStockList');
+            listContainer.empty();
+            filterText = filterText.toLowerCase();
+            
+            let count = 0;
+            stokKartlariList.forEach(s => {
+                const searchStr = `${s.StokAdi} ${s.StokKodu} ${s.Kategori}`.toLowerCase();
+                if (filterText === '' || searchStr.includes(filterText)) {
+                    count++;
+                    const html = `
+                        <label style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc';" onmouseout="this.style.borderColor='#e2e8f0'; this.style.background='white';">
+                            <input type="checkbox" class="bulk-stock-cb" value="${s.Id}" style="width: 18px; height: 18px; cursor: pointer;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: #1e293b; font-size: 0.95rem;">${s.StokAdi} <span style="font-size: 0.8rem; color: #64748b; margin-left: 6px;">(${s.StokKodu})</span></div>
+                                <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">Kategori: <b style="color: #475569;">${s.Kategori || '-'}</b></div>
+                            </div>
+                        </label>
+                    `;
+                    listContainer.append(html);
+                }
+            });
+            
+            if (count === 0) {
+                listContainer.append('<div style="text-align: center; padding: 20px; color: #94a3b8;"><i class="fa-solid fa-circle-exclamation" style="font-size: 2rem; margin-bottom: 10px;"></i><br>Kriterlere uygun stok bulunamadı.</div>');
+            }
+            updateBulkCount();
+        }
+
+        function updateBulkCount() {
+            const checkedCount = $('.bulk-stock-cb:checked').length;
+            $('#bulkStockCount').text(checkedCount);
+        }
+
+        $(document).on('change', '.bulk-stock-cb', function() {
+            updateBulkCount();
+        });
+
+        $(document).on('input', '#bulkStockSearch', function() {
+            renderBulkStockList($(this).val());
+        });
+
         $(document).on('click', '#btnAddStockMaterial', function() {
             $('#stockMaterialsContainer .stok-detaylari').slideUp(200);
-            addStockMaterialRow();
+            $('#bulkStockSearch').val('');
+            renderBulkStockList();
+            $('#bulkStockModal').css('display', 'flex');
+        });
+        
+        $(document).on('click', '#btnBulkAddStock', function() {
+            $('.bulk-stock-cb:checked').each(function() {
+                const stokId = $(this).val();
+                addStockMaterialRow(stokId);
+            });
+            $('#bulkStockModal').css('display', 'none');
+            
+            if ($('.bulk-stock-cb:checked').length > 0) {
+                $('html, body').animate({
+                    scrollTop: $("#btnAddStockMaterial").offset().top - 100
+                }, 500);
+            }
         });
 
         $(document).on('click', '.btnRemoveStockMaterial', function() {
@@ -117,7 +202,6 @@
                 var detayHtml = `<div style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
                                     <div style="background: #f1f5f9; padding: 8px 16px; border-radius: 10px; font-size: 0.85rem; color: #475569; display: flex; align-items: center; gap: 8px; border: 1px solid #e2e8f0;"><i class="fa-solid fa-tag" style="color: #94a3b8;"></i> Kategori: <b style="color: #1e293b; margin-left: 4px;">${stok.Kategori || '-'}</b></div> 
                                     <div style="background: #f1f5f9; padding: 8px 16px; border-radius: 10px; font-size: 0.85rem; color: #475569; display: flex; align-items: center; gap: 8px; border: 1px solid #e2e8f0;"><i class="fa-solid fa-ruler" style="color: #94a3b8;"></i> Birim: <b style="color: #1e293b; margin-left: 4px;">${stok.Birim || '-'}</b></div> 
-                                    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 8px 16px; border-radius: 10px; font-size: 0.85rem; color: #166534; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-boxes-stacked" style="color: #22c55e;"></i> Mevcut: <b style="font-size: 1rem; color: #15803d; margin-left: 4px;">${stok.MevcutMiktar || 0}</b></div>
                                  </div>`;
                 
                 var initialPropsStr = row.attr('data-initial-props');
@@ -148,7 +232,7 @@
                     calcFields.push({ Key: "FİRE (%)", Type: "number", Def: "0" });
                 } else if (cat === "ETİKET" || cat === "ETIKET") {
                     isCalculable = true;
-                    calcFields.push({ Key: "FİRE (%)", Type: "number", Def: "0" });
+                    calcFields.push({ Key: "FİRE (%)", Type: "number", Def: "2" });
                 } else if (cat === "TELA") {
                     isCalculable = true;
                     calcFields.push({ Key: "TELA BİRİM", Type: "select", Def: "0.000,0.010,0.020,0.030,0.033,0.045,0.046,0.047" });
@@ -246,8 +330,36 @@
             updateStockSummary(row);
         });
 
-        $(document).on('input change', '.sm-calc-trigger', function() {
+        $(document).on('input change', '.sm-calc-trigger, .sm-dyn-prop, .sm-ozellik', function() {
             var row = $(this).closest('.stock-material-row');
+            
+            // Varyant stok sorgusu
+            var stokId = row.find('.sm-stokkarti').val();
+            if (stokId) {
+                var stok = stokKartlariList.find(s => s.Id == stokId);
+                if (stok && stok.Varyantlar && stok.Varyantlar.length > 0) {
+                    var props = [];
+                    row.find('.sm-dyn-prop, .sm-ozellik').each(function() {
+                        var k = $(this).data('key');
+                        var v = $(this).val();
+                        if (k && v) {
+                            props.push({ Key: k, Value: v });
+                        }
+                    });
+                    
+                    if (props.length > 0) {
+                        var varyantAdi = JSON.stringify(props);
+                        var match = stok.Varyantlar.find(v => v.VaryantAdi === varyantAdi);
+                        if (match) {
+                            row.find('.stok-detay-mevcut').text(match.MevcutMiktar);
+                        } else {
+                            row.find('.stok-detay-mevcut').text('Tanımsız (0)');
+                        }
+                    } else {
+                        row.find('.stok-detay-mevcut').text('Varyant Seçimi Bekleniyor');
+                    }
+                }
+            }
             var miktarInput = row.find('.sm-miktar');
             var miktar = 0;
             if (miktarInput.prop('readonly')) {

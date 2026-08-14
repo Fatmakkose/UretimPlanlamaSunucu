@@ -22,6 +22,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="~/images/favicon.png" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        /* Hover Efekti Tum Listeler Icin */
+        tr.hover-row:hover td { 
+            background-color: #f1f5f9 !important; 
+            transition: background-color 0.15s ease-in-out; 
+        }
+    </style>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body>
@@ -40,10 +47,10 @@
             <!-- ORTA KISIM: SEKMELER -->
             <div id="tab-system-header" class="tab-system-header" style="flex-grow: 1; margin: 0 20px; height: 100%;">
                 <div class="tab-list" id="tab-list">
-                    <!-- İlk açılış sekmesi (Ana Sayfa) -->
+                    <!-- İlk açılış sekmesi -->
                     <div class="tab-item active" data-tab-id="main-tab" onclick="appTabs.switchTab('main-tab')">
                         <i class="fa-solid fa-house tab-icon"></i>
-                        <span class="tab-title" id="main-tab-title">Ana Sayfa</span>
+                        <span class="tab-title" id="main-tab-title">@(ViewData["Title"] ?? "Ana Sayfa")</span>
                     </div>
                 </div>
             </div>
@@ -95,11 +102,16 @@
                         
                         @if ((await AuthorizationService.AuthorizeAsync(User, "PlanlamaAccess")).Succeeded)
                         {
-                            <li>
-                                <a href="/Planning" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Planning" ? "active" : "")" title="Planlama">
+                            <li class="has-submenu">
+                                <a href="#" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Planning" ? "active" : "")" title="Planlama">
                                     <i class="fa-solid fa-calendar-days menu-icon"></i>
                                     <span class="nav-text">Planlama</span>
+                                    <i class="fa-solid fa-chevron-right chevron"></i>
                                 </a>
+                                <ul class="submenu">
+                                    <li><a href="/Planning/Index?tab=cps"><i class="fa-solid fa-table-cells menu-icon"></i><span class="nav-text">CPS</span></a></li>
+                                    <li><a href="/Planning/Index?tab=worksheet"><i class="fa-solid fa-calculator menu-icon"></i><span class="nav-text">Çalışma Sayfası</span></a></li>
+                                </ul>
                             </li>
                         }
 
@@ -113,9 +125,8 @@
                                 </a>
                                 <ul class="submenu">
                                     <li><a href="/ProcessTracking"><i class="fa-solid fa-list menu-icon"></i><span class="nav-text">Tüm Süreçler</span></a></li>
-                                    <li><a href="/ProcessTracking/Index?step=purchase"><i class="fa-solid fa-truck menu-icon"></i><span class="nav-text">Sevk Onay</span></a></li>
-                                    <li><a href="/ProcessTracking/Index?step=timeline"><i class="fa-solid fa-calendar-check menu-icon"></i><span class="nav-text">CPS</span></a></li>
-                                    <li><a href="/ProcessTracking/Index?step=cutting"><i class="fa-solid fa-scissors menu-icon"></i><span class="nav-text">Kesim Süreci</span></a></li>
+                                    <li><a href="/ProcessTracking/Index?step=timeline"><i class="fa-solid fa-calendar-check menu-icon"></i><span class="nav-text">CPS Takip</span></a></li>
+                                    <li><a href="/ProcessTracking/Index?step=worksheet"><i class="fa-solid fa-clipboard-list menu-icon"></i><span class="nav-text">Çalışma Sayfası Takip</span></a></li>
                                     <li><a href="/ProcessTracking/Index?step=packing"><i class="fa-solid fa-box menu-icon"></i><span class="nav-text">Çeki Listesi</span></a></li>
                                     <li><a href="/ProcessTracking/Index?step=fileclosing"><i class="fa-solid fa-file-signature menu-icon"></i><span class="nav-text">Dosya Kapama</span></a></li>
                                 </ul>
@@ -214,6 +225,10 @@
             $('#topbarMenuToggle').click(function(e) {
                 e.preventDefault();
                 e.stopPropagation();
+                if ($('#dropdownSidebar').is(':visible')) {
+                    $('.submenu').hide();
+                    $('.has-submenu .chevron').removeClass('fa-chevron-down').addClass('fa-chevron-right');
+                }
                 // .dropdown-sidebar div'ini yavaşça aşağıya süzülerek aç/kapat
                 $('#dropdownSidebar').slideToggle(300);
             });
@@ -237,10 +252,20 @@
                 $(this).parent().siblings().find('.chevron').removeClass('fa-chevron-down').addClass('fa-chevron-right');
             });
 
+            // Yan bardan fare çekildiğinde alt menüleri otomatik kapat
+            $('#dropdownSidebar').on('mouseleave', function() {
+                $('.submenu').slideUp(200);
+                $('.has-submenu .chevron').removeClass('fa-chevron-down').addClass('fa-chevron-right');
+            });
+
             // Menü dışına tıklandığında menüyü kapat
             $(document).click(function(e) {
                 if (!$(e.target).closest('#dropdownSidebar').length && !$(e.target).closest('#topbarMenuToggle').length) {
-                    $('#dropdownSidebar').slideUp(300);
+                    if ($('#dropdownSidebar').is(':visible')) {
+                        $('.submenu').hide();
+                        $('.has-submenu .chevron').removeClass('fa-chevron-down').addClass('fa-chevron-right');
+                        $('#dropdownSidebar').slideUp(300);
+                    }
                 }
             });
 

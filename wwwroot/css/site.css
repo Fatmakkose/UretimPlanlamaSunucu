@@ -173,6 +173,7 @@ button {
     transition: all 0.3s ease;
     padding: 0 12px; /* Ä°konun tam ortalanmasÄ± iÃ§in */
     position: relative;
+    overflow: hidden;
 }
 
 .sidebar-nav > ul > li > a i.menu-icon {
@@ -1511,3 +1512,6 @@ html:not(.in-iframe) .main-topbar {
 
 
 
+
+/* Hover Efekti Tum Listeler Icin */
+tr.hover-row:hover td { background-color: #f1f5f9 !important; transition: background-color 0.15s ease-in-out; }

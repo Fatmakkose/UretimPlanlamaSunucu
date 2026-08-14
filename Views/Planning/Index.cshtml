@@ -2,35 +2,64 @@
 @{
     ViewData["Title"] = "Planlama";
 
-    int waitingQty = 0;
-    int cuttingQty = 0;
-    int completedQty = 0;
+    int delayedQty = 0;
+    int unplannedQty = 0;
+    int upcomingQty = 0;
+    int inProductionQty = 0;
 
-    string GetOrderKpiBucket(UretimPlanlama.Models.Order o)
+    List<string> GetOrderKpiBuckets(UretimPlanlama.Models.Order o)
     {
+        var buckets = new List<string>();
+        
         var pDict = new Dictionary<string, string>();
         if (!string.IsNullOrEmpty(o.ProductionJson)) { try { pDict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(o.ProductionJson); } catch {} }
 
         bool HasP(string key) => pDict != null && pDict.ContainsKey(key) && !string.IsNullOrEmpty(pDict[key]);
+        string GetP(string key) => HasP(key) ? pDict[key] : "";
 
-        bool isPaketBitis = o.PackagingEndDate.HasValue || HasP("prod_paket_bitis_actual");
-        bool isPaket = o.PackagingStartDate.HasValue || HasP("prod_paket_baslangic_actual") || isPaketBitis;
-        bool isDikimBitis = o.SewingEndDate.HasValue || HasP("prod_dikim_bitis_actual");
-        bool isDikim = o.SewingStartDate.HasValue || HasP("prod_dikim_baslangic_actual") || isDikimBitis || isPaket;
-        bool isKesimBitis = o.CuttingEndDate.HasValue || HasP("prod_kesim_bitis_actual") || isDikim;
-        bool isKesim = o.CuttingStartDate.HasValue || HasP("prod_kesim_baslangic_actual") || isKesimBitis;
+        // Unplanned check (missing SewingWorkshop or FabricSupplier or Dates)
+        bool isUnplanned = string.IsNullOrEmpty(o.SewingWorkshop) && !HasP("prod_dikim_atolyesi");
+        if (isUnplanned) {
+            buckets.Add("unplanned");
+        }
 
-        if (isKesimBitis) return "completed";
-        if (isKesim) return "cutting";
-        return "waiting";
+        // In Production check (Kesim Başlamış, ancak Paket bitmemiş)
+        bool isKesimBasladi = o.CuttingStartDate.HasValue || HasP("prod_kesim_baslangic_actual");
+        bool isPaketBitti = o.PackagingEndDate.HasValue || HasP("prod_paket_bitis_actual");
+        if (isKesimBasladi && !isPaketBitti) {
+            buckets.Add("in_production");
+        }
+
+        // Delayed check (e.g. Termin target passed, but not shipped)
+        bool isGcGitti = HasP("prod_gs_gidisi_actual");
+        DateTime today = DateTime.Today;
+        
+        string terminStr = GetP("prod_knn_revize_termin");
+        if(string.IsNullOrEmpty(terminStr)) terminStr = GetP("prod_suanki_termin");
+        if(string.IsNullOrEmpty(terminStr) && o.PlannedPackagingEndDate.HasValue) terminStr = o.PlannedPackagingEndDate.Value.ToString("yyyy-MM-dd");
+        
+        DateTime? terminDate = null;
+        if(DateTime.TryParse(terminStr, out var td)) terminDate = td;
+        
+        if (!isGcGitti && terminDate.HasValue && terminDate.Value < today) {
+            buckets.Add("delayed");
+        }
+        
+        // Upcoming check (termin is within the next 7 days)
+        if (!isGcGitti && terminDate.HasValue && terminDate.Value >= today && terminDate.Value <= today.AddDays(7)) {
+            buckets.Add("upcoming");
+        }
+        
+        return buckets;
     }
 
     foreach (var o in Model)
     {
-        var bucket = GetOrderKpiBucket(o);
-        if (bucket == "completed") completedQty += o.CalculatedQuantity;
-        else if (bucket == "cutting") cuttingQty += o.CalculatedQuantity;
-        else waitingQty += o.CalculatedQuantity;
+        var buckets = GetOrderKpiBuckets(o);
+        if (buckets.Contains("delayed")) delayedQty += o.CalculatedQuantity;
+        if (buckets.Contains("unplanned")) unplannedQty += o.CalculatedQuantity;
+        if (buckets.Contains("upcoming")) upcomingQty += o.CalculatedQuantity;
+        if (buckets.Contains("in_production")) inProductionQty += o.CalculatedQuantity;
     }
 }
 
@@ -48,48 +77,49 @@
         <h1 style="font-size: 1.8rem; margin: 0; color: var(--text-main);">Planlama Listesi</h1>
     </div>
     <div class="header-actions" style="display: flex; gap: 12px;">
+        <button class="btn btn-outline-secondary" onclick="filterOrderTableByKpi('all')"><i class="fa-solid fa-list"></i> Tümünü Gör</button>
     </div>
 </div>
 
 <div class="stat-cards" style="margin-bottom: 25px;">
-    <div class="stat-card clickable-stat-card active-kpi-card" data-kpi="all" onclick="filterOrderTableByKpi('all')" style="cursor: pointer;">
+    <div class="stat-card clickable-stat-card" data-kpi="delayed" onclick="filterOrderTableByKpi('delayed')" style="cursor: pointer; border-left: 4px solid #dc2626;">
         <div class="stat-content">
-            <div class="stat-title">Toplam Sipariş Adeti</div>
-            <div class="stat-value">@Model.Sum(o => o.CalculatedQuantity).ToString("N0")</div>
-            <div class="stat-desc">Sistemdeki siparişlerin toplam adeti</div>
+            <div class="stat-title" style="color: #991b1b; font-weight: 700;">Geciken / Riskli</div>
+            <div class="stat-value" style="color: #dc2626;">@delayedQty.ToString("N0")</div>
+            <div class="stat-desc" style="color: #ef4444;">Termin tarihi geçenler</div>
         </div>
-        <div class="stat-icon icon-teal">
-            <i class="fa-solid fa-briefcase"></i>
+        <div class="stat-icon" style="background: linear-gradient(135deg, #fef2f2, #fecaca); color: #dc2626;">
+            <i class="fa-solid fa-triangle-exclamation"></i>
         </div>
     </div>
-    <div class="stat-card clickable-stat-card" data-kpi="waiting" onclick="filterOrderTableByKpi('waiting')" style="cursor: pointer;">
+    <div class="stat-card clickable-stat-card" data-kpi="unplanned" onclick="filterOrderTableByKpi('unplanned')" style="cursor: pointer; border-left: 4px solid #d97706;">
         <div class="stat-content">
-            <div class="stat-title">Yeni Kayıt / Bekleyen</div>
-            <div class="stat-value">@waitingQty.ToString("N0")</div>
-            <div class="stat-desc text-info">Kesime başlamayı bekleyen adet</div>
+            <div class="stat-title" style="color: #92400e; font-weight: 700;">Planlama Bekleyen</div>
+            <div class="stat-value" style="color: #d97706;">@unplannedQty.ToString("N0")</div>
+            <div class="stat-desc" style="color: #f59e0b;">Atölye vb. veri eksik</div>
         </div>
-        <div class="stat-icon icon-light-teal" style="background: linear-gradient(135deg, #e0f2fe, #bae6fd); color: #0284c7;">
-            <i class="fa-solid fa-circle-info"></i>
+        <div class="stat-icon" style="background: linear-gradient(135deg, #fffbeb, #fde68a); color: #d97706;">
+            <i class="fa-solid fa-clipboard-question"></i>
         </div>
     </div>
-    <div class="stat-card clickable-stat-card" data-kpi="cutting" onclick="filterOrderTableByKpi('cutting')" style="cursor: pointer;">
+    <div class="stat-card clickable-stat-card" data-kpi="upcoming" onclick="filterOrderTableByKpi('upcoming')" style="cursor: pointer; border-left: 4px solid #2563eb;">
         <div class="stat-content">
-            <div class="stat-title">Aktif Üretimde</div>
-            <div class="stat-value">@cuttingQty.ToString("N0")</div>
-            <div class="stat-desc text-warning">Kesim sürecinde olan adet</div>
+            <div class="stat-title" style="color: #1e40af; font-weight: 700;">Yaklaşan Teslimat</div>
+            <div class="stat-value" style="color: #2563eb;">@upcomingQty.ToString("N0")</div>
+            <div class="stat-desc" style="color: #3b82f6;">Önümüzdeki 7 gün içinde</div>
         </div>
-        <div class="stat-icon icon-light-teal" style="background: linear-gradient(135deg, #fef3c7, #fde68a); color: #d97706;">
-            <i class="fa-solid fa-spinner"></i>
+        <div class="stat-icon" style="background: linear-gradient(135deg, #eff6ff, #bfdbfe); color: #2563eb;">
+            <i class="fa-solid fa-calendar-day"></i>
         </div>
     </div>
-    <div class="stat-card clickable-stat-card" data-kpi="completed" onclick="filterOrderTableByKpi('completed')" style="cursor: pointer;">
+    <div class="stat-card clickable-stat-card" data-kpi="in_production" onclick="filterOrderTableByKpi('in_production')" style="cursor: pointer; border-left: 4px solid #10b981;">
         <div class="stat-content">
-            <div class="stat-title">Tamamlanan</div>
-            <div class="stat-value">@completedQty.ToString("N0")</div>
-            <div class="stat-desc text-success">Kesim süreci biten toplam adet</div>
+            <div class="stat-title" style="color: #065f46; font-weight: 700;">Aktif Üretimde</div>
+            <div class="stat-value" style="color: #10b981;">@inProductionQty.ToString("N0")</div>
+            <div class="stat-desc" style="color: #34d399;">Hat üzerindeki üretim</div>
         </div>
-        <div class="stat-icon icon-light-teal" style="background: linear-gradient(135deg, #ecfdf5, #a7f3d0); color: #10b981;">
-            <i class="fa-solid fa-circle-check"></i>
+        <div class="stat-icon" style="background: linear-gradient(135deg, #ecfdf5, #a7f3d0); color: #10b981;">
+            <i class="fa-solid fa-industry"></i>
         </div>
     </div>
 </div>
@@ -148,11 +178,11 @@
                         var firstOrder = orderGroup.First();
                         var totalQty = orderGroup.Sum(o => o.CalculatedQuantity);
                         var colors = orderGroup.Select(o => new { Color = o.Color, Brand = o.Brand }).Distinct().ToList();
-                        var groupKpiBucket = GetOrderKpiBucket(firstOrder);
+                        var groupKpiBucket = string.Join(" ", GetOrderKpiBuckets(firstOrder));
                         
                         if (orderGroup.Count() == 1)
                         {
-                            <tr class="order-row main-order-row hover-row" data-kpi-status="@groupKpiBucket" style="border-bottom: 1px solid #f1f5f9; background: #fff; cursor: pointer;" onclick="if(window.parent.appTabs) { window.parent.appTabs.openNewTab('@firstOrder.OrderCode', '/Planning/Plan/@firstOrder.Id', 'fa-solid fa-calendar-check'); } else { window.location.href='/Planning/Plan/@firstOrder.Id'; }">
+                            <tr class="order-row main-order-row hover-row" data-kpi-status="@groupKpiBucket" style="border-bottom: 1px solid #f1f5f9; background: #fff; cursor: pointer;" onclick="if(window.parent.appTabs) { window.parent.appTabs.openNewTab('@firstOrder.OrderCode', '/Planning/Plan/@firstOrder.Id?tab=@(ViewBag.ActiveTab ?? "cps")', 'fa-solid fa-calendar-check'); } else { window.location.href='/Planning/Plan/@firstOrder.Id?tab=@(ViewBag.ActiveTab ?? "cps")'; }">
                                 <td style="padding-left: 24px;">
                                     <span style="background-color: var(--primary-color); color: white; padding: 4px 12px; border-radius: 9999px; font-weight: 600; display: inline-block;">@firstOrder.OrderCode</span>
                                 </td>
@@ -192,7 +222,7 @@
                                     @firstOrder.CalculatedQuantity.ToString("N0") <span style="font-weight: 500; font-size: 0.7rem; color: #64748b;">Adet</span>
                                 </td>
                                 <td style="text-align: center; padding-right: 24px;">
-                                    <a href="/Planning/Plan/@firstOrder.Id" class="action-btn" onclick="event.stopPropagation(); if(window.parent.appTabs) { window.parent.appTabs.openNewTab('@firstOrder.OrderCode', this.href, 'fa-solid fa-calendar-check'); event.preventDefault(); }"><i class="fa-solid fa-calendar-check"></i> Planla</a>
+                                    <a href="/Planning/Plan/@firstOrder.Id?tab=@(ViewBag.ActiveTab ?? "cps")" class="action-btn" onclick="event.stopPropagation(); if(window.parent.appTabs) { window.parent.appTabs.openNewTab('@firstOrder.OrderCode', this.href, 'fa-solid fa-calendar-check'); event.preventDefault(); }"><i class="fa-solid fa-calendar-check"></i> Planla</a>
                                 </td>
                             </tr>
                         }
@@ -236,7 +266,7 @@
 
                             foreach (var order in orderGroup)
                             {
-                                <tr class="order-row @groupClass hover-row" style="display: none; background: #f8fafc; border-bottom: 1px dashed #cbd5e1; cursor: pointer;" onclick="if(window.parent.appTabs) { window.parent.appTabs.openNewTab('@order.OrderCode', '/Planning/Plan/@order.Id', 'fa-solid fa-calendar-check'); } else { window.location.href='/Planning/Plan/@order.Id'; }">
+                                <tr class="order-row @groupClass hover-row" style="display: none; background: #f8fafc; border-bottom: 1px dashed #cbd5e1; cursor: pointer;" onclick="if(window.parent.appTabs) { window.parent.appTabs.openNewTab('@order.OrderCode', '/Planning/Plan/@order.Id?tab=@(ViewBag.ActiveTab ?? "cps")', 'fa-solid fa-calendar-check'); } else { window.location.href='/Planning/Plan/@order.Id?tab=@(ViewBag.ActiveTab ?? "cps")'; }">
                                     <td style="padding-left: 50px;">
                                         <span style="font-size:0.8rem; color:#94a3b8;"><i class="fa-solid fa-arrow-turn-up fa-rotate-90"></i></span>
                                     </td>
@@ -269,7 +299,7 @@
                                         @order.CalculatedQuantity.ToString("N0") <span style="font-weight: 500; font-size: 0.7rem; color: #64748b;">Adet</span>
                                     </td>
                                     <td style="text-align: center; padding-right: 24px;">
-                                        <a href="/Planning/Plan/@order.Id" class="action-btn" onclick="event.stopPropagation(); if(window.parent.appTabs) { window.parent.appTabs.openNewTab('@order.OrderCode', this.href, 'fa-solid fa-calendar-check'); event.preventDefault(); }"><i class="fa-solid fa-calendar-check"></i> Planla</a>
+                                        <a href="/Planning/Plan/@order.Id?tab=@(ViewBag.ActiveTab ?? "cps")" class="action-btn" onclick="event.stopPropagation(); if(window.parent.appTabs) { window.parent.appTabs.openNewTab('@order.OrderCode', this.href, 'fa-solid fa-calendar-check'); event.preventDefault(); }"><i class="fa-solid fa-calendar-check"></i> Planla</a>
                                     </td>
                                 </tr>
                             }
@@ -291,7 +321,10 @@
                 $('.main-order-row').show();
             } else {
                 $('.main-order-row').hide();
-                $(`.main-order-row[data-kpi-status="${kpiBucket}"]`).show();
+                $('.main-order-row').filter(function() {
+                    var statusStr = $(this).attr('data-kpi-status') || '';
+                    return statusStr.split(' ').includes(kpiBucket);
+                }).show();
             }
             
             // Alt satırları gizle
@@ -312,3 +345,4 @@
         });
     </script>
 }
+

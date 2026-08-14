@@ -288,6 +288,8 @@ namespace UretimPlanlama.Models
         [NotMapped]
         public string? OrderMaterialsJson { get; set; }
 
+        public string? ImageUrl { get; set; }
+
         public ICollection<OrderMaterial> OrderMaterials { get; set; } = new List<OrderMaterial>();
     }
 }

@@ -30,7 +30,7 @@ namespace UretimPlanlama.Controllers
             ViewBag.Colors = _context.ColorDefs.OrderBy(c => c.Name).ToList();
             ViewBag.Customers = _context.Customers.OrderBy(c => c.Name).ToList();
             ViewBag.Brands = _context.Brands.OrderBy(b => b.Name).ToList();
-            ViewBag.StokKartlari = _context.StokKartlari.Where(s => s.Aktif).OrderBy(s => s.StokAdi).ToList();
+            ViewBag.StokKartlari = _context.StokKartlari.Include(s => s.Varyantlar).Where(s => s.Aktif).OrderBy(s => s.StokAdi).ToList();
             return View(orders);
         }
 
@@ -45,7 +45,7 @@ namespace UretimPlanlama.Controllers
             ViewBag.Customers = _context.Customers.OrderBy(c => c.Name).ToList();
             ViewBag.Colors = _context.ColorDefs.OrderBy(c => c.Name).ToList();
             ViewBag.Brands = _context.Brands.OrderBy(b => b.Name).ToList();
-            ViewBag.StokKartlari = _context.StokKartlari.Where(s => s.Aktif).OrderBy(s => s.StokAdi).ToList();
+            ViewBag.StokKartlari = _context.StokKartlari.Include(s => s.Varyantlar).Where(s => s.Aktif).OrderBy(s => s.StokAdi).ToList();
             ViewBag.ReturnUrl = returnUrl;
             return View();
         }
@@ -94,7 +94,7 @@ namespace UretimPlanlama.Controllers
             ViewBag.Fabricators = _context.Fabricators.Where(f => f.IsActive).OrderBy(f => f.Name).ToList();
             ViewBag.Customers = _context.Customers.OrderBy(c => c.Name).ToList();
             ViewBag.Brands = _context.Brands.OrderBy(b => b.Name).ToList();
-            ViewBag.StokKartlari = _context.StokKartlari.OrderBy(s => s.StokAdi).ToList();
+            ViewBag.StokKartlari = _context.StokKartlari.Include(s => s.Varyantlar).OrderBy(s => s.StokAdi).ToList();
             ViewBag.ReturnUrl = returnUrl;
             return View(order);
         }
@@ -144,6 +144,34 @@ namespace UretimPlanlama.Controllers
                 if (ex.InnerException != null) msg += " | " + ex.InnerException.Message;
                 return Json(new { success = false, message = msg });
             }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UploadOrderImage(IFormFile OrderImage)
+        {
+            if (!User.HasPermission("Write"))
+                return Json(new { success = false, message = "Yetkiniz yetersiz." });
+
+            if (OrderImage == null || OrderImage.Length == 0)
+                return Json(new { success = false, message = "Lütfen bir görsel seçin." });
+
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "orders");
+            if (!Directory.Exists(uploadsFolder))
+                Directory.CreateDirectory(uploadsFolder);
+
+            var fileExt = Path.GetExtension(OrderImage.FileName);
+            if (string.IsNullOrEmpty(fileExt)) fileExt = ".png";
+            
+            var uniqueFileName = Guid.NewGuid().ToString() + "_" + DateTime.Now.Ticks + fileExt;
+            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await OrderImage.CopyToAsync(stream);
+            }
+
+            var imageUrl = "/uploads/orders/" + uniqueFileName;
+            return Json(new { success = true, imageUrl = imageUrl });
         }
 
         [HttpPost]
@@ -327,7 +355,7 @@ namespace UretimPlanlama.Controllers
             ViewBag.Customers = _context.Customers.OrderBy(c => c.Name).ToList();
             ViewBag.Colors = _context.ColorDefs.OrderBy(c => c.Name).ToList();
             ViewBag.Brands = _context.Brands.OrderBy(b => b.Name).ToList();
-            ViewBag.StokKartlari = _context.StokKartlari.Where(s => s.Aktif).OrderBy(s => s.StokAdi).ToList();
+            ViewBag.StokKartlari = _context.StokKartlari.Include(s => s.Varyantlar).Where(s => s.Aktif).OrderBy(s => s.StokAdi).ToList();
 
             // Setup JSON string for existing materials so frontend can parse it
             if (order.OrderMaterials != null && order.OrderMaterials.Any())
@@ -419,6 +447,11 @@ namespace UretimPlanlama.Controllers
 
                 existingOrder.SizeDistributionJson = updatedOrder.SizeDistributionJson;
                 existingOrder.AsortiDistributionJson = updatedOrder.AsortiDistributionJson;
+                
+                if (!string.IsNullOrEmpty(updatedOrder.ImageUrl))
+                {
+                    existingOrder.ImageUrl = updatedOrder.ImageUrl;
+                }
                 
                 // Keep existing ProductionJson but update KNN Revize Termin if provided
                 if (!string.IsNullOrEmpty(updatedOrder.ProductionJson))
@@ -564,7 +597,7 @@ namespace UretimPlanlama.Controllers
                 return NotFound();
             }
 
-            ViewBag.StokKartlari = _context.StokKartlari.Where(s => s.Aktif).OrderBy(s => s.StokAdi).ToList();
+            ViewBag.StokKartlari = _context.StokKartlari.Include(s => s.Varyantlar).Where(s => s.Aktif).OrderBy(s => s.StokAdi).ToList();
 
             if (order.OrderMaterials != null && order.OrderMaterials.Any())
             {

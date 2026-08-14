@@ -4,70 +4,422 @@
     ViewData["Title"] = "Marka Tanımı";
 }
 
-<div class="dashboard-header" style="margin-bottom: 25px;">
-    <div class="header-title">
-        <h1 style="font-size: 1.8rem; margin: 0; color: var(--text-main);">Marka Tanımı</h1>
+<style>
+    .brand-page-container {
+        padding: 20px 0;
+        animation: fadeIn 0.5s ease-in-out;
+    }
+
+    .brand-header-card {
+        background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+        border-radius: 12px;
+        padding: 15px 25px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.8);
+    }
+
+    .brand-title {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #2d3748;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .brand-title i {
+        color: #4a5568;
+        background: white;
+        padding: 8px 10px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        font-size: 1.1rem;
+    }
+
+    .btn-add-brand {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 8px 18px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(118, 75, 162, 0.2);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .btn-add-brand:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 25px rgba(118, 75, 162, 0.4);
+    }
+
+    .search-container {
+        background: white;
+        border-radius: 10px;
+        padding: 4px 15px;
+        display: flex;
+        align-items: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        margin-bottom: 20px;
+        border: 1px solid #edf2f7;
+    }
+
+    .search-container i {
+        color: #a0aec0;
+        font-size: 1rem;
+    }
+
+    .search-container input {
+        border: none;
+        outline: none;
+        width: 100%;
+        padding: 10px 12px;
+        font-size: 0.95rem;
+        color: #4a5568;
+        background: transparent;
+    }
+
+    .brand-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 15px;
+    }
+
+    .brand-card {
+        background: white;
+        border-radius: 12px;
+        padding: 15px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        transition: all 0.3s ease;
+        border: 1px solid transparent;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .brand-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 3px;
+        height: 100%;
+        background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px 0 0 12px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .brand-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+        border-color: #e2e8f0;
+    }
+
+    .brand-card:hover::before {
+        opacity: 1;
+    }
+
+    .brand-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .brand-icon-wrapper {
+        background: #f7fafc;
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #4a5568;
+        font-size: 1rem;
+    }
+
+    .brand-name {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #2d3748;
+    }
+
+    .btn-delete {
+        background: #fff5f5;
+        color: #e53e3e;
+        border: 1px solid #fed7d7;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-delete:hover {
+        background: #e53e3e;
+        color: white;
+    }
+
+    .empty-state {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 60px 20px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.04);
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        color: #cbd5e0;
+        margin-bottom: 20px;
+    }
+
+    .empty-state h3 {
+        font-size: 1.5rem;
+        color: #4a5568;
+        margin-bottom: 10px;
+    }
+
+    .empty-state p {
+        color: #718096;
+        font-size: 1rem;
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        backdrop-filter: blur(5px);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.active {
+        display: flex;
+        animation: fadeInOverlay 0.3s forwards;
+    }
+
+    .brand-modal {
+        background: white;
+        border-radius: 20px;
+        width: 100%;
+        max-width: 500px;
+        box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+        transform: scale(0.9);
+        opacity: 0;
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+
+    .modal-overlay.active .brand-modal {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    .modal-header {
+        padding: 25px 30px;
+        border-bottom: 1px solid #edf2f7;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #f7fafc;
+    }
+
+    .modal-header h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        color: #2d3748;
+        font-weight: 700;
+    }
+
+    .btn-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: #a0aec0;
+        cursor: pointer;
+        transition: color 0.2s ease;
+    }
+
+    .btn-close:hover {
+        color: #4a5568;
+    }
+
+    .modal-body {
+        padding: 30px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #4a5568;
+    }
+
+    .form-group input {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        font-size: 1rem;
+        transition: border-color 0.3s ease;
+    }
+
+    .form-group input:focus {
+        border-color: #667eea;
+        outline: none;
+    }
+
+    .modal-footer {
+        padding: 20px 30px;
+        background: #f7fafc;
+        border-top: 1px solid #edf2f7;
+        display: flex;
+        justify-content: flex-end;
+        gap: 15px;
+    }
+
+    .btn-cancel {
+        padding: 10px 20px;
+        border-radius: 10px;
+        border: 1px solid #cbd5e0;
+        background: white;
+        color: #4a5568;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-cancel:hover {
+        background: #edf2f7;
+    }
+
+    .btn-save {
+        padding: 10px 25px;
+        border-radius: 10px;
+        border: none;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3);
+    }
+
+    .btn-save:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(118, 75, 162, 0.4);
+    }
+
+    @@keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @@keyframes fadeInOverlay {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+</style>
+
+<div class="brand-page-container">
+    <div class="brand-header-card">
+        <h1 class="brand-title">
+            <i class="fa-solid fa-copyright"></i> Marka Tanımları
+        </h1>
+        <button class="btn-add-brand" onclick="openModal()">
+            <i class="fa-solid fa-plus"></i> Yeni Marka Ekle
+        </button>
     </div>
-    <div class="header-actions">
-        <a href="/Definitions/CreateBrand" class="btn-planner" style="text-decoration: none;"><i class="fa-solid fa-plus"></i> Yeni Marka Ekle</a>
+
+    <div class="search-container">
+        <i class="fa-solid fa-search"></i>
+        <input type="text" id="searchInput" placeholder="Mevcut markalar arasında ara..." />
+    </div>
+
+    <div class="brand-grid">
+        @if (Model != null && Model.Count > 0)
+        {
+            foreach (var brand in Model)
+            {
+                <div class="brand-card searchable-item">
+                    <div class="brand-info">
+                        <div class="brand-icon-wrapper">
+                            <i class="fa-solid fa-tag"></i>
+                        </div>
+                        <div class="brand-name">@brand.Name</div>
+                    </div>
+                    <button class="btn-delete" title="Markayı Sil" onclick="deleteBrand(@brand.Id, '@brand.Name')">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="fa-solid fa-tags"></i>
+                <h3>Henüz marka bulunmuyor</h3>
+                <p>Sisteme kayıtlı bir marka yok. Yeni bir marka ekleyerek başlayabilirsiniz.</p>
+                <button class="btn-add-brand" style="margin: 20px auto 0;" onclick="openModal()">
+                    <i class="fa-solid fa-plus"></i> Şimdi Ekle
+                </button>
+            </div>
+        }
     </div>
 </div>
 
-@if (TempData["SuccessMessage"] != null)
-{
-    <div style="background-color: var(--success-bg); color: var(--success-text); padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid rgba(13, 148, 136, 0.2);">
-        <i class="fa-solid fa-circle-check" style="margin-right: 8px;"></i> @TempData["SuccessMessage"]
-    </div>
-}
-
-<div class="dashboard-grid" style="grid-template-columns: 1fr;">
-    <div class="schedule-section">
-        <div class="section-header">
-            <div>
-                <h2>Mevcut Markalar</h2>
-            </div>
-            <div class="search-box" style="width: 300px; margin-top: -10px;">
-                <i class="fa-solid fa-search"></i>
-                <input type="text" id="searchInput" placeholder="Marka ara..." />
+<!-- Add Brand Modal -->
+<div class="modal-overlay" id="addBrandModal">
+    <div class="brand-modal">
+        <div class="modal-header">
+            <h2>Yeni Marka Ekle</h2>
+            <button class="btn-close" onclick="closeModal()"><i class="fa-solid fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="brandName">Marka Adı</label>
+                <input type="text" id="brandName" placeholder="Örn: LCW VISION" autocomplete="off" />
             </div>
         </div>
-
-        <div class="schedule-list">
-            @if (Model != null && Model.Count > 0)
-            {
-                foreach (var brand in Model)
-                {
-                    <div class="schedule-item searchable-item">
-                        <div class="time-slot">
-                            <span style="color: var(--primary-color);"><i class="fa-solid fa-tags fa-lg"></i></span>
-                        </div>
-                        <div class="job-info">
-                            <div class="job-title">
-                                <span class="job-id" style="font-size: 1.1rem;">@brand.Name</span>
-                            </div>
-                        </div>
-                        <div style="display: flex; gap: 8px;">
-                            <button class="btn-modify" style="color: var(--danger-text); border-color: var(--danger-text);" onclick="deleteBrand(@brand.Id, '@brand.Name')"><i class="fa-solid fa-trash"></i></button>
-                        </div>
-                    </div>
-                }
-            }
-            else
-            {
-                <div class="schedule-item" style="justify-content: center; padding: 40px;">
-                    <div style="text-align: center; color: var(--text-muted);">
-                        <i class="fa-solid fa-tags" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.5;"></i>
-                        <p style="font-size: 1.1rem; margin: 0;">Henüz kayıtlı bir marka bulunmuyor.</p>
-                        <p style="font-size: 0.9rem; margin-top: 5px;">Yeni bir marka tanımlamak için sağ üstteki butonu kullanabilirsiniz.</p>
-                    </div>
-                </div>
-            }
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="closeModal()">İptal</button>
+            <button class="btn-save" onclick="saveBrand()">Kaydet</button>
         </div>
     </div>
 </div>
 
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        // Search Functionality
         $(document).ready(function() {
             $('#searchInput').on('keyup', function() {
                 var value = $(this).val().toLowerCase();
@@ -77,16 +429,85 @@
             });
         });
 
+        // Modal Logic
+        const modal = document.getElementById('addBrandModal');
+        const brandInput = document.getElementById('brandName');
+
+        function openModal() {
+            modal.classList.add('active');
+            brandInput.value = '';
+            setTimeout(() => brandInput.focus(), 300);
+        }
+
+        function closeModal() {
+            modal.classList.remove('active');
+        }
+
+        // Close modal on outside click
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+
+        // Save on Enter key
+        brandInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                saveBrand();
+            }
+        });
+
+        function saveBrand() {
+            const name = brandInput.value.trim();
+            if (!name) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Uyarı',
+                    text: 'Lütfen bir marka adı giriniz.'
+                });
+                return;
+            }
+
+            // AJAX request to save brand
+            $.ajax({
+                url: '/Definitions/CreateBrandAjax',
+                type: 'POST',
+                data: { name: name },
+                success: function (res) {
+                    if (res.success) {
+                        closeModal();
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Başarılı',
+                            text: res.message,
+                            timer: 1500,
+                            showConfirmButton: false
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    } else {
+                        Swal.fire('Hata!', res.message, 'error');
+                    }
+                },
+                error: function () {
+                    Swal.fire('Hata!', 'Kaydetme işlemi sırasında bir hata oluştu.', 'error');
+                }
+            });
+        }
+
         function deleteBrand(id, name) {
             Swal.fire({
                 title: 'Emin misiniz?',
-                text: "'" + name + "' markasını silmek istediğinize emin misiniz?",
+                html: "<b>" + name + "</b> markasını silmek istediğinize emin misiniz?",
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Evet, Sil!',
-                cancelButtonText: 'İptal'
+                confirmButtonColor: '#e53e3e',
+                cancelButtonColor: '#cbd5e0',
+                confirmButtonText: '<i class="fa-solid fa-trash"></i> Evet, Sil',
+                cancelButtonText: 'İptal',
+                customClass: {
+                    confirmButton: 'swal2-confirm swal2-styled swal2-danger'
+                }
             }).then((result) => {
                 if (result.isConfirmed) {
                     $.ajax({
@@ -95,7 +516,15 @@
                         data: { id: id },
                         success: function (res) {
                             if (res.success) {
-                                window.location.reload();
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Silindi!',
+                                    text: 'Marka başarıyla silindi.',
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    window.location.reload();
+                                });
                             } else {
                                 Swal.fire('Hata!', res.message, 'error');
                             }

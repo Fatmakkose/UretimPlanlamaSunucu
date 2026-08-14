@@ -39,6 +39,17 @@ namespace UretimPlanlama.Controllers
             }
             return View(color);
         }
+        [HttpPost]
+        public IActionResult CreateAjax(string name, string description)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                return Json(new { success = false, message = "Renk adı boş olamaz." });
+                
+            var color = new ColorDef { Name = name, Description = description };
+            _context.ColorDefs.Add(color);
+            _context.SaveChanges();
+            return Json(new { success = true, message = "Renk başarıyla eklendi." });
+        }
 
         [HttpPost]
         public IActionResult Delete(int id)
@@ -49,6 +60,20 @@ namespace UretimPlanlama.Controllers
                 _context.ColorDefs.Remove(color);
                 _context.SaveChanges();
                 return Json(new { success = true, message = "Renk silindi." });
+            }
+            return Json(new { success = false, message = "Renk bulunamadı." });
+        }
+
+        [HttpPost]
+        public IActionResult Update(int id, string name, string description)
+        {
+            var color = _context.ColorDefs.Find(id);
+            if (color != null)
+            {
+                color.Name = name;
+                color.Description = description;
+                _context.SaveChanges();
+                return Json(new { success = true, message = "Renk güncellendi." });
             }
             return Json(new { success = false, message = "Renk bulunamadı." });
         }

@@ -1143,56 +1143,70 @@
         <div style="overflow-y: auto; padding: 24px; flex-grow: 1;">
             
             <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px; margin-bottom: 24px;">
-                <!-- Genel & Ürün Bilgileri Kartı -->
-                <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
-                    <h4 style="margin: 0 0 16px 0; font-size: 1rem; color: var(--primary-color); font-weight: 600; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
-                        <i class="fa-solid fa-circle-info" style="margin-right: 6px;"></i> Ürün ve Genel Bilgiler
-                    </h4>
-                    <div style="display: grid; grid-template-columns: 1fr; gap: 12px; font-size: 0.9rem;">
-                        <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px;">
-                            <span style="color: var(--text-muted);"><i class="fa-solid fa-hashtag" style="margin-right: 8px; width: 14px;"></i>Sipariş Kodu</span>
-                            <strong id="detOrderCode" style="color: var(--text-main);">...</strong>
+
+                <!-- Sol Kolon: Genel Bilgiler ve Görsel -->
+                <div style="display: flex; flex-direction: column; gap: 24px;">
+                    <!-- Genel & Ürün Bilgileri Kartı -->
+                    <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                        <h4 style="margin: 0 0 16px 0; font-size: 1rem; color: var(--primary-color); font-weight: 600; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
+                            <i class="fa-solid fa-circle-info" style="margin-right: 6px;"></i> Ürün ve Genel Bilgiler
+                        </h4>
+                        <div style="display: grid; grid-template-columns: 1fr; gap: 12px; font-size: 0.9rem;">
+                            <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px;">
+                                <span style="color: var(--text-muted);"><i class="fa-solid fa-hashtag" style="margin-right: 8px; width: 14px;"></i>Sipariş Kodu</span>
+                                <strong id="detOrderCode" style="color: var(--text-main);">...</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px;">
+                                <span style="color: var(--text-muted);"><i class="fa-solid fa-shirt" style="margin-right: 8px; width: 14px;"></i>Model Adı</span>
+                                <strong id="detModelName" style="color: var(--text-main);">...</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px;">
+                                <span style="color: var(--text-muted);"><i class="fa-solid fa-tag" style="margin-right: 8px; width: 14px;"></i>Model No</span>
+                                <strong id="detModelNo" style="color: var(--text-main);">...</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px;">
+                                <span style="color: var(--text-muted);"><i class="fa-solid fa-palette" style="margin-right: 8px; width: 14px;"></i>Renk / Option</span>
+                                <strong id="detColor" style="color: var(--text-main);">...</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px;">
+                                <span style="color: var(--text-muted);"><i class="fa-solid fa-copyright" style="margin-right: 8px; width: 14px;"></i>Marka</span>
+                                <strong id="detBrand" style="color: var(--text-main);">...</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px;">
+                                <span style="color: var(--text-muted);"><i class="fa-solid fa-user-tie" style="margin-right: 8px; width: 14px;"></i>Alıcı (Müşteri)</span>
+                                <strong id="detCustomer" style="color: var(--text-main);">LC Waikiki</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px;">
+                                <span style="color: var(--text-muted);"><i class="fa-solid fa-circle-nodes" style="margin-right: 8px; width: 14px;"></i>Bölge</span>
+                                <strong id="detRegion" style="color: var(--text-main);">...</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px;">
+                                <span style="color: var(--text-muted);"><i class="fa-solid fa-magnifying-glass-chart" style="margin-right: 8px; width: 14px;"></i>Inspection Tipi</span>
+                                <strong id="detInspectionType" style="color: var(--text-main);">...</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px;">
+                                <span style="color: var(--text-muted);"><i class="fa-solid fa-calendar-check" style="margin-right: 8px; width: 14px;"></i>Inspection Tarihi</span>
+                                <strong id="detInspectionDate" style="color: var(--text-main);">...</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px;">
+                                <span style="color: var(--text-muted);"><i class="fa-solid fa-map-location-dot" style="margin-right: 8px; width: 14px;"></i>Teslim Yeri</span>
+                                <strong id="detDeliveryPlace" style="color: var(--text-main);">...</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding-bottom: 4px;">
+                                <span style="color: var(--text-muted);"><i class="fa-solid fa-comment-dots" style="margin-right: 8px; width: 14px;"></i>Açıklama</span>
+                                <strong id="detDescription" style="color: var(--text-main); font-weight: 500; text-align: right; max-width: 250px; display: block; word-wrap: break-word;">...</strong>
+                            </div>
                         </div>
-                        <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px;">
-                            <span style="color: var(--text-muted);"><i class="fa-solid fa-shirt" style="margin-right: 8px; width: 14px;"></i>Model Adı</span>
-                            <strong id="detModelName" style="color: var(--text-main);">...</strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px;">
-                            <span style="color: var(--text-muted);"><i class="fa-solid fa-tag" style="margin-right: 8px; width: 14px;"></i>Model No</span>
-                            <strong id="detModelNo" style="color: var(--text-main);">...</strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px;">
-                            <span style="color: var(--text-muted);"><i class="fa-solid fa-palette" style="margin-right: 8px; width: 14px;"></i>Renk / Option</span>
-                            <strong id="detColor" style="color: var(--text-main);">...</strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px;">
-                            <span style="color: var(--text-muted);"><i class="fa-solid fa-copyright" style="margin-right: 8px; width: 14px;"></i>Marka</span>
-                            <strong id="detBrand" style="color: var(--text-main);">...</strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px;">
-                            <span style="color: var(--text-muted);"><i class="fa-solid fa-user-tie" style="margin-right: 8px; width: 14px;"></i>Alıcı (Müşteri)</span>
-                            <strong id="detCustomer" style="color: var(--text-main);">LC Waikiki</strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px;">
-                            <span style="color: var(--text-muted);"><i class="fa-solid fa-circle-nodes" style="margin-right: 8px; width: 14px;"></i>Bölge</span>
-                            <strong id="detRegion" style="color: var(--text-main);">...</strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px;">
-                            <span style="color: var(--text-muted);"><i class="fa-solid fa-magnifying-glass-chart" style="margin-right: 8px; width: 14px;"></i>Inspection Tipi</span>
-                            <strong id="detInspectionType" style="color: var(--text-main);">...</strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px;">
-                            <span style="color: var(--text-muted);"><i class="fa-solid fa-calendar-check" style="margin-right: 8px; width: 14px;"></i>Inspection Tarihi</span>
-                            <strong id="detInspectionDate" style="color: var(--text-main);">...</strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px;">
-                            <span style="color: var(--text-muted);"><i class="fa-solid fa-map-location-dot" style="margin-right: 8px; width: 14px;"></i>Teslim Yeri</span>
-                            <strong id="detDeliveryPlace" style="color: var(--text-main);">...</strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; padding-bottom: 4px;">
-                            <span style="color: var(--text-muted);"><i class="fa-solid fa-comment-dots" style="margin-right: 8px; width: 14px;"></i>Açıklama</span>
-                            <strong id="detDescription" style="color: var(--text-main); font-weight: 500; text-align: right; max-width: 250px; display: block; word-wrap: break-word;">...</strong>
-                        </div>
+                    </div>
+
+                    <!-- Sipariş Görseli -->
+                    <div id="detOrderImageSection" style="display: none; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); text-align: center; flex-direction: column;">
+                        <h4 style="margin: 0 0 16px 0; font-size: 1rem; color: var(--primary-color); font-weight: 600; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; text-align: left;">
+                            <i class="fa-solid fa-image" style="margin-right: 6px;"></i> Sipariş Görseli
+                        </h4>
+                        <a id="detOrderImageLinkFull" href="#" target="_blank" style="display: flex; align-items: center; justify-content: center;">
+                            <img id="detOrderImagePreviewFull" src="" style="max-height: 250px; max-width: 100%; object-fit: contain; border-radius: 8px; border: 1px solid #cbd5e1; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" title="Büyütmek için tıklayın" />
+                        </a>
                     </div>
                 </div>
 
@@ -1279,13 +1293,11 @@
                                 <td id="detAsSize3XL" style="padding: 12px 8px;">0</td>
                                 <td id="detAsRatioTotal" style="padding: 12px 8px; border-left: 1px solid var(--border-color); font-weight: 700; color: #16a34a; background: #dcfce7;">0</td>
                             </tr>
-                            <tr>
-                                <td style="padding: 12px 8px; text-align: left; font-weight: 600; color: #15803d;">Asorti Toplam</td>
-                                <td colspan="6" style="padding: 12px 8px; text-align: right; color: var(--text-muted); font-style: italic;">
-                                    Asorti Sayısı: <strong id="detAsortiCount" style="color: var(--text-main); font-style: normal; margin-right: 15px;">0</strong> 
-                                    (Kutu Sayısı × Asorti Oran Toplamı) =
+                            <tr style="border-top: 1px dashed var(--border-color);">
+                                <td colspan="7" style="padding: 12px 8px; text-align: right; font-weight: 700; color: #0f172a; font-size: 1.05rem;">
+                                    Toplam Sipariş Adeti:
                                 </td>
-                                <td id="detAsortiFinalQty" style="padding: 12px 8px; border-left: 1px solid var(--border-color); font-weight: 700; color: #15803d; background: #bbf7d0;">0</td>
+                                <td id="detAsortiFinalQty" style="padding: 12px 8px; border-left: 1px solid var(--border-color); font-weight: 800; color: #111827; background: #bbf7d0; font-size: 1.1rem;">0</td>
                             </tr>
                         </tbody>
                     </table>
@@ -1702,6 +1714,15 @@
                             $("#detDeliveryPlace").text(order.deliveryPlace || "-");
                             $("#detDescription").text(order.goodsDescription || "-");
                             
+                            // Görsel
+                            if (order.imageUrl) {
+                                $("#detOrderImageSection").css("display", "flex");
+                                $("#detOrderImagePreviewFull").attr("src", order.imageUrl);
+                                $("#detOrderImageLinkFull").attr("href", order.imageUrl);
+                            } else {
+                                $("#detOrderImageSection").hide();
+                            }
+                            
                             // Rozetler (Badges)
                             var status = order.status || "Yeni Kayıt";
                             $("#detStatusBadge").text(status);
@@ -1752,12 +1773,14 @@
                             $("#detAsSize2XL").text(order.asortiSize2XL || 0);
                             $("#detAsSize3XL").text(order.asortiSize3XL || 0);
                             var asortiRatioTotal = (order.asortiSizeS || 0) + (order.asortiSizeM || 0) + (order.asortiSizeL || 0) + (order.asortiSizeXL || 0) + (order.asortiSize2XL || 0) + (order.asortiSize3XL || 0);
-                            $("#detAsRatioTotal").text(asortiRatioTotal);
 
                             // Toplam Asorti
-                            $("#detAsortiCount").text(order.asortiCount || 0);
-                            var asortiFinalQty = asortiRatioTotal * (order.asortiCount || 0);
-                            $("#detAsortiFinalQty").text(asortiFinalQty);
+                            var lotCount = order.asortiCount || 0;
+                            var asortiFinalQty = asortiRatioTotal * lotCount;
+                            $("#detAsRatioTotal").text(asortiFinalQty);
+
+                            var totalOrderQty = openTotal + asortiFinalQty;
+                            $("#detAsortiFinalQty").text(totalOrderQty);
 
                             // Model Detayları
                             $("#detModelUnitPrice").html(formatCurrency(order.unitPrice));

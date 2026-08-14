@@ -9,7 +9,7 @@
         <p style="color: var(--text-muted); margin-top: 5px;">Sistemde kullanılacak renkleri buradan tanımlayabilirsiniz.</p>
     </div>
     <div class="header-actions">
-        <a href="/ColorDef/Create" class="btn-planner" style="border-radius: 8px; font-size: 0.95rem; padding: 10px 18px; text-decoration:none;"><i class="fa-solid fa-plus"></i> Yeni Renk Ekle</a>
+        <button id="btnCreateNewColor" class="btn-planner" style="border: none; border-radius: 8px; font-size: 0.95rem; padding: 10px 18px; cursor: pointer;"><i class="fa-solid fa-plus"></i> Yeni Renk Ekle</button>
     </div>
 </div>
 
@@ -20,44 +20,57 @@
     </div>
 }
 
-<div class="schedule-list" style="overflow-x: auto; background: transparent; border: none; padding: 0;">
-    <table class="premium-table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; background: white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden;">
-        <thead>
-            <tr style="background: #f8fafc; border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">
-                <th style="padding: 14px 16px;">Renk Adı</th>
-                <th style="padding: 14px 16px;">Açıklama</th>
-                <th style="padding: 14px 16px; text-align: center; width: 100px;">İşlem</th>
-            </tr>
-        </thead>
-        <tbody>
-            @if (Model != null && Model.Count > 0)
+<div class="color-grid" style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 15px;">
+    @if (Model != null && Model.Count > 0)
+    {
+        foreach (var color in Model)
+        {
+            var rawDesc = color.Description ?? "";
+            var hexCode = "#e2e8f0"; // Default gray
+            var actualDesc = rawDesc;
+            
+            if (rawDesc.StartsWith("#") && rawDesc.Contains("|"))
             {
-                foreach (var color in Model)
-                {
-                    <tr style="border-bottom: 1px solid var(--border-color);" id="color-row-@color.Id">
-                        <td style="padding: 16px;">
-                            <strong style="color: var(--text-main);">@color.Name</strong>
-                        </td>
-                        <td style="padding: 16px; color: var(--text-muted);">
-                            @(string.IsNullOrEmpty(color.Description) ? "-" : color.Description)
-                        </td>
-                        <td style="padding: 16px; text-align: center;">
-                            <button class="btnDelete" data-id="@color.Id" style="background: none; border: none; color: #dc2626; cursor: pointer;" title="Sil"><i class="fa-solid fa-trash"></i></button>
-                        </td>
-                    </tr>
-                }
+                var parts = rawDesc.Split('|', 2);
+                hexCode = parts[0];
+                actualDesc = parts[1];
             }
-            else
+            else if (rawDesc.StartsWith("#") && rawDesc.Length == 7)
             {
-                <tr>
-                    <td colspan="3" style="text-align: center; padding: 40px; color: var(--text-muted);">
-                        Henüz hiç renk tanımlanmamış.
-                    </td>
-                </tr>
+                hexCode = rawDesc;
+                actualDesc = "";
             }
-        </tbody>
-    </table>
+
+            <div class="color-card" id="color-row-@color.Id" style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); position: relative; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s, box-shadow 0.2s;">
+                <div style="display: flex; gap: 12px; align-items: flex-start;">
+                    <div style="width: 24px; height: 24px; border-radius: 50%; background-color: @hexCode; border: 2px solid #cbd5e1; flex-shrink: 0; margin-top: 2px;"></div>
+                    <div>
+                        <strong style="color: var(--text-main); font-size: 1.05rem; display: block; margin-bottom: 4px;">@color.Name</strong>
+                        <span style="color: var(--text-muted); font-size: 0.85rem;">@(string.IsNullOrEmpty(actualDesc) ? "Açıklama yok" : actualDesc)</span>
+                    </div>
+                </div>
+                <div style="margin-top: 15px; display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid #f1f5f9; padding-top: 12px;">
+                    <button class="btnEdit" data-id="@color.Id" data-name="@color.Name" data-desc="@actualDesc" data-hex="@hexCode" style="background: none; border: none; color: #3b82f6; cursor: pointer; padding: 4px;" title="Düzenle"><i class="fa-solid fa-pen"></i></button>
+                    <button class="btnDelete" data-id="@color.Id" style="background: none; border: none; color: #dc2626; cursor: pointer; padding: 4px;" title="Sil"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div style="grid-column: span 5; text-align: center; padding: 40px; color: var(--text-muted); background: white; border-radius: 8px; border: 1px solid #e2e8f0;">
+            Henüz hiç renk tanımlanmamış.
+        </div>
+    }
 </div>
+
+<style>
+    .color-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        border-color: #cbd5e1 !important;
+    }
+</style>
 
 @section Scripts {
     <script>
@@ -77,7 +90,156 @@
                     if (result.isConfirmed) {
                         $.post("/ColorDef/Delete", { id: id }, function(res) {
                             if (res.success) {
-                                $("#color-row-" + id).fadeOut();
+                                $("#color-row-" + id).fadeOut(300, function() { $(this).remove(); });
+                            } else {
+                                Swal.fire('Hata!', res.message, 'error');
+                            }
+                        });
+                    }
+                });
+            });
+
+            // Renk İsimlerinden Otomatik Renk Kodu Bulma (LCW & Genel)
+            function autoDetectColor(name) {
+                if(!name) return null;
+                name = name.toUpperCase();
+                var colorMap = {
+                    "BLACK": "#000000", "SIYAH": "#000000", "SİYAH": "#000000",
+                    "WHITE": "#ffffff", "BEYAZ": "#ffffff",
+                    "NAVY": "#000080", "LACIVERT": "#000080", "LACİVERT": "#000080",
+                    "RED": "#ff0000", "KIRMIZI": "#ff0000",
+                    "BLUE": "#0000ff", "MAVI": "#0000ff", "MAVİ": "#0000ff",
+                    "GREEN": "#008000", "YESIL": "#008000", "YEŞİL": "#008000",
+                    "YELLOW": "#ffff00", "SARI": "#ffff00",
+                    "ORANGE": "#ffa500", "TURUNCU": "#ffa500",
+                    "PURPLE": "#800080", "MOR": "#800080",
+                    "PINK": "#ffc0cb", "PEMBE": "#ffc0cb",
+                    "BROWN": "#a52a2a", "KAHVERENGI": "#a52a2a", "KAHVERENGİ": "#a52a2a",
+                    "GREY": "#808080", "GRAY": "#808080", "GRI": "#808080", "GRİ": "#808080",
+                    "ECRU": "#f5f5dc", "EKRU": "#f5f5dc",
+                    "BEIGE": "#f5f5dc", "BEJ": "#f5f5dc",
+                    "KHAKI": "#f0e68c", "HAKI": "#f0e68c", "HAKİ": "#f0e68c",
+                    "MAROON": "#800000", "BORDO": "#800000",
+                    "OLIVE": "#808000", "ZEYTIN": "#808000", "ZEYTİN": "#808000",
+                    "CYAN": "#00ffff", "TURQUOISE": "#40e0d0", "TURKUAZ": "#40e0d0",
+                    "LILAC": "#c8a2c8", "LILA": "#c8a2c8", "LİLA": "#c8a2c8"
+                };
+                for (var key in colorMap) {
+                    if (name.includes(key)) return colorMap[key];
+                }
+                return null;
+            }
+
+            $("#btnCreateNewColor").click(function() {
+                Swal.fire({
+                    title: 'Yeni Renk Ekle',
+                    html:
+                        '<div style="display: flex; gap: 10px; align-items: flex-end;">' +
+                        '  <div style="text-align:left; flex: 1;">' +
+                        '    <label style="font-size:0.85rem; color:#64748b; margin-bottom:4px; display:block;">Görsel Renk</label>' +
+                        '    <input type="color" id="swal-create-hex" value="#e2e8f0" style="width:100%; height:40px; border:1px solid #cbd5e1; border-radius:6px; cursor:pointer;">' +
+                        '  </div>' +
+                        '  <div style="text-align:left; flex: 3;">' +
+                        '    <label style="font-size:0.85rem; color:#64748b; margin-bottom:4px; display:block;">Renk Adı</label>' +
+                        '    <input id="swal-create-name" class="swal2-input" placeholder="Örn: NAVY STRIPED-LGS" style="margin-top:0; width:100%;">' +
+                        '  </div>' +
+                        '</div>' +
+                        '<div style="text-align:left; margin-bottom:8px; margin-top:16px;"><label style="font-size:0.85rem; color:#64748b;">Açıklama (Opsiyonel)</label></div>' +
+                        '<input id="swal-create-desc" class="swal2-input" style="margin-top:0;">',
+                    focusConfirm: false,
+                    showCancelButton: true,
+                    confirmButtonText: 'Kaydet',
+                    cancelButtonText: 'İptal',
+                    didOpen: () => {
+                        // Otomatik renk bulucu
+                        const nameInput = document.getElementById('swal-create-name');
+                        const hexInput = document.getElementById('swal-create-hex');
+                        nameInput.addEventListener('input', function(e) {
+                            var detectedColor = autoDetectColor(e.target.value);
+                            if(detectedColor) {
+                                hexInput.value = detectedColor;
+                            }
+                        });
+                    },
+                    preConfirm: () => {
+                        return [
+                            document.getElementById('swal-create-hex').value,
+                            document.getElementById('swal-create-name').value,
+                            document.getElementById('swal-create-desc').value
+                        ]
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        var newHex = result.value[0];
+                        var newName = result.value[1];
+                        var newDesc = result.value[2];
+                        if(!newName) { Swal.fire('Hata!', 'Renk adı boş olamaz', 'error'); return; }
+                        
+                        var combinedDesc = newHex + "|" + newDesc;
+                        $.post("/ColorDef/CreateAjax", { name: newName, description: combinedDesc }, function(res) {
+                            if (res.success) {
+                                location.reload();
+                            } else {
+                                Swal.fire('Hata!', res.message, 'error');
+                            }
+                        });
+                    }
+                });
+            });
+
+            $(".btnEdit").click(function() {
+                var id = $(this).data("id");
+                var name = $(this).data("name");
+                var desc = $(this).data("desc") || "";
+                var hex = $(this).data("hex") || "#e2e8f0";
+                
+                Swal.fire({
+                    title: 'Rengi Düzenle',
+                    html:
+                        '<div style="display: flex; gap: 10px; align-items: flex-end;">' +
+                        '  <div style="text-align:left; flex: 1;">' +
+                        '    <label style="font-size:0.85rem; color:#64748b; margin-bottom:4px; display:block;">Görsel Renk</label>' +
+                        '    <input type="color" id="swal-input-hex" value="' + hex + '" style="width:100%; height:40px; border:1px solid #cbd5e1; border-radius:6px; cursor:pointer;">' +
+                        '  </div>' +
+                        '  <div style="text-align:left; flex: 3;">' +
+                        '    <label style="font-size:0.85rem; color:#64748b; margin-bottom:4px; display:block;">Renk Adı</label>' +
+                        '    <input id="swal-input1" class="swal2-input" style="margin-top:0; width:100%;" value="' + name + '">' +
+                        '  </div>' +
+                        '</div>' +
+                        '<div style="text-align:left; margin-bottom:8px; margin-top:16px;"><label style="font-size:0.85rem; color:#64748b;">Açıklama</label></div>' +
+                        '<input id="swal-input2" class="swal2-input" style="margin-top:0;" value="' + desc + '">',
+                    focusConfirm: false,
+                    showCancelButton: true,
+                    confirmButtonText: 'Kaydet',
+                    cancelButtonText: 'İptal',
+                    didOpen: () => {
+                        const nameInput = document.getElementById('swal-input1');
+                        const hexInput = document.getElementById('swal-input-hex');
+                        nameInput.addEventListener('input', function(e) {
+                            var detectedColor = autoDetectColor(e.target.value);
+                            if(detectedColor) {
+                                hexInput.value = detectedColor;
+                            }
+                        });
+                    },
+                    preConfirm: () => {
+                        return [
+                            document.getElementById('swal-input-hex').value,
+                            document.getElementById('swal-input1').value,
+                            document.getElementById('swal-input2').value
+                        ]
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        var newHex = result.value[0];
+                        var newName = result.value[1];
+                        var newDesc = result.value[2];
+                        if(!newName) { Swal.fire('Hata!', 'Renk adı boş olamaz', 'error'); return; }
+                        
+                        var combinedDesc = newHex + "|" + newDesc;
+                        $.post("/ColorDef/Update", { id: id, name: newName, description: combinedDesc }, function(res) {
+                            if (res.success) {
+                                location.reload();
                             } else {
                                 Swal.fire('Hata!', res.message, 'error');
                             }

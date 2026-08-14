@@ -64,6 +64,12 @@ var appTabs = {
 
         if (existingTabId) {
             this.switchTab(existingTabId);
+            if (this.openTabs[existingTabId].url !== url) {
+                var iframe = document.getElementById('iframe-' + existingTabId);
+                if (iframe) {
+                    iframe.src = url;
+                }
+            }
             return;
         }
 
@@ -127,14 +133,20 @@ var appTabs = {
 
         var isActive = $('#btn-' + tabId).hasClass('active');
         
+        var prevTabBtn = $('#btn-' + tabId).prev('.tab-item');
+        var nextTabToSwitch = 'main-tab';
+        if (prevTabBtn.length > 0) {
+            nextTabToSwitch = prevTabBtn.attr('data-tab-id') || 'main-tab';
+        }
+
         // Remove elements
         $('#btn-' + tabId).remove();
         $('#pane-' + tabId).remove();
         delete this.openTabs[tabId];
 
-        // If it was active, switch to main tab
+        // If it was active, switch to previous tab
         if (isActive) {
-            this.switchTab('main-tab');
+            this.switchTab(nextTabToSwitch);
         }
     },
 
@@ -190,9 +202,13 @@ $(document).ready(function() {
             if (!href || href === '#' || href.startsWith('javascript:') || target === '_blank' || $(this).hasClass('no-tab-link')) return;
             
             // Eğer Ana Sayfa'ya tıklandıysa sayfayı gerçekten yönlendirebiliriz veya main-tab'e dönebiliriz
-            if (href === '/' || href === '/Home/Index') {
+            if (href === '/' || href.toLowerCase() === '/home/index') {
                 e.preventDefault();
-                appTabs.switchTab('main-tab');
+                if (window.location.pathname !== '/' && window.location.pathname.toLowerCase() !== '/home/index' && window.location.pathname.toLowerCase() !== '/home') {
+                    window.location.href = '/';
+                } else {
+                    appTabs.switchTab('main-tab');
+                }
                 return;
             }
             

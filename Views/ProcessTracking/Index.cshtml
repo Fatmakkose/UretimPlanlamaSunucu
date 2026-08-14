@@ -3,7 +3,8 @@
     string stepParam = ViewBag.Step as string;
     string pageTitle = "Süreç Takip Listesi";
     if (stepParam == "purchase") pageTitle = "Sevk Onay";
-    else if (stepParam == "timeline") pageTitle = "CPS";
+    else if (stepParam == "timeline") pageTitle = "CPS Takip";
+    else if (stepParam == "worksheet") pageTitle = "Çalışma Sayfası Takip";
     else if (stepParam == "cutting") pageTitle = "Kesim Süreci";
     else if (stepParam == "packing") pageTitle = "Çeki Listesi";
     else if (stepParam == "fileclosing") pageTitle = "Dosya Kapama";
@@ -12,35 +13,46 @@
 
     ViewData["Title"] = pageTitle;
 
-    int waitingQty = 0;
-    int cuttingQty = 0;
-    int completedQty = 0;
+    int hazirlikQty = 0;
+    int uretimQty = 0;
+    int sevkQty = 0;
+    int delayedQty = 0;
 
-    string GetOrderKpiBucket(UretimPlanlama.Models.Order o)
+    List<string> GetOrderKpiBuckets(UretimPlanlama.Models.Order o)
     {
+        var buckets = new List<string>();
         var pDict = new Dictionary<string, string>();
         if (!string.IsNullOrEmpty(o.ProductionJson)) { try { pDict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(o.ProductionJson); } catch {} }
 
         bool HasP(string key) => pDict != null && pDict.ContainsKey(key) && !string.IsNullOrEmpty(pDict[key]);
 
+        bool isPaketBaslangic = o.PackagingStartDate.HasValue || HasP("prod_paket_baslangic_actual");
         bool isPaketBitis = o.PackagingEndDate.HasValue || HasP("prod_paket_bitis_actual");
-        bool isPaket = o.PackagingStartDate.HasValue || HasP("prod_paket_baslangic_actual") || isPaketBitis;
-        bool isDikimBitis = o.SewingEndDate.HasValue || HasP("prod_dikim_bitis_actual");
-        bool isDikim = o.SewingStartDate.HasValue || HasP("prod_dikim_baslangic_actual") || isDikimBitis || isPaket;
-        bool isKesimBitis = o.CuttingEndDate.HasValue || HasP("prod_kesim_bitis_actual") || isDikim;
-        bool isKesim = o.CuttingStartDate.HasValue || HasP("prod_kesim_baslangic_actual") || isKesimBitis;
+        bool isSevk = HasP("prod_yola_cikis_actual") || HasP("prod_gs_gidisi_actual") || o.WarehouseArrivalDate.HasValue || HasP("prod_depo_varis_actual");
+        bool isKesimBaslangic = o.CuttingStartDate.HasValue || HasP("prod_kesim_baslangic_actual");
 
-        if (isKesimBitis) return "completed";
-        if (isKesim) return "cutting";
-        return "waiting";
+        if (o.PlannedPackagingEndDate.HasValue && o.PlannedPackagingEndDate.Value.Date < DateTime.Today && !isPaketBitis && !isSevk) {
+            buckets.Add("delayed");
+        }
+
+        if (isPaketBaslangic || isPaketBitis || isSevk) {
+            buckets.Add("sevk");
+        } else if (isKesimBaslangic) {
+            buckets.Add("uretim");
+        } else {
+            buckets.Add("hazirlik");
+        }
+
+        return buckets;
     }
 
     foreach (var o in Model)
     {
-        var bucket = GetOrderKpiBucket(o);
-        if (bucket == "completed") completedQty += o.CalculatedQuantity;
-        else if (bucket == "cutting") cuttingQty += o.CalculatedQuantity;
-        else waitingQty += o.CalculatedQuantity;
+        var buckets = GetOrderKpiBuckets(o);
+        if (buckets.Contains("hazirlik")) hazirlikQty += o.CalculatedQuantity;
+        if (buckets.Contains("uretim")) uretimQty += o.CalculatedQuantity;
+        if (buckets.Contains("sevk")) sevkQty += o.CalculatedQuantity;
+        if (buckets.Contains("delayed")) delayedQty += o.CalculatedQuantity;
     }
 }
 
@@ -62,44 +74,51 @@
 </div>
 
 <div class="stat-cards" style="margin-bottom: 25px;">
-    <div class="stat-card clickable-stat-card active-kpi-card" data-kpi="all" onclick="filterOrderTableByKpi('all')" style="cursor: pointer;">
+    <!-- Hazırlık Aşamasında -->
+    <div class="stat-card clickable-stat-card active-kpi-card" data-kpi="hazirlik" onclick="filterOrderTableByKpi('hazirlik')" style="cursor: pointer; border-left: 4px solid #0284c7;">
         <div class="stat-content">
-            <div class="stat-title">Toplam Sipariş Adeti</div>
-            <div class="stat-value">@Model.Sum(o => o.CalculatedQuantity).ToString("N0")</div>
-            <div class="stat-desc">Sistemdeki siparişlerin toplam adeti</div>
+            <div class="stat-title" style="color: #075985; font-weight: 700;">HAZIRLIK AŞAMASINDA</div>
+            <div class="stat-value" style="color: #0284c7;">@hazirlikQty.ToString("N0")</div>
+            <div class="stat-desc" style="color: #0ea5e9;">Kumaş ve Numune Bekleyen</div>
         </div>
-        <div class="stat-icon icon-teal">
-            <i class="fa-solid fa-briefcase"></i>
+        <div class="stat-icon" style="background: linear-gradient(135deg, #e0f2fe, #bae6fd); color: #0284c7;">
+            <i class="fa-solid fa-swatchbook"></i>
         </div>
     </div>
-    <div class="stat-card clickable-stat-card" data-kpi="waiting" onclick="filterOrderTableByKpi('waiting')" style="cursor: pointer;">
+    
+    <!-- Aktif Üretimde -->
+    <div class="stat-card clickable-stat-card" data-kpi="uretim" onclick="filterOrderTableByKpi('uretim')" style="cursor: pointer; border-left: 4px solid #d97706;">
         <div class="stat-content">
-            <div class="stat-title">Yeni Kayıt / Bekleyen</div>
-            <div class="stat-value">@waitingQty.ToString("N0")</div>
-            <div class="stat-desc text-info">Kesime başlamayı bekleyen adet</div>
+            <div class="stat-title" style="color: #92400e; font-weight: 700;">AKTİF ÜRETİMDE</div>
+            <div class="stat-value" style="color: #d97706;">@uretimQty.ToString("N0")</div>
+            <div class="stat-desc" style="color: #f59e0b;">Kesim ve Dikim Sürecinde</div>
         </div>
-        <div class="stat-icon icon-light-teal" style="background: linear-gradient(135deg, #e0f2fe, #bae6fd); color: #0284c7;">
-            <i class="fa-solid fa-circle-info"></i>
+        <div class="stat-icon" style="background: linear-gradient(135deg, #fffbeb, #fde68a); color: #d97706;">
+            <i class="fa-solid fa-scissors"></i>
         </div>
     </div>
-    <div class="stat-card clickable-stat-card" data-kpi="cutting" onclick="filterOrderTableByKpi('cutting')" style="cursor: pointer;">
+
+    <!-- Paket ve Sevk -->
+    <div class="stat-card clickable-stat-card" data-kpi="sevk" onclick="filterOrderTableByKpi('sevk')" style="cursor: pointer; border-left: 4px solid #10b981;">
         <div class="stat-content">
-            <div class="stat-title">Aktif Üretimde</div>
-            <div class="stat-value">@cuttingQty.ToString("N0")</div>
-            <div class="stat-desc text-warning">Kesim sürecinde olan adet</div>
+            <div class="stat-title" style="color: #065f46; font-weight: 700;">PAKET & SEVK</div>
+            <div class="stat-value" style="color: #10b981;">@sevkQty.ToString("N0")</div>
+            <div class="stat-desc" style="color: #34d399;">Pakette veya Sevk Edilen</div>
         </div>
-        <div class="stat-icon icon-light-teal" style="background: linear-gradient(135deg, #fef3c7, #fde68a); color: #d97706;">
-            <i class="fa-solid fa-spinner"></i>
+        <div class="stat-icon" style="background: linear-gradient(135deg, #ecfdf5, #a7f3d0); color: #10b981;">
+            <i class="fa-solid fa-box"></i>
         </div>
     </div>
-    <div class="stat-card clickable-stat-card" data-kpi="completed" onclick="filterOrderTableByKpi('completed')" style="cursor: pointer;">
+    
+    <!-- Geciken Riskli -->
+    <div class="stat-card clickable-stat-card" data-kpi="delayed" onclick="filterOrderTableByKpi('delayed')" style="cursor: pointer; border-left: 4px solid #ef4444;">
         <div class="stat-content">
-            <div class="stat-title">Tamamlanan</div>
-            <div class="stat-value">@completedQty.ToString("N0")</div>
-            <div class="stat-desc text-success">Kesim süreci biten toplam adet</div>
+            <div class="stat-title" style="color: #991b1b; font-weight: 700;">GECİKEN / RİSKLİ</div>
+            <div class="stat-value" style="color: #ef4444;">@delayedQty.ToString("N0")</div>
+            <div class="stat-desc" style="color: #f87171;">Planlanan Sevk Tarihi Geçen</div>
         </div>
-        <div class="stat-icon icon-light-teal" style="background: linear-gradient(135deg, #ecfdf5, #a7f3d0); color: #10b981;">
-            <i class="fa-solid fa-circle-check"></i>
+        <div class="stat-icon" style="background: linear-gradient(135deg, #fef2f2, #fecaca); color: #ef4444;">
+            <i class="fa-solid fa-circle-exclamation"></i>
         </div>
     </div>
 </div>
@@ -158,7 +177,7 @@
                         var firstOrder = orderGroup.First();
                         var totalQty = orderGroup.Sum(o => o.CalculatedQuantity);
                         var colors = orderGroup.Select(o => new { Color = o.Color, Brand = o.Brand }).Distinct().ToList();
-                        var groupKpiBucket = GetOrderKpiBucket(firstOrder);
+                        var groupKpiBucket = string.Join(" ", GetOrderKpiBuckets(firstOrder));
                         
                         if (orderGroup.Count() == 1)
                         {
@@ -301,7 +320,10 @@
                 $('.main-order-row').show();
             } else {
                 $('.main-order-row').hide();
-                $(`.main-order-row[data-kpi-status="${kpiBucket}"]`).show();
+                $('.main-order-row').filter(function() {
+                    var statusStr = $(this).attr('data-kpi-status') || "";
+                    return statusStr.indexOf(kpiBucket) > -1;
+                }).show();
             }
             
             // Alt satırları gizle

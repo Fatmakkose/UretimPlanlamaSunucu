@@ -24,18 +24,19 @@ namespace UretimPlanlama.Controllers
             _hubContext = hubContext;
         }
 
-        public IActionResult Index()
+        public IActionResult Index(string tab = "cps")
         {
             if (!User.HasPermission("View"))
             {
                 return RedirectToAction("AccessDenied", "Account");
             }
             var orders = _context.Orders.OrderByDescending(o => o.OrderDate).ToList();
+            ViewBag.ActiveTab = tab;
             return View(orders);
         }
 
         [HttpGet]
-        public IActionResult Plan(int id)
+        public IActionResult Plan(int id, string tab = "cps")
         {
             if (!User.HasPermission("View"))
             {
@@ -50,6 +51,14 @@ namespace UretimPlanlama.Controllers
             ViewBag.Workshops = _context.Workshops.Where(w => w.IsActive).OrderBy(w => w.Name).ToList();
             ViewBag.Fabricators = _context.Fabricators.Where(f => f.IsActive).OrderBy(f => f.Name).ToList();
             ViewBag.StokKartlari = _context.StokKartlari.ToList();
+            
+            var gelenKumasMiktari = _context.StokHareketler
+                .Include(s => s.StokKarti)
+                .Where(s => s.OrderId == id && s.HareketTipi == "Giriş" && s.StokKarti != null && s.StokKarti.Kategori == "Kumaş")
+                .Sum(s => s.Miktar);
+            ViewBag.GelenKumasMiktari = gelenKumasMiktari;
+            
+            ViewBag.ActiveTab = tab;
             return View(order);
         }
 
@@ -105,13 +114,14 @@ namespace UretimPlanlama.Controllers
                 if (form.ContainsKey("FabricArrivalActualDate")) order.FabricArrivalActualDate = orderData.FabricArrivalActualDate;
 
                 // Extra fields in PurchasingMaterialsJson
-                var dict = new Dictionary<string, string>();
+                var oldDict = new Dictionary<string, string>();
                 if (!string.IsNullOrEmpty(orderData.PurchasingMaterialsJson))
                 {
                     try {
-                        dict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(orderData.PurchasingMaterialsJson) ?? new Dictionary<string, string>();
+                        oldDict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(orderData.PurchasingMaterialsJson) ?? new Dictionary<string, string>();
                     } catch {}
                 }
+                var dict = new Dictionary<string, string>(oldDict);
 
                 string globalFabricSupplier = null;
                 foreach (var k in form.Keys) {
@@ -131,10 +141,17 @@ namespace UretimPlanlama.Controllers
                 
                 order.PurchasingMaterialsJson = System.Text.Json.JsonSerializer.Serialize(dict);
                 
+                CheckAndNotifyCpsDateChanges(order, oldDict, dict, "Satın Alma");
+                
                 // Satın Alma Tamamlandı mı?
                 order.IsPurchasingCompleted = orderData.IsPurchasingCompleted;
 
                 _context.SaveChanges();
+
+                if (Request.Headers["X-Requested-With"] == "Fetch")
+                {
+                    return Json(new { success = true });
+                }
 
                 TempData["SuccessMessage"] = "Satın Alma planı güncellendi.";
                 TempData["ActiveTab"] = "uretim";
@@ -153,13 +170,14 @@ namespace UretimPlanlama.Controllers
             var order = _context.Orders.Find(Id);
             if (order != null)
             {
-                var dict = new Dictionary<string, string>();
+                var oldDict = new Dictionary<string, string>();
                 if (!string.IsNullOrEmpty(order.SampleTestJson))
                 {
                     try {
-                        dict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(order.SampleTestJson) ?? new Dictionary<string, string>();
+                        oldDict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(order.SampleTestJson) ?? new Dictionary<string, string>();
                     } catch {}
                 }
+                var dict = new Dictionary<string, string>(oldDict);
 
                 foreach (var k in form.Keys) {
                     if (k.StartsWith("sample_")) {
@@ -174,7 +192,15 @@ namespace UretimPlanlama.Controllers
                 }
 
                 order.SampleTestJson = System.Text.Json.JsonSerializer.Serialize(dict);
+                
+                CheckAndNotifyCpsDateChanges(order, oldDict, dict, "Numune/Test");
+                
                 _context.SaveChanges();
+
+                if (Request.Headers["X-Requested-With"] == "Fetch")
+                {
+                    return Json(new { success = true });
+                }
 
                 TempData["SuccessMessage"] = "Numune ve Test planı güncellendi.";
                 TempData["ActiveTab"] = "satinalma";
@@ -193,13 +219,14 @@ namespace UretimPlanlama.Controllers
             var order = _context.Orders.Find(Id);
             if (order != null)
             {
-                var dict = new Dictionary<string, string>();
+                var oldDict = new Dictionary<string, string>();
                 if (!string.IsNullOrEmpty(order.ProductionJson))
                 {
                     try {
-                        dict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(order.ProductionJson) ?? new Dictionary<string, string>();
+                        oldDict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(order.ProductionJson) ?? new Dictionary<string, string>();
                     } catch {}
                 }
+                var dict = new Dictionary<string, string>(oldDict);
 
                 foreach (var k in form.Keys) {
                     if (k.StartsWith("prod_")) {
@@ -208,6 +235,8 @@ namespace UretimPlanlama.Controllers
                 }
 
                 order.ProductionJson = System.Text.Json.JsonSerializer.Serialize(dict);
+                
+                CheckAndNotifyCpsDateChanges(order, oldDict, dict, "Üretim");
 
                 // Atölye seçimi SewingWorkshop alanına da kaydediliyor (Atölye Tanım sayfası bu alandan okur)
                 if (dict.TryGetValue("prod_dikim_atolyesi", out var dikimAtolye) && !string.IsNullOrEmpty(dikimAtolye))
@@ -222,6 +251,11 @@ namespace UretimPlanlama.Controllers
                 }
 
                 _context.SaveChanges();
+
+                if (Request.Headers["X-Requested-With"] == "Fetch")
+                {
+                    return Json(new { success = true });
+                }
 
                 TempData["SuccessMessage"] = "Üretim planı başarıyla kaydedildi. Süreç Takip sayfasına yönlendirildiniz.";
                 return RedirectToAction("Track", "ProcessTracking", new { id = order.Id });
@@ -512,6 +546,62 @@ namespace UretimPlanlama.Controllers
             _context.SaveChanges();
 
             return Json(new { success = true });
+        }
+
+        private void CheckAndNotifyCpsDateChanges(Order order, Dictionary<string, string> oldDict, Dictionary<string, string> newDict, string sectionName)
+        {
+            var notifications = new List<Notification>();
+
+            foreach (var key in newDict.Keys)
+            {
+                string newVal = newDict[key];
+                string oldVal = oldDict.ContainsKey(key) ? oldDict[key] : "";
+
+                bool isDateKey = key.ToLower().Contains("tarih") || key.ToLower().Contains("date") || 
+                                 System.Text.RegularExpressions.Regex.IsMatch(newVal, @"^\d{4}-\d{2}-\d{2}$") ||
+                                 System.Text.RegularExpressions.Regex.IsMatch(oldVal, @"^\d{4}-\d{2}-\d{2}$");
+
+                if (isDateKey)
+                {
+                    if (oldVal != newVal && (!string.IsNullOrEmpty(newVal) || !string.IsNullOrEmpty(oldVal)))
+                    {
+                        string humanReadableKey = key.Replace("sample_", "")
+                                                     .Replace("pur_", "")
+                                                     .Replace("prod_", "")
+                                                     .Replace("_", " ")
+                                                     .ToUpper();
+
+                        notifications.Add(new Notification
+                        {
+                            Title = "CPS Tarih Güncellemesi",
+                            Message = $"{order.OrderCode} siparişi için CPS ({sectionName}) kısmında {humanReadableKey} tarihi güncellendi: {(string.IsNullOrEmpty(newVal) ? "Silindi" : newVal)}",
+                            Type = "CPS Güncelleme",
+                            OrderCode = order.OrderCode,
+                            CreatedAt = DateTime.Now,
+                            IsRead = false
+                        });
+                    }
+                }
+            }
+
+            if (notifications.Any())
+            {
+                _context.Notifications.AddRange(notifications);
+                _context.SaveChanges();
+
+                foreach (var notif in notifications)
+                {
+                    _hubContext.Clients.All.SendAsync("ReceiveNotification", new
+                    {
+                        id = notif.Id,
+                        title = notif.Title,
+                        message = notif.Message,
+                        type = notif.Type,
+                        createdAt = notif.CreatedAt.ToString("HH:mm - dd.MM.yyyy"),
+                        isRead = notif.IsRead
+                    });
+                }
+            }
         }
     }
 

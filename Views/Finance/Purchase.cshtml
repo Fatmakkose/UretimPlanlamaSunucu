@@ -52,7 +52,7 @@
     }
     .form-grid {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(5, 1fr);
         gap: 20px;
     }
     .form-group {
@@ -221,13 +221,13 @@
         </div>
         <div class="form-group">
             <label class="form-label">İşlem Tarihi *</label>
-            <input type="date" class="form-control" id="islemTarihi" value="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+            <input type="date" class="form-control" id="islemTarihi" value="@DateTime.Today.ToString("yyyy-MM-dd")" required readonly style="background-color: #f1f5f9; cursor: not-allowed;" tabindex="-1" />
         </div>
         <div class="form-group">
-            <label class="form-label">Belge No *</label>
-            <input type="text" class="form-control" id="belgeNo" placeholder="Fatura veya Fiş No giriniz" required />
+            <label class="form-label">Belge No</label>
+            <input type="text" class="form-control" id="belgeNo" placeholder="Fatura veya Fiş No giriniz" />
         </div>
-        <div class="form-group" style="grid-column: span 2;">
+        <div class="form-group">
             <label class="form-label">Açıklama</label>
             <input type="text" class="form-control" id="aciklama" placeholder="Alış faturası veya işlem ile ilgili notlar..." />
         </div>
@@ -372,6 +372,23 @@
                     calcFields.push({ Key: "BİRİM METRAJ", Type: "text", Def: "" });
                 }
 
+                var hasBoyut = false;
+                if (stok.ozelliklerJson) {
+                    try {
+                        var tempParsed = JSON.parse(stok.ozelliklerJson);
+                        if (Array.isArray(tempParsed)) {
+                            hasBoyut = tempParsed.some(o => o.Key && (o.Key.toUpperCase() === 'BOYUT' || o.Key.toUpperCase() === 'BOY'));
+                        }
+                    } catch(e) {}
+                }
+
+                if (cat === "DÜĞME" || (stok.stokAdi && stok.stokAdi.toUpperCase().includes("DÜĞME"))) {
+                    if (!hasBoyut) {
+                        calcFields.push({ Key: "BOYUT", Type: "select", Def: "14/,16/,18/,20/,24/,28/,32/" });
+                    }
+                    calcFields.push({ Key: "RENK", Type: "text", Def: "" });
+                }
+
                 if (stok.ozelliklerJson) {
                     try {
                         var parsedOz = JSON.parse(stok.ozelliklerJson);
@@ -463,10 +480,6 @@
                 Swal.fire('Uyarı', 'Lütfen bir cari hesap seçiniz.', 'warning');
                 return;
             }
-            if (!belgeNo) {
-                Swal.fire('Uyarı', 'Lütfen fatura/fiş belge numarasını giriniz.', 'warning');
-                return;
-            }
 
             const kalemler = [];
             let hasError = false;
@@ -552,11 +565,11 @@
                     if (res.success) {
                         Swal.fire({
                             title: 'Başarılı!',
-                            text: res.message,
+                            text: 'Alış işlemi başarıyla kaydedildi.',
                             icon: 'success',
                             confirmButtonText: 'Tamam'
                         }).then((result) => {
-                            window.location.href = '/Finance/Reports';
+                            window.location.href = '/Finance/Purchase';
                         });
                     } else {
                         Swal.fire('Hata!', res.message, 'error');

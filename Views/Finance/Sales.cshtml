@@ -52,7 +52,7 @@
     }
     .form-grid {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(5, 1fr);
         gap: 20px;
     }
     .form-group {
@@ -221,13 +221,13 @@
         </div>
         <div class="form-group">
             <label class="form-label">İşlem Tarihi *</label>
-            <input type="date" class="form-control" id="islemTarihi" value="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+            <input type="date" class="form-control" id="islemTarihi" value="@DateTime.Today.ToString("yyyy-MM-dd")" required readonly style="background-color: #f1f5f9; cursor: not-allowed;" tabindex="-1" />
         </div>
         <div class="form-group">
             <label class="form-label">Belge No (Otomatik)</label>
             <input type="text" class="form-control" id="belgeNo" value="@ViewBag.YeniBelgeNo" readonly />
         </div>
-        <div class="form-group" style="grid-column: span 2;">
+        <div class="form-group">
             <label class="form-label">Açıklama</label>
             <input type="text" class="form-control" id="aciklama" placeholder="Satış faturası veya işlem ile ilgili notlar..." />
         </div>

@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using UretimPlanlama.Models;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.WebHost.UseUrls("http://0.0.0.0:5101");
+builder.WebHost.UseUrls("http://0.0.0.0:5102");
 
 builder.Host.UseWindowsService();
 
@@ -90,7 +90,7 @@ using (var scope = app.Services.CreateScope())
 
                 using var checkCmd = connection.CreateCommand();
                 checkCmd.CommandText = $"SELECT COUNT(*) FROM sys.columns WHERE object_id = OBJECT_ID(N'[{tableName}]') AND name = N'{columnName}'";
-                var count = (int)checkCmd.ExecuteScalar();
+                var count = Convert.ToInt32(checkCmd.ExecuteScalar() ?? 0);
 
                 if (count == 0)
                 {

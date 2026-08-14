@@ -68,7 +68,8 @@ namespace UretimPlanlama.Controllers
 
             var purchaseMovements = _context.StokHareketler
                 .Include(sh => sh.StokKarti)
-                .Where(sh => sh.OrderId == id && sh.HareketTipi == "Giriş")
+                .Include(sh => sh.StokVaryant)
+                .Where(sh => sh.OrderId == id && (sh.HareketTipi == "Giriş" || (sh.HareketTipi == "Transfer" && sh.Miktar > 0)))
                 .ToList();
             ViewBag.PurchaseMovements = purchaseMovements;
 
@@ -420,7 +421,9 @@ namespace UretimPlanlama.Controllers
             if (order == null) return Json(new { success = false, message = "Sipariş bulunamadı." });
 
             var purchaseMovements = _context.StokHareketler
-                .Where(sh => sh.OrderId == orderId && sh.HareketTipi == "Giriş")
+                .Include(sh => sh.StokKarti)
+                .Include(sh => sh.StokVaryant)
+                .Where(sh => sh.OrderId == orderId && (sh.HareketTipi == "Giriş" || (sh.HareketTipi == "Transfer" && sh.Miktar > 0)))
                 .ToList();
 
             var existingExits = _context.StokHareketler
@@ -467,7 +470,16 @@ namespace UretimPlanlama.Controllers
                             }
                         }
                     }
-                } catch {}
+                } catch {
+                    // Fallback for non-JSON strings like "BOY: 14 BOY"
+                    var parts = json.Split(new[] { '|', ',' }, StringSplitOptions.RemoveEmptyEntries);
+                    foreach(var part in parts) {
+                        var kv = part.Split(':');
+                        if (kv.Length >= 2 && kv[0].Contains(keyContains, StringComparison.OrdinalIgnoreCase)) {
+                            return string.Join(":", kv.Skip(1)).Trim();
+                        }
+                    }
+                }
                 return null;
             };
 
@@ -496,6 +508,26 @@ namespace UretimPlanlama.Controllers
                 }
 
                 string matName = !string.IsNullOrEmpty(extraInfo) ? $"{stokKarti?.StokAdi ?? "Bilinmeyen Malzeme"} ({extraInfo})" : (stokKarti?.StokAdi ?? "Belirtilmemiş Malzeme");
+                if (mat.StokVaryant != null) {
+                    string vName = mat.StokVaryant.VaryantAdi;
+                    if (vName.StartsWith("[") || vName.StartsWith("{")) {
+                        try {
+                            using var doc = System.Text.Json.JsonDocument.Parse(vName);
+                            var vParts = new System.Collections.Generic.List<string>();
+                            if (doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Array) {
+                                foreach(var i in doc.RootElement.EnumerateArray()) {
+                                    if (i.TryGetProperty("Key", out var k) && i.TryGetProperty("Value", out var v)) 
+                                        vParts.Add($"{k.GetString()}: {v.GetString()}");
+                                }
+                            } else if (doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object) {
+                                foreach(var prop in doc.RootElement.EnumerateObject()) 
+                                    vParts.Add($"{prop.Name}: {prop.Value.GetString()}");
+                            }
+                            if (vParts.Count > 0) vName = string.Join(" | ", vParts.Where(v => !string.IsNullOrEmpty(v)));
+                        } catch {}
+                    }
+                    matName = $"{stokKarti?.StokAdi ?? "Bilinmeyen Malzeme"} - {vName}";
+                }
 
                 double totalIstenen = 0;
                 string itemKey = "stk_" + mat.StokKartiId;
@@ -571,13 +603,85 @@ namespace UretimPlanlama.Controllers
                 if (mat.StokVaryantId.HasValue && mat.StokVaryantId > 0) {
                     siparisAlisMiktar = (double)purchaseMovements.Where(p => p.StokKartiId == mat.StokKartiId && p.StokVaryantId == mat.StokVaryantId).Sum(p => p.Miktar);
                 } else if (!string.IsNullOrEmpty(mat.OzelliklerJson) && stokKarti != null && stokKarti.Varyantlar != null) {
-                    var vMatch = stokKarti.Varyantlar.FirstOrDefault(v => v.VaryantAdi == mat.OzelliklerJson.Trim());
+                    var vMatch = stokKarti.Varyantlar.FirstOrDefault(v => {
+                        string formattedV = v.VaryantAdi;
+                        string formattedO = mat.OzelliklerJson;
+                        try {
+                            using var docV = System.Text.Json.JsonDocument.Parse(v.VaryantAdi);
+                            var vParts = new System.Collections.Generic.List<string>();
+                            if (docV.RootElement.ValueKind == System.Text.Json.JsonValueKind.Array) {
+                                foreach(var i in docV.RootElement.EnumerateArray()) { if (i.TryGetProperty("Value", out var val)) vParts.Add(val.GetString()); }
+                            } else if (docV.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object) {
+                                foreach(var prop in docV.RootElement.EnumerateObject()) vParts.Add(prop.Value.GetString());
+                            }
+                            if (vParts.Count > 0) formattedV = string.Join(" ", vParts.Where(x => !string.IsNullOrEmpty(x)));
+                        } catch {}
+                        try {
+                            using var docO = System.Text.Json.JsonDocument.Parse(mat.OzelliklerJson);
+                            var oParts = new System.Collections.Generic.List<string>();
+                            if (docO.RootElement.ValueKind == System.Text.Json.JsonValueKind.Array) {
+                                foreach(var i in docO.RootElement.EnumerateArray()) { if (i.TryGetProperty("Value", out var val)) oParts.Add(val.GetString()); }
+                            } else if (docO.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object) {
+                                foreach(var prop in docO.RootElement.EnumerateObject()) oParts.Add(prop.Value.GetString());
+                            }
+                            if (oParts.Count > 0) formattedO = string.Join(" ", oParts.Where(x => !string.IsNullOrEmpty(x)));
+                        } catch {}
+                        return formattedV == formattedO || v.VaryantAdi == mat.OzelliklerJson.Trim();
+                    });
+                    
                     if (vMatch != null) {
                         siparisAlisMiktar = (double)purchaseMovements.Where(p => p.StokKartiId == mat.StokKartiId && p.StokVaryantId == vMatch.Id).Sum(p => p.Miktar);
                     }
                 }
                 if (siparisAlisMiktar == 0) {
-                    siparisAlisMiktar = (double)purchaseMovements.Where(p => p.StokKartiId == mat.StokKartiId).Sum(p => p.Miktar);
+                    siparisAlisMiktar = (double)purchaseMovements.Where(p => {
+                        if (p.StokKartiId != mat.StokKartiId) return false;
+                        if (p.StokVaryantId.HasValue && p.StokVaryant != null && !string.IsNullOrEmpty(mat.OzelliklerJson)) {
+                            
+                            string Extract(string json, string keyContains) {
+                                if (string.IsNullOrEmpty(json)) return null;
+                                try {
+                                    using var doc = System.Text.Json.JsonDocument.Parse(json);
+                                    if (doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Array) {
+                                        foreach(var item in doc.RootElement.EnumerateArray()) {
+                                            if (item.TryGetProperty("Key", out var k) && item.TryGetProperty("Value", out var v) && k.GetString().Contains(keyContains, StringComparison.OrdinalIgnoreCase)) return v.GetString();
+                                        }
+                                    } else if (doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object) {
+                                        foreach(var prop in doc.RootElement.EnumerateObject()) {
+                                            if (prop.Name.Contains(keyContains, StringComparison.OrdinalIgnoreCase)) return prop.Value.GetString();
+                                        }
+                                    }
+                                } catch {
+                                    // Fallback for non-JSON strings like "BOY: 14 BOY"
+                                    var parts = json.Split(new[] { '|', ',' }, StringSplitOptions.RemoveEmptyEntries);
+                                    foreach(var part in parts) {
+                                        var kv = part.Split(':');
+                                        if (kv.Length >= 2 && kv[0].Contains(keyContains, StringComparison.OrdinalIgnoreCase)) {
+                                            return string.Join(":", kv.Skip(1)).Trim();
+                                        }
+                                    }
+                                }
+                                return null;
+                            }
+
+                            string pBoy = Extract(p.StokVaryant.VaryantAdi, "BOYUT") ?? Extract(p.StokVaryant.VaryantAdi, "EBAT") ?? Extract(p.StokVaryant.VaryantAdi, "BÜYÜKLÜK") ?? Extract(p.StokVaryant.VaryantAdi, "BOY");
+                            string pRenk = Extract(p.StokVaryant.VaryantAdi, "RENK");
+                            
+                            string mBoy = Extract(mat.OzelliklerJson, "BOYUT") ?? Extract(mat.OzelliklerJson, "EBAT") ?? Extract(mat.OzelliklerJson, "BÜYÜKLÜK") ?? Extract(mat.OzelliklerJson, "BOY");
+                            string mRenk = Extract(mat.OzelliklerJson, "RENK");
+                            
+                            bool MatchAttr(string a1, string a2) {
+                                if (string.IsNullOrEmpty(a1) || string.IsNullOrEmpty(a2)) return false;
+                                var t1 = a1.Trim().ToLowerInvariant().Replace("/", "").Replace(" boy", "").Replace("boy", "").Trim();
+                                var t2 = a2.Trim().ToLowerInvariant().Replace("/", "").Replace(" boy", "").Replace("boy", "").Trim();
+                                return t1.Contains(t2) || t2.Contains(t1);
+                            }
+
+                            if (!string.IsNullOrEmpty(mBoy) && !string.IsNullOrEmpty(pBoy) && !MatchAttr(pBoy, mBoy)) return false;
+                            if (!string.IsNullOrEmpty(mRenk) && !string.IsNullOrEmpty(pRenk) && !MatchAttr(pRenk, mRenk)) return false;
+                        }
+                        return true;
+                    }).Sum(p => p.Miktar);
                 }
 
                 double rawDepoStok = 0;
@@ -594,7 +698,8 @@ namespace UretimPlanlama.Controllers
                     rawDepoStok = (double)stokKarti.MevcutMiktar;
                 }
                 double mevcutDepoStok = Math.Max(0, rawDepoStok);
-                double sevkMiktar = Math.Max(siparisAlisMiktar, mevcutDepoStok);
+                // Sadece siparişe özel alışları dikkate al (Track.cshtml ile aynı mantık)
+                double sevkMiktar = siparisAlisMiktar;
                 bool isStokYeterli = sevkMiktar >= planMiktar;
 
                 // Daha önce çıkış yapılmış mı kontrol et

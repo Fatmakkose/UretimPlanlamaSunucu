@@ -140,6 +140,18 @@ namespace UretimPlanlama.Controllers
             return View(model);
         }
 
+        [HttpPost]
+        public IActionResult CreateFabricatorAjax(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                return Json(new { success = false, message = "Kumaşçı adı boş olamaz." });
+                
+            var fabricator = new Fabricator { Name = name, IsActive = true };
+            _context.Fabricators.Add(fabricator);
+            _context.SaveChanges();
+            return Json(new { success = true, message = "Kumaşçı başarıyla eklendi." });
+        }
+
         public IActionResult Customers()
         {
             var customers = _context.Customers.ToList();
@@ -236,6 +248,19 @@ namespace UretimPlanlama.Controllers
                 return RedirectToAction("Brands");
             }
             return View(model);
+        }
+
+        [HttpPost]
+        public IActionResult CreateBrandAjax(string name)
+        {
+            if (!string.IsNullOrEmpty(name))
+            {
+                var model = new Brand { Name = name };
+                _context.Brands.Add(model);
+                _context.SaveChanges();
+                return Json(new { success = true, message = "Marka başarıyla eklendi." });
+            }
+            return Json(new { success = false, message = "Marka adı boş olamaz." });
         }
 
         [HttpPost]

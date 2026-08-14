@@ -1,6 +1,6 @@
 @model List<UretimPlanlama.Models.Order>
 @{
-    ViewData["Title"] = "Üretim Genel Bakış";
+    ViewData["Title"] = "Ana Sayfa";
 
     string GetKpiBucket(UretimPlanlama.Models.Order o)
     {
@@ -262,16 +262,6 @@
     }
 </style>
 
-<div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center;">
-    <div class="header-title">
-        <h1 style="font-size: 1.8rem; margin: 0; color: var(--text-main);">Üretim Genel Bakış</h1>
-    </div>
-    <div class="header-actions" style="display: flex; gap: 10px;">
-        <a href="/Order/Create?returnUrl=%2FHome%2FIndex" class="btn" style="background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 600;" onclick="if(window.parent.appTabs) { window.parent.appTabs.openNewTab('Yeni Sipariş', this.href, 'fa-solid fa-plus'); event.preventDefault(); }"><i class="fa-solid fa-plus"></i> Yeni Sipariş</a>
-        <a href="/Planning" class="btn" style="background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 600;" onclick="if(window.parent.appTabs) { window.parent.appTabs.openNewTab('Planlama', this.href, 'fa-solid fa-calendar-days'); event.preventDefault(); }"><i class="fa-solid fa-calendar-days"></i> Planlama</a>
-        <a href="/Reports" class="btn" style="background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 600;" onclick="if(window.parent.appTabs) { window.parent.appTabs.openNewTab('Gerçekleşen', this.href, 'fa-solid fa-chart-bar'); event.preventDefault(); }"><i class="fa-solid fa-chart-bar"></i> Gerçekleşen</a>
-    </div>
-</div>
 
 @if (ViewBag.CriticalOrders != null && ((List<UretimPlanlama.Models.Order>)ViewBag.CriticalOrders).Any())
 {
@@ -298,7 +288,7 @@
             @foreach(var co in ((List<UretimPlanlama.Models.Order>)ViewBag.CriticalOrders).Take(5))
             {
                 var delayDays = (DateTime.Today - co.PlannedPackagingEndDate.Value.Date).Days;
-                <tr style="border-bottom: 1px solid #fecaca; cursor: pointer; transition: background 0.2s;" onclick="window.location.href='/ProcessTracking/Track/@co.Id'" onmouseover="this.style.backgroundColor='#fee2e2'" onmouseout="this.style.backgroundColor='transparent'">
+                <tr style="border-bottom: 1px solid #fecaca; cursor: pointer; transition: background 0.2s;" onclick="if(window.parent.appTabs) { window.parent.appTabs.openNewTab('Takip: @co.OrderCode', '/ProcessTracking/Track/@co.Id', 'fa-solid fa-route'); } else { window.location.href='/ProcessTracking/Track/@co.Id'; }" onmouseover="this.style.backgroundColor='#fee2e2'" onmouseout="this.style.backgroundColor='transparent'">
                     <td style="padding: 10px 16px; font-size: 0.85rem; font-family: monospace;">@co.OrderCode</td>
                     <td style="padding: 10px 16px; font-size: 0.85rem; font-weight: 500;">@co.ModelName</td>
                     <td style="padding: 10px 16px; font-size: 0.85rem; color: #475569;">@co.Customer</td>
@@ -309,72 +299,97 @@
     </div>
 }
 
-<div class="stat-cards" style="margin-bottom: 25px;">
-    <!-- Toplam Sipariş -->
-    <div class="stat-card clickable-stat-card active-kpi-card" data-kpi="all" onclick="filterKpiCard('all', event)">
-        <div class="stat-content">
-            <div class="stat-title">TOPLAM SİPARİŞ</div>
-            <div class="stat-value">@((ViewBag.TotalOrdersQty ?? 0).ToString("N0"))</div>
-            <div class="stat-desc">Sistemdeki siparişlerin toplam adedi</div>
-            <div class="kpi-card-actions">
-                <button type="button" class="kpi-detail-btn" onclick="event.stopPropagation(); openKpiModal('all', 'Tüm Siparişler');">
-                    <i class="fa-solid fa-list"></i> Detaylı Liste
-                </button>
+@if (ViewBag.RecentNotifications != null)
+{
+    var cpsUpdates = ((List<UretimPlanlama.Models.Notification>)ViewBag.RecentNotifications)
+                        .Where(n => n.Type == "CPS Güncelleme" && n.CreatedAt >= DateTime.Now.AddDays(-1)).ToList();
+    if (cpsUpdates.Any())
+    {
+        <div class="alert alert-warning" style="background-color: #fffbeb; border-left: 4px solid #f59e0b; border-radius: 4px; padding: 12px 16px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <i class="fa-solid fa-bell" style="color: #f59e0b; font-size: 1.2rem;"></i>
+            <div style="flex-grow: 1; overflow: hidden; white-space: nowrap;">
+                <strong style="color: #b45309; margin-right: 8px;">Son 24 Saatte CPS Değişiklikleri:</strong>
+                <marquee scrollamount="5" style="color: #92400e; font-size: 0.9rem; max-width: 80%; display: inline-block; vertical-align: middle;">
+                    @foreach (var cps in cpsUpdates)
+                    {
+                        <span style="margin-right: 30px;">
+                            <i class="fa-solid fa-circle-dot" style="font-size: 0.5rem; margin-right: 4px; color: #f59e0b;"></i> 
+                            @cps.Message (@cps.CreatedAt.ToString("HH:mm"))
+                        </span>
+                    }
+                </marquee>
             </div>
         </div>
-        <div class="stat-icon icon-teal">
+    }
+}
+
+<div style="display: flex; gap: 24px; margin-bottom: 25px; align-items: stretch; flex-wrap: wrap;">
+    <div class="stat-cards" style="flex: 1; margin-bottom: 0; min-width: 600px;">
+    <!-- Toplam Sipariş -->
+    <div class="stat-card clickable-stat-card active-kpi-card" data-kpi="all" onclick="filterKpiCard('all', event); openKpiModal('all', 'Tüm Siparişler');" style="cursor: pointer; border-left: 4px solid #0284c7;">
+        <div class="stat-content">
+            <div class="stat-title" style="color: #075985; font-weight: 700;">TOPLAM SİPARİŞ</div>
+            <div class="stat-value" style="color: #0284c7;">@((ViewBag.TotalOrdersQty ?? 0).ToString("N0"))</div>
+            <div class="stat-desc" style="color: #0ea5e9;">Sistemdeki siparişlerin toplam adedi</div>
+        </div>
+        <div class="stat-icon" style="background: linear-gradient(135deg, #e0f2fe, #bae6fd); color: #0284c7;">
             <i class="fa-solid fa-cart-shopping"></i>
         </div>
     </div>
     
     <!-- Üretim Bekleyen -->
-    <div class="stat-card clickable-stat-card" data-kpi="waiting" onclick="filterKpiCard('waiting', event)">
+    <div class="stat-card clickable-stat-card" data-kpi="waiting" onclick="filterKpiCard('waiting', event); openKpiModal('waiting', 'Üretim Bekleyen Siparişler');" style="cursor: pointer; border-left: 4px solid #d97706;">
         <div class="stat-content">
-            <div class="stat-title">ÜRETİM BEKLEYEN</div>
-            <div class="stat-value">@((ViewBag.WaitingQty ?? 0).ToString("N0"))</div>
-            <div class="stat-desc">Kesime başlamayı bekleyen adet</div>
-            <div class="kpi-card-actions">
-                <button type="button" class="kpi-detail-btn" onclick="event.stopPropagation(); openKpiModal('waiting', 'Üretim Bekleyen Siparişler');">
-                    <i class="fa-solid fa-hourglass-start"></i> Detaylı Liste
-                </button>
-            </div>
+            <div class="stat-title" style="color: #92400e; font-weight: 700;">ÜRETİM BEKLEYEN</div>
+            <div class="stat-value" style="color: #d97706;">@((ViewBag.WaitingQty ?? 0).ToString("N0"))</div>
+            <div class="stat-desc" style="color: #f59e0b;">Kesime başlamayı bekleyen adet</div>
         </div>
-        <div class="stat-icon" style="background: #e0f2fe; color: #0284c7; width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #fffbeb, #fde68a); color: #d97706;">
             <i class="fa-solid fa-hourglass-start"></i>
         </div>
     </div>
 
     <!-- Kesimdeki Adet -->
-    <div class="stat-card clickable-stat-card" data-kpi="cutting" onclick="filterKpiCard('cutting', event)">
+    <div class="stat-card clickable-stat-card" data-kpi="cutting" onclick="filterKpiCard('cutting', event); openKpiModal('cutting', 'Aktif Kesimdeki Siparişler');" style="cursor: pointer; border-left: 4px solid #2563eb;">
         <div class="stat-content">
-            <div class="stat-title">AKTİF KESİMDE</div>
-            <div class="stat-value">@((ViewBag.CuttingQty ?? 0).ToString("N0"))</div>
-            <div class="stat-desc">Atölyelerde kesim sürecinde olanlar</div>
-            <div class="kpi-card-actions">
-                <button type="button" class="kpi-detail-btn" onclick="event.stopPropagation(); openKpiModal('cutting', 'Aktif Kesimdeki Siparişler');">
-                    <i class="fa-solid fa-scissors"></i> Detaylı Liste
-                </button>
-            </div>
+            <div class="stat-title" style="color: #1e40af; font-weight: 700;">AKTİF KESİMDE</div>
+            <div class="stat-value" style="color: #2563eb;">@((ViewBag.CuttingQty ?? 0).ToString("N0"))</div>
+            <div class="stat-desc" style="color: #3b82f6;">Atölyelerde kesim sürecinde olanlar</div>
         </div>
-        <div class="stat-icon" style="background: #e0f2fe; color: #0ea5e9; width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #eff6ff, #bfdbfe); color: #2563eb;">
             <i class="fa-solid fa-scissors"></i>
         </div>
     </div>
     
     <!-- Tamamlanan -->
-    <div class="stat-card clickable-stat-card" data-kpi="completed" onclick="filterKpiCard('completed', event)">
+    <div class="stat-card clickable-stat-card" data-kpi="completed" onclick="filterKpiCard('completed', event); openKpiModal('completed', 'Kesimi Tamamlanan Siparişler');" style="cursor: pointer; border-left: 4px solid #10b981;">
         <div class="stat-content">
-            <div class="stat-title">TAMAMLANAN</div>
-            <div class="stat-value">@((ViewBag.CompletedQty ?? 0).ToString("N0"))</div>
-            <div class="stat-desc">Kesim süreci başarıyla biten adet</div>
-            <div class="kpi-card-actions">
-                <button type="button" class="kpi-detail-btn" onclick="event.stopPropagation(); openKpiModal('completed', 'Kesimi Tamamlanan Siparişler');">
-                    <i class="fa-solid fa-circle-check"></i> Detaylı Liste
-                </button>
-            </div>
+            <div class="stat-title" style="color: #065f46; font-weight: 700;">TAMAMLANAN</div>
+            <div class="stat-value" style="color: #10b981;">@((ViewBag.CompletedQty ?? 0).ToString("N0"))</div>
+            <div class="stat-desc" style="color: #34d399;">Kesim süreci başarıyla biten adet</div>
         </div>
-        <div class="stat-icon icon-light-teal" style="background: linear-gradient(135deg, #ecfdf5, #a7f3d0); color: #10b981;">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #ecfdf5, #a7f3d0); color: #10b981;">
             <i class="fa-solid fa-circle-check"></i>
+        </div>
+    </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; justify-content: space-between; gap: 6px; width: 260px; flex-shrink: 0;">
+        <div style="display: flex; gap: 6px;">
+            <a href="/Order/Create?returnUrl=%2FHome%2FIndex" class="btn" style="flex: 1; text-align: center; background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; padding: 8px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85rem; font-weight: 700; box-shadow: 0 1px 2px rgba(21,128,61,0.1); transition: all 0.2s;" onclick="if(window.parent.appTabs) { window.parent.appTabs.openNewTab('Yeni Sipariş', this.href, 'fa-solid fa-plus'); event.preventDefault(); }"><i class="fa-solid fa-plus" style="margin-right: 4px;"></i> Yeni Sipariş</a>
+            <a href="/Order/Index" class="btn" style="flex: 1; text-align: center; background: #fef08a; color: #854d0e; border: 1px solid #fde047; padding: 8px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85rem; font-weight: 700; box-shadow: 0 1px 2px rgba(133,77,14,0.1); transition: all 0.2s;" onclick="if(window.parent.appTabs) { window.parent.appTabs.openNewTab('Siparişler', this.href, 'fa-solid fa-list'); event.preventDefault(); }"><i class="fa-solid fa-list" style="margin-right: 4px;"></i> Siparişler</a>
+        </div>
+        
+        <div style="display: flex; gap: 6px;">
+            <a href="/Planning/Index?tab=cps" class="btn" style="flex: 1; text-align: center; background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; padding: 6px 8px; border-radius: 6px; text-decoration: none; font-size: 0.75rem; font-weight: 600; box-shadow: 0 1px 2px rgba(29,78,216,0.1); transition: all 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" onclick="if(window.parent.appTabs) { window.parent.appTabs.openNewTab('CPS Planlama', this.href, 'fa-solid fa-table-cells'); event.preventDefault(); }"><i class="fa-solid fa-table-cells" style="margin-right: 3px;"></i> CPS Planlama</a>
+            
+            <a href="/Planning/Index?tab=worksheet" class="btn" style="flex: 1; text-align: center; background: #fdf4ff; color: #a21caf; border: 1px solid #f5d0fe; padding: 6px 8px; border-radius: 6px; text-decoration: none; font-size: 0.75rem; font-weight: 600; box-shadow: 0 1px 2px rgba(162,28,175,0.1); transition: all 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" onclick="if(window.parent.appTabs) { window.parent.appTabs.openNewTab('ÇLŞ Planlama', this.href, 'fa-solid fa-calculator'); event.preventDefault(); }"><i class="fa-solid fa-calculator" style="margin-right: 3px;"></i> ÇLŞ Planlama</a>
+        </div>
+        
+        <div style="display: flex; gap: 6px;">
+            <a href="/ProcessTracking/Index?step=timeline" class="btn" style="flex: 1; text-align: center; background: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; padding: 6px 8px; border-radius: 6px; text-decoration: none; font-size: 0.75rem; font-weight: 600; box-shadow: 0 1px 2px rgba(67,56,202,0.1); transition: all 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" onclick="if(window.parent.appTabs) { window.parent.appTabs.openNewTab('CPS Takip', this.href, 'fa-solid fa-calendar-check'); event.preventDefault(); }"><i class="fa-solid fa-calendar-check" style="margin-right: 3px;"></i> CPS Takip</a>
+            
+            <a href="/ProcessTracking/Index?step=worksheet" class="btn" style="flex: 1; text-align: center; background: #ffedd5; color: #c2410c; border: 1px solid #fed7aa; padding: 6px 8px; border-radius: 6px; text-decoration: none; font-size: 0.75rem; font-weight: 600; box-shadow: 0 1px 2px rgba(194,65,12,0.1); transition: all 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" onclick="if(window.parent.appTabs) { window.parent.appTabs.openNewTab('ÇLŞ Takip', this.href, 'fa-solid fa-clipboard-list'); event.preventDefault(); }"><i class="fa-solid fa-clipboard-list" style="margin-right: 3px;"></i> ÇLŞ Takip</a>
         </div>
     </div>
 </div>
@@ -403,7 +418,7 @@
                     {
                         var daysLeft = (u.EffectiveTerminDate.Value.Date - DateTime.Today).Days;
                         var badgeColor = daysLeft <= 3 ? "#dc2626" : (daysLeft <= 7 ? "#eab308" : "#16a34a");
-                        <li class="workshop-item" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background 0.2s;" onclick="window.location.href='/ProcessTracking/Track/@u.Id#timeline'" onmouseover="this.style.backgroundColor='#f1f5f9'" onmouseout="this.style.backgroundColor='transparent'">
+                        <li class="workshop-item" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background 0.2s;" onclick="if(window.parent.appTabs) { window.parent.appTabs.openNewTab('@u.OrderCode Takip', '/ProcessTracking/Track/@u.Id#timeline', 'fa-solid fa-calendar-check'); } else { window.location.href='/ProcessTracking/Track/@u.Id#timeline'; }" onmouseover="this.style.backgroundColor='#f1f5f9'" onmouseout="this.style.backgroundColor='transparent'">
                             <div>
                                 <div style="font-size: 0.85rem; font-weight: 700; color: #1e293b;">@u.OrderCode</div>
                                 <div style="font-size: 0.75rem; color: #64748b;">@u.ModelName</div>
@@ -441,14 +456,19 @@
                 if(notifications.Any()) {
                     foreach (var n in notifications)
                     {
-                        <li class="workshop-item" style="display: flex; gap: 12px;">
+                        bool isCps = n.Type == "CPS Güncelleme";
+                        <li class="workshop-item" style="display: flex; gap: 12px; @(isCps ? "background: #fffbeb; padding: 8px; border-radius: 6px; border: 1px solid #fde68a; margin-bottom: 4px;" : "")">
                             <div style="margin-top: 4px;">
-                                <i class="fa-solid fa-circle-info" style="color: #0ea5e9;"></i>
+                                @if(isCps) {
+                                    <i class="fa-solid fa-calendar-check" style="color: #d97706;"></i>
+                                } else {
+                                    <i class="fa-solid fa-circle-info" style="color: #0ea5e9;"></i>
+                                }
                             </div>
                             <div>
-                                <div style="font-size: 0.85rem; font-weight: 600; color: #1e293b;">@n.Title</div>
-                                <div style="font-size: 0.75rem; color: #475569; margin-top: 2px;">@n.Message</div>
-                                <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 4px;">@n.CreatedAt.ToString("dd.MM.yyyy HH:mm")</div>
+                                <div style="font-size: 0.85rem; font-weight: 600; color: @(isCps ? "#92400e" : "#1e293b");">@n.Title</div>
+                                <div style="font-size: 0.75rem; color: @(isCps ? "#b45309" : "#475569"); margin-top: 2px;">@n.Message</div>
+                                <div style="font-size: 0.7rem; color: @(isCps ? "#d97706" : "#94a3b8"); margin-top: 4px;">@n.CreatedAt.ToString("dd.MM.yyyy HH:mm")</div>
                             </div>
                         </li>
                     }
@@ -498,38 +518,6 @@
                     @foreach (var order in activeOrdersList)
                     {
                         var rowKpiBucket = GetKpiBucket(order);
-                        var areaName = order.Status ?? (string.IsNullOrEmpty(order.ProductionPlace) ? "PLANLAMA" : order.ProductionPlace.ToUpper());
-                        var areaColor = "#0369a1";
-                        var areaBg = "#e0f2fe";
-                        var areaBorder = "#bae6fd";
-                        
-                        if (areaName.Contains("DİKİM", StringComparison.OrdinalIgnoreCase))
-                        {
-                            areaColor = "#15803d";
-                            areaBg = "#dcfce7";
-                            areaBorder = "#bbf7d0";
-                        }
-                        else if (areaName.Contains("KESİM", StringComparison.OrdinalIgnoreCase))
-                        {
-                            areaColor = "#0369a1";
-                            areaBg = "#e0f2fe";
-                            areaBorder = "#bae6fd";
-                        }
-                        else if (areaName.Contains("PAKET", StringComparison.OrdinalIgnoreCase))
-                        {
-                            areaColor = "#4338ca";
-                            areaBg = "#e0e7ff";
-                            areaBorder = "#c7d2fe";
-                        }
-                        else if (areaName == "Bekleniyor")
-                        {
-                            areaColor = "#b91c1c";
-                            areaBg = "#fee2e2";
-                            areaBorder = "#fecaca";
-                        }
-
-                        var progress = 5.0; // Varsayılan: Yeni Kayıt
-                        
                         var pDict = new Dictionary<string, string>();
                         if (!string.IsNullOrEmpty(order.ProductionJson)) { try { pDict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(order.ProductionJson); } catch {} }
                         
@@ -539,28 +527,34 @@
                         bool HasP(string key) => pDict != null && pDict.ContainsKey(key) && !string.IsNullOrEmpty(pDict[key]);
                         bool HasS(string key) => sDict != null && sDict.ContainsKey(key) && !string.IsNullOrEmpty(sDict[key]);
 
-                        if (order.WarehouseArrivalDate.HasValue || HasP("prod_depo_varis_actual")) { progress = 100.0; }
-                        else if (HasP("prod_yola_cikis_actual") || HasP("prod_gs_gidisi_actual")) { progress = 95.0; }
-                        else if (order.PackagingEndDate.HasValue || HasP("prod_paket_bitis_actual")) { progress = 90.0; }
-                        else if (order.PackagingStartDate.HasValue || HasP("prod_paket_baslangic_actual")) { progress = 80.0; }
-                        else if (order.SewingEndDate.HasValue || HasP("prod_dikim_bitis_actual")) { progress = 70.0; }
-                        else if (order.SewingStartDate.HasValue || HasP("prod_dikim_baslangic_actual")) { progress = 50.0; }
-                        else if (order.CuttingEndDate.HasValue || HasP("prod_kesim_bitis_actual")) { progress = 40.0; }
-                        else if (order.CuttingStartDate.HasValue || HasP("prod_kesim_baslangic_actual")) { progress = 30.0; }
-                        else if (HasS("sample_pp_onay_actual")) { progress = 25.0; }
-                        else if (HasS("sample_dugme_renk_actual") || HasS("sample_tuse_renk_actual")) { progress = 20.0; }
-                        else if (HasS("sample_kumas_ytesti_actual")) { progress = 15.0; }
-                        else if (order.FabricArrivalActualDate.HasValue) { progress = 10.0; }
-                        else { progress = 5.0; }
+                        var cpsStage = "PLANLAMA";
+                        var areaColor = "#0369a1";
+                        var areaBg = "#e0f2fe";
+                        var areaBorder = "#bae6fd";
+                        var progress = 5.0;
+
+                        if (order.WarehouseArrivalDate.HasValue || HasP("prod_depo_varis_actual")) { cpsStage = "DEPOYA ULAŞTI"; progress = 100.0; areaColor = "#15803d"; areaBg = "#dcfce7"; areaBorder = "#bbf7d0"; }
+                        else if (HasP("prod_yola_cikis_actual") || HasP("prod_gs_gidisi_actual")) { cpsStage = "YOLDA / SEVK"; progress = 95.0; areaColor = "#4338ca"; areaBg = "#e0e7ff"; areaBorder = "#c7d2fe"; }
+                        else if (order.PackagingEndDate.HasValue || HasP("prod_paket_bitis_actual")) { cpsStage = "PAKET BİTTİ"; progress = 90.0; areaColor = "#4338ca"; areaBg = "#e0e7ff"; areaBorder = "#c7d2fe"; }
+                        else if (order.PackagingStartDate.HasValue || HasP("prod_paket_baslangic_actual")) { cpsStage = "PAKETTE"; progress = 80.0; areaColor = "#4338ca"; areaBg = "#e0e7ff"; areaBorder = "#c7d2fe"; }
+                        else if (order.SewingEndDate.HasValue || HasP("prod_dikim_bitis_actual")) { cpsStage = "DİKİM BİTTİ"; progress = 70.0; areaColor = "#15803d"; areaBg = "#dcfce7"; areaBorder = "#bbf7d0"; }
+                        else if (order.SewingStartDate.HasValue || HasP("prod_dikim_baslangic_actual")) { cpsStage = "DİKİMDE"; progress = 50.0; areaColor = "#15803d"; areaBg = "#dcfce7"; areaBorder = "#bbf7d0"; }
+                        else if (order.CuttingEndDate.HasValue || HasP("prod_kesim_bitis_actual")) { cpsStage = "KESİM BİTTİ"; progress = 40.0; areaColor = "#0369a1"; areaBg = "#e0f2fe"; areaBorder = "#bae6fd"; }
+                        else if (order.CuttingStartDate.HasValue || HasP("prod_kesim_baslangic_actual")) { cpsStage = "KESİMDE"; progress = 30.0; areaColor = "#0369a1"; areaBg = "#e0f2fe"; areaBorder = "#bae6fd"; }
+                        else if (HasS("sample_pp_onay_actual")) { cpsStage = "PP ONAY"; progress = 25.0; areaColor = "#854d0e"; areaBg = "#fef9c3"; areaBorder = "#fef08a"; }
+                        else if (HasS("sample_dugme_renk_actual") || HasS("sample_tuse_renk_actual")) { cpsStage = "NUMUNE ONAYI"; progress = 20.0; areaColor = "#854d0e"; areaBg = "#fef9c3"; areaBorder = "#fef08a"; }
+                        else if (HasS("sample_kumas_ytesti_actual")) { cpsStage = "KUMAŞ TESTİ"; progress = 15.0; areaColor = "#854d0e"; areaBg = "#fef9c3"; areaBorder = "#fef08a"; }
+                        else if (order.FabricArrivalActualDate.HasValue) { cpsStage = "KUMAŞ GELDİ"; progress = 10.0; areaColor = "#854d0e"; areaBg = "#fef9c3"; areaBorder = "#fef08a"; }
+                        else { cpsStage = "YENİ KAYIT"; progress = 5.0; areaColor = "#475569"; areaBg = "#f1f5f9"; areaBorder = "#e2e8f0"; }
                         
-                        var isPaused = areaName == "Bekleniyor";
+                        var isPaused = order.Status == "Bekleniyor";
                         var progressColor = isPaused ? "#ef4444" : "#0d9488";
 
-                        <tr class="kpi-table-row" data-kpi-status="@rowKpiBucket" style="cursor: pointer; transition: background 0.2s;" onclick="window.location.href='/ProcessTracking/Track/@order.Id'" onmouseover="this.style.backgroundColor='#f1f5f9'" onmouseout="this.style.backgroundColor='transparent'">
+                        <tr class="kpi-table-row" data-kpi-status="@rowKpiBucket" style="cursor: pointer; transition: background 0.2s;" onclick="if(window.parent.appTabs) { window.parent.appTabs.openNewTab('Takip: @order.OrderCode', '/ProcessTracking/Track/@order.Id', 'fa-solid fa-route'); } else { window.location.href='/ProcessTracking/Track/@order.Id'; }" onmouseover="this.style.backgroundColor='#f1f5f9'" onmouseout="this.style.backgroundColor='transparent'">
                             <td class="order-code-td">@order.OrderCode</td>
                             <td class="order-model-td">@order.ModelName @(!string.IsNullOrEmpty(order.Color) ? $"({order.Color})" : "")</td>
                             <td>
-                                <span class="badge-area" style="color: @areaColor; background: @areaBg; border-color: @areaBorder;">@areaName.ToUpper()</span>
+                                <span class="badge-area" style="color: @areaColor; background: @areaBg; border-color: @areaBorder;">@cpsStage</span>
                             </td>
                             <td>
                                 @if (isPaused)
@@ -696,16 +690,25 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    var allOrdersKpiData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Select(o => new {
-        id = o.Id,
-        code = o.OrderCode,
-        model = o.ModelName,
-        customer = string.IsNullOrEmpty(o.Customer) ? "-" : o.Customer,
-        color = string.IsNullOrEmpty(o.Color) ? "" : o.Color,
-        qty = o.CalculatedQuantity,
-        status = string.IsNullOrEmpty(o.Status) ? "Yeni Kayıt" : o.Status,
-        kpiBucket = GetKpiBucket(o),
-        date = o.OrderDate.ToString("dd.MM.yyyy")
+    var allOrdersKpiData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Select(o => {
+        var kBucket = GetKpiBucket(o);
+        var stat = o.Status;
+        if (string.IsNullOrEmpty(stat)) {
+            if (kBucket == "cutting") stat = "Kesimde";
+            else if (kBucket == "completed") stat = "Tamamlandı";
+            else stat = "Yeni Kayıt";
+        }
+        return new {
+            id = o.Id,
+            code = o.OrderCode,
+            model = o.ModelName,
+            customer = string.IsNullOrEmpty(o.Customer) ? "-" : o.Customer,
+            color = string.IsNullOrEmpty(o.Color) ? "" : o.Color,
+            qty = o.CalculatedQuantity,
+            status = stat,
+            kpiBucket = kBucket,
+            date = o.OrderDate.ToString("dd.MM.yyyy")
+        };
     })));
 
     var currentModalKpi = 'all';
