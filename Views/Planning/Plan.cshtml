@@ -314,31 +314,31 @@
             <!-- Sipariş Kodu -->
             <div style="flex: 1; min-width: 120px; background: #fff; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03); padding: 10px 14px; border: 1px solid #e2e8f0; position: relative; border-bottom: 3px solid #3b82f6;">
                 <div style="font-size: 0.6rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-hashtag" style="color: #94a3b8;"></i> SİPARİŞ KODU</div>
-                <div style="font-size: 0.9rem; font-weight: 800; color: #0f172a; word-wrap: break-word;">@Model.OrderCode</div>
+                <div style="font-size: 0.9rem; font-weight: 800; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@Model.OrderCode</div>
             </div>
 
             <!-- Model -->
             <div style="flex: 1.5; min-width: 130px; background: #fff; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03); padding: 10px 14px; border: 1px solid #e2e8f0; position: relative; border-bottom: 3px solid #0ea5e9;">
                 <div style="font-size: 0.6rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-barcode" style="color: #94a3b8;"></i> MODEL</div>
-                <div style="font-size: 0.85rem; font-weight: 700; color: #0f172a; word-wrap: break-word;" title="@Model.ModelName">@Model.ModelName</div>
+                <div style="font-size: 0.85rem; font-weight: 700; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="@Model.ModelName">@Model.ModelName</div>
             </div>
 
             <!-- Renk -->
             <div style="flex: 1; min-width: 110px; background: #fff; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03); padding: 10px 14px; border: 1px solid #e2e8f0; position: relative; border-bottom: 3px solid #8b5cf6;">
                 <div style="font-size: 0.6rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-palette" style="color: #94a3b8;"></i> RENK</div>
-                <div style="font-size: 0.85rem; font-weight: 700; color: #0f172a; word-wrap: break-word;" title="@Model.Color">@Model.Color</div>
+                <div style="font-size: 0.85rem; font-weight: 700; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="@Model.Color">@Model.Color</div>
             </div>
 
             <!-- Müşteri -->
             <div style="flex: 1.5; min-width: 130px; background: #fff; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03); padding: 10px 14px; border: 1px solid #e2e8f0; position: relative; border-bottom: 3px solid #10b981;">
                 <div style="font-size: 0.6rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-building" style="color: #94a3b8;"></i> MÜŞTERİ</div>
-                <div style="font-size: 0.85rem; font-weight: 700; color: #0f172a; word-wrap: break-word;" title="@Model.Customer">@Model.Customer</div>
+                <div style="font-size: 0.85rem; font-weight: 700; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="@Model.Customer">@Model.Customer</div>
             </div>
 
             <!-- Atölye -->
             <div style="flex: 1.5; min-width: 130px; background: #fff; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03); padding: 10px 14px; border: 1px solid #e2e8f0; position: relative; border-bottom: 3px solid #d946ef;">
                 <div style="font-size: 0.6rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-industry" style="color: #94a3b8;"></i> ATÖLYE</div>
-                <div style="font-size: 0.85rem; font-weight: 700; color: #0f172a; word-wrap: break-word;">
+                <div style="font-size: 0.85rem; font-weight: 700; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                     @{
                         var atolyeInfo = GetProdVal("prod_dikim_atolyesi");
                         if (string.IsNullOrEmpty(atolyeInfo)) { atolyeInfo = Model.SewingWorkshop ?? Model.ProductionPlace; }
@@ -1079,7 +1079,15 @@
                     </div> <!-- End part-mrp -->
                 </div> <!-- End color-pane -->
             }
-        </div> <!-- End colorPanesContainer -->            </form>
+        </div> <!-- End colorPanesContainer -->
+        <div class="part-mrp" style="display:none;">
+            <div style="display: flex; justify-content: flex-end; margin-top: 20px; margin-bottom: 20px;">
+                <button type="button" onclick="saveUnifiedDates()" class="btn-planner" style="background: linear-gradient(135deg, #1d4ed8, #2563eb); color: white; border: none; padding: 12px 30px; border-radius: 8px; font-weight: 700; font-size: 1.05rem; cursor: pointer; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3); transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                    <i class="fa-solid fa-save"></i> Değişiklikleri Kaydet
+                </button>
+            </div>
+        </div>
+        </form>
         </div>
 
 
@@ -2079,23 +2087,23 @@ function planGetTotalCutForSize(sizeName, cutType) {
                 if(calculatedValue > 0) {
                     const targetQty = parseFloat(planTargetSizes[sizeName]) || 0;
                     const alreadyCut = planGetTotalCutForSize(sizeName, 'Açık Adet');
-                    if ((alreadyCut + calculatedValue) > targetQty) {
-                        validationError = `Hata: '${sizeName}' bedeni için sipariş hedefini aşıyorsunuz! (Hedef: ${targetQty}, Toplam Kesilecek: ${alreadyCut + calculatedValue})`;
-                    }
+                    // if ((alreadyCut + calculatedValue) > targetQty) {
+                    //     validationError = `Hata: '${sizeName}' bedeni için sipariş hedefini aşıyorsunuz! (Hedef: ${targetQty}, Toplam Kesilecek: ${alreadyCut + calculatedValue})`;
+                    // }
                     sizes[sizeName] = calculatedValue;
                 }
             });
             
-            if (validationError) {
-                Swal.fire({
-                    title: 'Hata',
-                    text: validationError + "\n\nKesim planlamasında hedeflenen adetten fazlasını giremezsiniz. Fazla kesim kaydını sadece üretim (kesim) sürecinde ekleyebilirsiniz.",
-                    icon: 'error',
-                    confirmButtonColor: '#3085d6',
-                    confirmButtonText: 'Tamam'
-                });
-                return;
-            }
+            // if (validationError) {
+            //     Swal.fire({
+            //         title: 'Hata',
+            //         text: validationError + "\n\nKesim planlamasında hedeflenen adetten fazlasını giremezsiniz. Fazla kesim kaydını sadece üretim (kesim) sürecinde ekleyebilirsiniz.",
+            //         icon: 'error',
+            //         confirmButtonColor: '#3085d6',
+            //         confirmButtonText: 'Tamam'
+            //     });
+            //     return;
+            // }
             
             _planAddCutToGlobalAndRender('Açık Adet', date, multiplier, sizes, totalQty, markerLength, unitMeterage);
             
@@ -2127,23 +2135,23 @@ function planGetTotalCutForSize(sizeName, cutType) {
                 if(val > 0) {
                     const targetQty = (parseFloat(planTargetSizesAsorti[sizeName]) || 0) * planAsortiCount;
                     const alreadyCut = planGetTotalCutForSize(sizeName, 'Asorti');
-                    if ((alreadyCut + val) > targetQty) {
-                        validationError = `Hata: '${sizeName}' bedeni için sipariş hedefini aşıyorsunuz! (Hedef: ${targetQty}, Toplam Kesilecek: ${alreadyCut + val})`;
-                    }
+                    // if ((alreadyCut + val) > targetQty) {
+                    //     validationError = `Hata: '${sizeName}' bedeni için sipariş hedefini aşıyorsunuz! (Hedef: ${targetQty}, Toplam Kesilecek: ${alreadyCut + val})`;
+                    // }
                     sizes[sizeName] = val;
                 }
             });
             
-            if (validationError) {
-                Swal.fire({
-                    title: 'Hata',
-                    text: validationError + "\n\nKesim planlamasında hedeflenen adetten fazlasını giremezsiniz. Fazla kesim kaydını sadece üretim (kesim) sürecinde ekleyebilirsiniz.",
-                    icon: 'error',
-                    confirmButtonColor: '#3085d6',
-                    confirmButtonText: 'Tamam'
-                });
-                return;
-            }
+            // if (validationError) {
+            //     Swal.fire({
+            //         title: 'Hata',
+            //         text: validationError + "\n\nKesim planlamasında hedeflenen adetten fazlasını giremezsiniz. Fazla kesim kaydını sadece üretim (kesim) sürecinde ekleyebilirsiniz.",
+            //         icon: 'error',
+            //         confirmButtonColor: '#3085d6',
+            //         confirmButtonText: 'Tamam'
+            //     });
+            //     return;
+            // }
             
             _planAddCutToGlobalAndRender('Asorti', date, multiplier, sizes, totalQty, markerLength, unitMeterage);
             
@@ -2209,9 +2217,9 @@ function planGetTotalCutForSize(sizeName, cutType) {
                             const targetQty = parseFloat(planTargetSizes[s]) || 0;
                             const oldVal = parseFloat(item.Sizes && item.Sizes[s] ? item.Sizes[s] : 0) || 0;
                             const alreadyCut = planGetTotalCutForSize(s, 'Açık Adet') - oldVal;
-                            if ((alreadyCut + calc) > targetQty) {
-                                validationError = `Hata: '${s}' bedeni için sipariş hedefini aşıyorsunuz! (Hedef: ${targetQty}, Toplam Kesilecek: ${alreadyCut + calc})`;
-                            }
+                            // if ((alreadyCut + calc) > targetQty) {
+                            //     validationError = `Hata: '${s}' bedeni için sipariş hedefini aşıyorsunuz! (Hedef: ${targetQty}, Toplam Kesilecek: ${alreadyCut + calc})`;
+                            // }
                         }
                         
                         sizes[s] = calc;
@@ -2219,16 +2227,16 @@ function planGetTotalCutForSize(sizeName, cutType) {
                     });
                 }
                 
-                if (validationError) {
-                    Swal.fire({
-                        title: 'Hata',
-                        text: validationError + "\n\nKesim planlamasında hedeflenen adetten fazlasını giremezsiniz. Lütfen kat sayısını veya beden adetlerini kontrol edin.",
-                        icon: 'error',
-                        confirmButtonColor: '#3085d6',
-                        confirmButtonText: 'Tamam'
-                    });
-                    return;
-                }
+                // if (validationError) {
+                //     Swal.fire({
+                //         title: 'Hata',
+                //         text: validationError + "\n\nKesim planlamasında hedeflenen adetten fazlasını giremezsiniz. Lütfen kat sayısını veya beden adetlerini kontrol edin.",
+                //         icon: 'error',
+                //         confirmButtonColor: '#3085d6',
+                //         confirmButtonText: 'Tamam'
+                //     });
+                //     return;
+                // }
                 
                 item.Date = newDate;
                 item.Multiplier = newMultiplier;
@@ -2251,9 +2259,9 @@ function planGetTotalCutForSize(sizeName, cutType) {
                             const targetQty = (parseFloat(planTargetSizesAsorti[s]) || 0) * planAsortiCount;
                             const oldVal = parseFloat(item.Sizes && item.Sizes[s] ? item.Sizes[s] : 0) || 0;
                             const alreadyCut = planGetTotalCutForSize(s, 'Asorti') - oldVal;
-                            if ((alreadyCut + calc) > targetQty) {
-                                validationError = `Hata: '${s}' bedeni için sipariş hedefini aşıyorsunuz! (Hedef: ${targetQty}, Toplam Kesilecek: ${alreadyCut + calc})`;
-                            }
+                            // if ((alreadyCut + calc) > targetQty) {
+                            //     validationError = `Hata: '${s}' bedeni için sipariş hedefini aşıyorsunuz! (Hedef: ${targetQty}, Toplam Kesilecek: ${alreadyCut + calc})`;
+                            // }
                         }
                         
                         sizes[s] = calc;
@@ -2261,16 +2269,16 @@ function planGetTotalCutForSize(sizeName, cutType) {
                     });
                 }
                 
-                if (validationError) {
-                    Swal.fire({
-                        title: 'Hata',
-                        text: validationError + "\n\nKesim planlamasında hedeflenen adetten fazlasını giremezsiniz. Lütfen kat sayısını veya beden adetlerini kontrol edin.",
-                        icon: 'error',
-                        confirmButtonColor: '#3085d6',
-                        confirmButtonText: 'Tamam'
-                    });
-                    return;
-                }
+                // if (validationError) {
+                //     Swal.fire({
+                //         title: 'Hata',
+                //         text: validationError + "\n\nKesim planlamasında hedeflenen adetten fazlasını giremezsiniz. Lütfen kat sayısını veya beden adetlerini kontrol edin.",
+                //         icon: 'error',
+                //         confirmButtonColor: '#3085d6',
+                //         confirmButtonText: 'Tamam'
+                //     });
+                //     return;
+                // }
                 
                 item.Date = newDate;
                 item.Multiplier = newMultiplier;

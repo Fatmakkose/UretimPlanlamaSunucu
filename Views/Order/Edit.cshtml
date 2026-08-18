@@ -312,82 +312,29 @@
             <button type="button" id="btnAddColorRow" class="btn-planner" style="padding: 8px 16px; font-size: 0.9rem; white-space:nowrap; background: linear-gradient(135deg, #10b981, #059669) !important; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3) !important;"><i class="fa-solid fa-plus"></i> Yeni Renk Ekle</button>
         </div>
         <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 16px; border-radius: 8px;">
-            <div class="genel-bilgiler-grid" style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #e2e8f0;">
-                <div class="form-group">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                        <label style="margin-bottom: 0;">Renk</label>
-                    </div>
-                    <select name="Color" id="orderColorSelect" class="form-control" required>
-                        <option value="">-- Renk Seçin --</option>
-                        @if (ViewBag.Colors != null)
-                        {
-                            var hasMatch = false;
-                            foreach (var c in (List<UretimPlanlama.Models.ColorDef>)ViewBag.Colors)
-                            {
-                                if (Model.Color == c.Name)
-                                {
-                                    hasMatch = true;
-                                    <option value="@c.Name" selected>@c.Name</option>
-                                }
-                                else
-                                {
-                                    <option value="@c.Name">@c.Name</option>
-                                }
-                            }
-                            if (!string.IsNullOrEmpty(Model.Color) && !hasMatch)
-                            {
-                                <option value="@Model.Color" selected>@Model.Color (Tanımlı Değil)</option>
+            @{
+                string revizeTermin = "";
+                if (Model.RevisedInspectionDate.HasValue) {
+                    revizeTermin = Model.RevisedInspectionDate.Value.ToString("yyyy-MM-dd");
+                } else if (!string.IsNullOrEmpty(Model.ProductionJson)) {
+                    try {
+                        var dict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(Model.ProductionJson);
+                        if (dict != null && dict.ContainsKey("prod_knn_revize_termin")) {
+                            string rDate = dict["prod_knn_revize_termin"];
+                            if (DateTime.TryParse(rDate, new System.Globalization.CultureInfo("tr-TR"), System.Globalization.DateTimeStyles.None, out DateTime dt)) {
+                                revizeTermin = dt.ToString("yyyy-MM-dd");
+                            } else if (rDate.Length == 10 && rDate[2] == '.' && rDate[5] == '.') {
+                                revizeTermin = $"{rDate.Substring(6, 4)}-{rDate.Substring(3, 2)}-{rDate.Substring(0, 2)}";
+                            } else {
+                                revizeTermin = rDate;
                             }
                         }
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Termin Tarihi</label>
-                    <input name="PlannedPackagingEndDate" class="form-control" type="date" value="@(Model.PlannedPackagingEndDate?.ToString("yyyy-MM-dd") ?? "")" />
-                </div>
-                <div class="form-group">
-                    <label>Revize Termin Tarihi</label>
-                    @{
-                        string revizeTermin = "";
-                        if (!string.IsNullOrEmpty(Model.ProductionJson)) {
-                            try {
-                                var dict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(Model.ProductionJson);
-                                if (dict != null && dict.ContainsKey("prod_knn_revize_termin")) {
-                                    revizeTermin = dict["prod_knn_revize_termin"];
-                                }
-                            } catch {}
-                        }
-                    }
-                    <input id="revizeTerminInput" class="form-control" type="date" value="@revizeTermin" />
-                    <input type="hidden" id="hiddenProductionJson" name="ProductionJson" value='@Html.Raw(Model.ProductionJson ?? "{}")' />
-                </div>
-                <div class="form-group">
-                    <label>Özel Kod (Açık Adet)</label>
-                    <input name="OpenSpecialCode" class="form-control" value="@Model.OpenSpecialCode" placeholder="Örn: ACK-001" />
-                </div>
-                <div class="form-group">
-                    <label>Özel Renk Kodu</label>
-                    <input name="OptionCode" class="form-control" value="@Model.OptionCode" placeholder="Örn: RENK-001" />
-                </div>
-                <div class="form-group">
-                    <label>Özel Kod (Asorti)</label>
-                    <input name="AsortiSpecialCode" class="form-control" value="@Model.AsortiSpecialCode" placeholder="Örn: ASR-001" />
-                </div>
-            </div>
-            
-            <div style="background: #ffffff; padding: 12px 20px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; flex-wrap:wrap; gap:16px;">
-                <label style="font-weight: 600; font-size: 0.85rem; color: #1e293b; margin:0;"><i class="fa-solid fa-ruler"></i> Ana Sipariş Beden Şablonu:</label>
-                <select class="form-control main-size-template" style="width: 150px; padding: 4px 10px; font-size: 0.8rem; border-radius: 6px; font-weight:600; background:#f8fafc; border:1px solid #cbd5e1;">
-                    <option value="">-- Şablon Seçin --</option>
-                    <option value="beden">Beden (XS..6XL)</option>
-                    <option value="numara">Numara (32..48)</option>
-                </select>
-                <div class="main-size-checkboxes" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-left: 12px; padding-left: 12px; border-left: 2px solid #cbd5e1;">
-                </div>
-            </div>
-            
-            <div class="main-color-tables" style="padding: 16px 20px; overflow-x: auto; display:none;">
-            </div>
+                    } catch {}
+                }
+            }
+            <input type="hidden" id="hiddenProductionJson" name="ProductionJson" value='@Html.Raw(Model.ProductionJson ?? "{}")' />
+            <input type="hidden" id="hiddenRevizeTermin" value="@revizeTermin" />
+            <input type="hidden" id="hiddenPlannedPackagingEndDate" value="@(Model.PlannedPackagingEndDate?.ToString("yyyy-MM-dd") ?? "")" />
             
             <!-- Renk Kartları Konteyneri -->
             <div id="colorsContainer"></div>
@@ -738,7 +685,16 @@
             });
         }
 
-        $('#btnSubmitFullEdit').click(function() {
+        $('#btnSubmitFullEdit').click(function(e) {
+            e.preventDefault();
+            var dataObj = {};
+            
+            // First populate from form fields (PascalCase keys matching the server model)
+            const formData = new FormData($('#editOrderFormFull')[0]);
+            formData.forEach((value, key) => { 
+                dataObj[key] = value; 
+            });
+            
             var materials = [];
             $('#stockMaterialsContainer .stock-material-row').each(function() {
                 var stokId = parseInt($(this).find('.sm-stokkarti').val());
@@ -771,38 +727,45 @@
             
             $("#orderMaterialsJson").val(JSON.stringify(materials));
             
-            // Rebuild Size and Asorti JSON and Total Quantity
-            let openSizes = {};
-            let asortiSizes = {};
-            let totalQty = 0;
-            let asortiMultiplier = parseInt($('.main-asorti-count').val()) || 0;
-
-            $('.main-open-size').each(function() {
-                var sz = $(this).data('size');
-                var val = parseInt($(this).val()) || 0;
-                if (val > 0) {
-                    openSizes[sz] = val;
-                    totalQty += val;
-                }
-            });
-            $('.main-asorti-size').each(function() {
-                var sz = $(this).data('size');
-                var val = parseInt($(this).val()) || 0;
-                if (val > 0) {
-                    asortiSizes[sz] = val;
-                    totalQty += (val * asortiMultiplier);
-                }
-            });
-
-            $('input[name="SizeDistributionJson"]').val(JSON.stringify(openSizes));
-            $('input[name="AsortiDistributionJson"]').val(JSON.stringify(asortiSizes));
-            $('input[name="Quantity"]').val(totalQty);
+            var allRows = getSavedRowsData();
+            if (allRows.length === 0) {
+                Swal.fire({ icon: 'error', title: 'Hata!', text: 'Lütfen en az bir renk dağılımı giriniz.', confirmButtonColor: '#ef4444' });
+                return;
+            }
             
-            const formData = new FormData($('#editOrderFormFull')[0]);
-            let dataObj = {};
-            formData.forEach((value, key) => { 
-                dataObj[key] = value; 
-            });
+            var firstRowData = allRows[0];
+            dataObj.Color = firstRowData.color;
+            dataObj.FabricSupplier = firstRowData.fabricator;
+            if (firstRowData.inspectionDate) dataObj.PlannedPackagingEndDate = firstRowData.inspectionDate;
+            if (firstRowData.asortiInspectionDate) dataObj.InspectionDate = firstRowData.asortiInspectionDate;
+            if (firstRowData.unitPrice) dataObj.UnitPrice = parseFloat(firstRowData.unitPrice.replace(',', '.'));
+            dataObj.OpenSpecialCode = firstRowData.openSpecialCode;
+            dataObj.OptionCode = firstRowData.openColorCode;
+            dataObj.AsortiSpecialCode = firstRowData.asortiSpecialCode;
+            
+            // Update hidden ProductionJson for revize termin and set Model property
+            if (firstRowData.revisedInspectionDate) {
+                dataObj.RevisedInspectionDate = firstRowData.revisedInspectionDate;
+                var jsonStr = $('#hiddenProductionJson').val() || "{}";
+                try {
+                    var obj = JSON.parse(jsonStr);
+                    obj["prod_knn_revize_termin"] = firstRowData.revisedInspectionDate;
+                    dataObj.ProductionJson = JSON.stringify(obj);
+                } catch(e) {}
+            } else {
+                dataObj.RevisedInspectionDate = null;
+            }
+
+            dataObj.AsortiCount = parseInt(firstRowData.asortiCount) || 0;
+            dataObj.SizeDistributionJson = JSON.stringify(firstRowData.openSizes);
+            dataObj.AsortiDistributionJson = JSON.stringify(firstRowData.asortiSizes);
+            
+            var qty = 0;
+            var asortiToplam = 0;
+            for(var k in firstRowData.openSizes) qty += firstRowData.openSizes[k];
+            for(var k in firstRowData.asortiSizes) asortiToplam += firstRowData.asortiSizes[k];
+            qty += (asortiToplam * dataObj.AsortiCount);
+            dataObj.Quantity = qty;
 
             // Need to handle Id as int
             if (dataObj.Id) dataObj.Id = parseInt(dataObj.Id);
@@ -815,7 +778,7 @@
                     data: JSON.stringify(dataObj),
                     success: function(res) {
                         if (res.success) {
-                            var extraRows = getSavedRowsData();
+                            var extraRows = allRows.slice(1);
                             if (extraRows.length > 0) {
                                 // Post multiple
                                 var newOrders = [];
@@ -829,18 +792,18 @@
                                     newOrder.Color = row.color;
                                     newOrder.FabricSupplier = row.fabricator;
                                     if(row.inspectionDate) newOrder.InspectionDate = row.inspectionDate;
-                                    // if(row.revisedInspectionDate) newOrder.RevisedInspectionDate = row.revisedInspectionDate;
+                                    if(row.revisedInspectionDate) newOrder.RevisedInspectionDate = row.revisedInspectionDate;
                                     if(row.unitPrice) newOrder.UnitPrice = parseFloat(row.unitPrice.replace(',','.'));
                                     newOrder.AsortiCount = parseInt(row.asortiCount) || 0;
                                     newOrder.SizeDistributionJson = JSON.stringify(row.openSizes);
                                     newOrder.AsortiDistributionJson = JSON.stringify(row.asortiSizes);
                                     
-                                    var qty = 0;
-                                    var asortiToplam = 0;
-                                    for(var k in row.openSizes) qty += row.openSizes[k];
-                                    for(var k in row.asortiSizes) asortiToplam += row.asortiSizes[k];
-                                    qty += (asortiToplam * newOrder.AsortiCount);
-                                    newOrder.Quantity = qty;
+                                    var rowQty = 0;
+                                    var rowAsortiToplam = 0;
+                                    for(var k in row.openSizes) rowQty += row.openSizes[k];
+                                    for(var k in row.asortiSizes) rowAsortiToplam += row.asortiSizes[k];
+                                    rowQty += (rowAsortiToplam * newOrder.AsortiCount);
+                                    newOrder.Quantity = rowQty;
 
                                     newOrders.push(newOrder);
                                 });
@@ -853,22 +816,22 @@
                                     success: function(resMult) {
                                         if (resMult.success) {
                                             Swal.fire({ icon: 'success', title: 'Başarılı!', text: 'Ana sipariş güncellendi ve ' + extraRows.length + ' yeni renk siparişi başarıyla oluşturuldu.', confirmButtonColor: '#10b981' }).then(() => {
-                                                window.location.href = '/Order/Index';
+                                                redirectToIndex();
                                             });
                                         } else {
                                             Swal.fire({ icon: 'warning', title: 'Kısmi Başarı', text: 'Ana sipariş güncellendi ancak yeni renkler eklenirken hata oluştu: ' + resMult.message, confirmButtonColor: '#f59e0b' }).then(() => {
-                                                window.location.href = '/Order/Index';
+                                                redirectToIndex();
                                             });
                                         }
                                     },
                                     error: function() {
                                         Swal.fire({ icon: 'error', title: 'Sunucu Hatası!', text: 'Ana sipariş güncellendi ancak yeni renkler kaydedilirken sunucu hatası oluştu.', confirmButtonColor: '#ef4444' }).then(() => {
-                                            window.location.href = '/Order/Index';
+                                            redirectToIndex();
                                         });
                                     }
                                 });
                             } else {
-                                window.location.href = '/Order/Index';
+                                redirectToIndex();
                             }
                         } else {
                             Swal.fire({ icon: 'error', title: 'Hata!', text: res.message, confirmButtonColor: '#ef4444' });
@@ -909,6 +872,14 @@
             }
         });
 
+        function redirectToIndex() {
+            if (window.parent && window.parent.closeGenericIframeModal) {
+                window.parent.location.reload();
+            } else {
+                window.location.href = '/Order/Index';
+            }
+        }
+
         function handleCancel() {
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('isClone') === 'true') {
@@ -918,14 +889,14 @@
                     contentType: 'application/json',
                     data: JSON.stringify([@Model.Id]),
                     success: function() {
-                        window.location.href = '/Order/Index';
+                        redirectToIndex();
                     },
                     error: function() {
-                        window.location.href = '/Order/Index';
+                        redirectToIndex();
                     }
                 });
             } else {
-                window.location.href = '/Order/Index';
+                redirectToIndex();
             }
         }
 
@@ -987,148 +958,12 @@
             ozel: []
         };
 
-        // --- ANA SİPARİŞ İÇİN DİNAMİK BEDEN MANTIĞI ---
-        function renderMainCheckboxes(templateName, activeSizes = []) {
-            var sizes = sizeTemplates[templateName] || [];
-            var html = "";
-            sizes.forEach(function(s) {
-                var isChecked = activeSizes.includes(s) ? "checked" : (activeSizes.length === 0 ? "checked" : "");
-                html += `<label style="display:flex; align-items:center; gap:4px; font-size:0.8rem; font-weight:600; cursor:pointer; user-select:none; background:#ffffff; padding:2px 6px; border-radius:4px; border:1px solid #cbd5e1;"><input type="checkbox" class="main-size-cb" value="` + s + `" ` + isChecked + ` style="cursor:pointer;" /> ` + s + `</label>`;
-            });
-            $('.main-size-checkboxes').html(html);
-        }
 
-        function getMainActiveSizes() {
-            var activeSizes = [];
-            $('.main-size-cb:checked').each(function() {
-                activeSizes.push($(this).val());
-            });
-            return activeSizes;
-        }
-
-        function renderMainTables() {
-            var activeSizes = getMainActiveSizes();
-            var $tablesContainer = $('.main-color-tables');
-            
-            if(activeSizes.length === 0) {
-                $tablesContainer.html('<div style="color: #64748b; font-size: 0.9rem;">Lütfen beden şablonundan beden seçimi yapınız.</div>').show();
-                return;
-            }
-            
-            // Collect existing values to preserve them
-            var oSizes = {};
-            $tablesContainer.find('.main-open-size').each(function() { 
-                var v = $(this).val();
-                if (v) oSizes[$(this).data('size')] = v; 
-            });
-            var aSizes = {};
-            $tablesContainer.find('.main-asorti-size').each(function() { 
-                var v = $(this).val();
-                if (v) aSizes[$(this).data('size')] = v; 
-            });
-
-            // If not found, use initial JSON from hidden inputs
-            if (Object.keys(oSizes).length === 0) {
-                var jsonStr = $('input[name="SizeDistributionJson"]').val();
-                if (jsonStr) { try { oSizes = JSON.parse(jsonStr); } catch(e){} }
-            }
-            if (Object.keys(aSizes).length === 0) {
-                var jsonStr = $('input[name="AsortiDistributionJson"]').val();
-                if (jsonStr) { try { aSizes = JSON.parse(jsonStr); } catch(e){} }
-            }
-
-            var sizeCount = activeSizes.length;
-            var thAcik = `
-            <tr>
-                <th colspan="${sizeCount}" style="text-align:center; border-bottom:1px solid #bae6fd;">Açık Adet</th>
-                <th rowspan="2" style="width:90px; min-width:90px; vertical-align:middle; text-align:center; color:#0284c7;">Toplam Adet</th>
-            </tr><tr>`;
-            var thAsorti = `
-            <tr>
-                <th colspan="${sizeCount}" style="text-align:center; border-bottom:1px solid #bbf7d0;">Asorti Adet</th>
-                <th rowspan="2" style="width:90px; min-width:90px; vertical-align:middle; text-align:center;">Top. Asorti Sayısı</th>
-                <th rowspan="2" style="width:100px; min-width:100px; vertical-align:middle; text-align:center;">Top. Asorti Sipariş</th>
-                <th rowspan="2" style="width:90px; min-width:90px; vertical-align:middle; text-align:center; color:#15803d;">Toplam Adet</th>
-            </tr><tr>`;
-            
-            var trAcikSizesHtml = "";
-            var trAsortiSizesHtml = "";
-
-            activeSizes.forEach(s => {
-                thAcik += `<th style="width:75px; min-width:75px; text-align:center; padding: 4px;">` + s + `</th>`;
-                thAsorti += `<th style="width:75px; min-width:75px; text-align:center; padding: 4px;">` + s + `</th>`;
-                
-                var oVal = oSizes[s] || "";
-                var aVal = aSizes[s] || "";
-                trAcikSizesHtml += `<td><input type="number" min="0" data-size="${s}" class="form-control form-control-sm main-size-input main-open-size no-spinner" style="text-align:center; font-weight:600; padding:4px;" value="${oVal}" /></td>`;
-                trAsortiSizesHtml += `<td><input type="number" min="0" data-size="${s}" class="form-control form-control-sm main-size-input main-asorti-size no-spinner" style="text-align:center; font-weight:600; padding:4px;" value="${aVal}" /></td>`;
-            });
-            
-            thAcik += `</tr>`;
-            thAsorti += `</tr>`;
-
-            var asortiCountVal = $('input[name="AsortiCount"]').val() || "0";
-
-            var tablesHtml = `
-            <table class="table table-bordered table-sm" style="min-width: 700px; margin-bottom: 16px;">
-                <thead style="background: #f8fafc; color: #0369a1; font-size: 0.75rem;">${thAcik}</thead>
-                <tbody>
-                    <tr class="main-acik-row">
-                        ${trAcikSizesHtml}
-                        <td style="vertical-align:middle; text-align:center; font-weight:800; color:#0284c7; font-size:0.95rem;" class="main-acik-total">0</td>
-                    </tr>
-                </tbody>
-            </table>
-            <table class="table table-bordered table-sm" style="min-width: 700px; margin-bottom: 0;">
-                <thead style="background: #f8fafc; color: #15803d; font-size: 0.75rem;">${thAsorti}</thead>
-                <tbody>
-                    <tr class="main-asorti-row">
-                        ${trAsortiSizesHtml}
-                        <td style="vertical-align:middle; text-align:center; font-weight:700; color:#475569;" class="main-asorti-ratio-total">0</td>
-                        <td><input type="number" name="AsortiCount" min="0" class="form-control form-control-sm main-asorti-count" value="${asortiCountVal}" style="text-align:center; font-weight:700;" /></td>
-                        <td style="vertical-align:middle; text-align:center; font-weight:800; color:#16a34a; font-size:0.95rem;" class="main-asorti-total">0</td>
-                    </tr>
-                </tbody>
-            </table>
-            `;
-            
-            $tablesContainer.html(tablesHtml).show();
-            calcMainTotal();
-        }
-
-        function calcMainTotal() {
-            var openTotal = 0;
-            $('.main-acik-row .main-open-size').each(function() { openTotal += parseInt($(this).val()) || 0; });
-            $('.main-acik-total').text(openTotal);
-
-            var asortiRatioTotal = 0;
-            $('.main-asorti-row .main-asorti-size').each(function() { asortiRatioTotal += parseInt($(this).val()) || 0; });
-            $('.main-asorti-ratio-total').text(asortiRatioTotal);
-
-            var asortiMultiplier = parseInt($('.main-asorti-count').val()) || 0;
-            var asortiTotal = asortiRatioTotal * asortiMultiplier;
-            $('.main-asorti-total').text(asortiTotal);
-        }
-
-        $(document).on('change', '.main-size-template', function() {
-            $('.main-size-checkboxes').empty();
-            renderMainCheckboxes($(this).val());
-            renderMainTables();
-        });
-
-        $(document).on('change', '.main-size-cb', function() {
-            renderMainTables();
-        });
-
-        $(document).on('input', '.main-size-input, .main-asorti-count', function() {
-            calcMainTotal();
-        });
-        
-        // Initial Loading
+        // Initial Loading via unified color cards layout
         var initialOpenSizes = {};
-        try { initialOpenSizes = JSON.parse($('input[name="SizeDistributionJson"]').val()); } catch(e){}
+        try { initialOpenSizes = JSON.parse($('input[name="SizeDistributionJson"]').val() || "{}"); } catch(e){}
         var initialAsortiSizes = {};
-        try { initialAsortiSizes = JSON.parse($('input[name="AsortiDistributionJson"]').val()); } catch(e){}
+        try { initialAsortiSizes = JSON.parse($('input[name="AsortiDistributionJson"]').val() || "{}"); } catch(e){}
         
         var allInitialSizes = [];
         Object.keys(initialOpenSizes).forEach(k => { if (!allInitialSizes.includes(k)) allInitialSizes.push(k); });
@@ -1145,22 +980,40 @@
             }
         }
         if (!initTemplate && allInitialSizes.length > 0) initTemplate = "ozel";
-        
-        if (initTemplate) {
-            $('.main-size-template').val(initTemplate);
-            renderMainCheckboxes(initTemplate, allInitialSizes);
-            renderMainTables();
-        } else {
-            $('.main-size-template').val('beden');
-            renderMainCheckboxes('beden', sizeTemplates['beden']);
-            renderMainTables();
-        }
-        function renderCardCheckboxes($card, templateName) {
+        if (!initTemplate) initTemplate = "beden";
+
+        var initialSavedData = {
+            color: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Color ?? "")),
+            fabricator: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.FabricSupplier ?? "")),
+            templateId: initTemplate,
+            inspectionDate: $('#hiddenPlannedPackagingEndDate').val(),
+            revisedInspectionDate: $('#hiddenRevizeTermin').val(),
+            openSpecialCode: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.OpenSpecialCode ?? "")),
+            openColorCode: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.OptionCode ?? "")),
+            asortiSpecialCode: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.AsortiSpecialCode ?? "")),
+            asortiCount: '@Model.AsortiCount',
+            unitPrice: '@Model.UnitPrice',
+            openSizes: initialOpenSizes,
+            asortiSizes: initialAsortiSizes,
+            asortiInspectionDate: '@(Model.InspectionDate.HasValue ? Model.InspectionDate.Value.ToString("yyyy-MM-dd") : "")'
+        };
+
+        $(document).ready(function() {
+            addNewColorRow(initialSavedData);
+            // First row represents the main order being edited, we can visually distinguish it if necessary.
+            // Also hide its delete button to prevent deleting the order being edited.
+            setTimeout(function() {
+                var firstCard = $('.color-card').first();
+                if (firstCard.length > 0) {
+                    firstCard.find('.btn-remove-color-row').hide();
+                }
+            }, 100);
+        });
+        function renderCardCheckboxes($card, templateName, activeSizes = null) {
             var sizes = sizeTemplates[templateName] || [];
-            var activeSizes = getCardActiveSizes($card);
             var html = "";
             sizes.forEach(function(s) {
-                var isChecked = activeSizes.includes(s) ? "checked" : (activeSizes.length === 0 ? "checked" : "");
+                var isChecked = (activeSizes && activeSizes.includes(s)) || (!activeSizes) ? "checked" : "";
                 html += `<label style="display:flex; align-items:center; gap:4px; font-size:0.8rem; font-weight:600; cursor:pointer; user-select:none; background:#ffffff; padding:2px 6px; border-radius:4px; border:1px solid #cbd5e1;"><input type="checkbox" class="card-size-cb" value="` + s + `" ` + isChecked + ` style="cursor:pointer;" /> ` + s + `</label>`;
             });
             $card.find('.card-size-checkboxes').html(html);
@@ -1174,7 +1027,7 @@
             return activeSizes;
         }
 
-        function renderCardTables($card) {
+        function renderCardTables($card, presetData = null) {
             var activeSizes = getCardActiveSizes($card);
             var $tablesContainer = $card.find('.color-tables');
             
@@ -1184,31 +1037,34 @@
             }
             
             var rId = $card.data('rid');
-            var oSizes = {};
-            $card.find('.open-size').each(function() { 
-                var v = $(this).val();
-                if (v) oSizes[$(this).data('size')] = v; 
-            });
-            var aSizes = {};
-            $card.find('.asorti-size').each(function() { 
-                var v = $(this).val();
-                if (v) aSizes[$(this).data('size')] = v; 
-            });
+            var oSizes = presetData ? (presetData.openSizes || {}) : {};
+            if (!presetData) {
+                $card.find('.open-size').each(function() { 
+                    var v = $(this).val();
+                    if (v) oSizes[$(this).data('size')] = v; 
+                });
+            }
+            var aSizes = presetData ? (presetData.asortiSizes || {}) : {};
+            if (!presetData) {
+                $card.find('.asorti-size').each(function() { 
+                    var v = $(this).val();
+                    if (v) aSizes[$(this).data('size')] = v; 
+                });
+            }
             
-            var openSpecialCode = $card.find('.row-open-special-code').val() || "";
-            var openColorCode = $card.find('.row-open-color-code').val() || "";
-            var inspectionDate = $card.find('.row-inspection-date').val() || "";
+            var openSpecialCode = presetData ? (presetData.openSpecialCode || "") : ($card.find('.row-open-special-code').val() || "");
+            var openColorCode = presetData ? (presetData.openColorCode || "") : ($card.find('.row-open-color-code').val() || "");
+            var inspectionDate = presetData ? (presetData.inspectionDate || "") : ($card.find('.row-inspection-date').val() || "");
             
-            var asortiSpecialCode = $card.find('.row-asorti-special-code').val() || "";
-            var asortiColorCode = $card.find('.row-asorti-color-code').val() || "";
-            var asortiInspectionDate = $card.find('.row-asorti-inspection-date').val() || "";
-            var asortiCount = $card.find('.row-asorti-count').val() || "0";
+            var asortiSpecialCode = presetData ? (presetData.asortiSpecialCode || "") : ($card.find('.row-asorti-special-code').val() || "");
+            var asortiColorCode = presetData ? (presetData.asortiColorCode || "") : ($card.find('.row-asorti-color-code').val() || "");
+            var asortiInspectionDate = presetData ? (presetData.asortiInspectionDate || "") : ($card.find('.row-asorti-inspection-date').val() || "");
+            var asortiCount = presetData ? (presetData.asortiCount || "0") : ($card.find('.row-asorti-count').val() || "0");
 
             var sizeCount = activeSizes.length;
             var thAcik = `
             <tr>
                 <th rowspan="2" style="width:110px; min-width:110px; vertical-align:middle; text-align:center;">Özel Kod</th>
-                <th rowspan="2" style="width:110px; min-width:110px; vertical-align:middle; text-align:center;">Özel Renk K.</th>
                 <th rowspan="2" style="width:140px; min-width:140px; vertical-align:middle; text-align:center;">Inspection (Termin)</th>
                 <th colspan="${sizeCount}" style="text-align:center; border-bottom:1px solid #bae6fd;">Açık Adet</th>
                 <th rowspan="2" style="width:90px; min-width:90px; vertical-align:middle; text-align:center; color:#0284c7;">Toplam Adet</th>
@@ -1216,7 +1072,6 @@
             var thAsorti = `
             <tr>
                 <th rowspan="2" style="width:110px; min-width:110px; vertical-align:middle; text-align:center;">Özel Kod</th>
-                <th rowspan="2" style="width:110px; min-width:110px; vertical-align:middle; text-align:center;">Özel Renk K.</th>
                 <th rowspan="2" style="width:140px; min-width:140px; vertical-align:middle; text-align:center;">Inspection (Termin)</th>
                 <th colspan="${sizeCount}" style="text-align:center; border-bottom:1px solid #bbf7d0;">Asorti Adet</th>
                 <th rowspan="2" style="width:90px; min-width:90px; vertical-align:middle; text-align:center;">Top. Asorti Sayısı</th>
@@ -1246,7 +1101,6 @@
                 <tbody>
                     <tr class="acik-row" data-rid="${rId}">
                         <td><input type="text" class="form-control form-control-sm row-open-special-code" placeholder="Örn: ACK" value="${openSpecialCode}" /></td>
-                        <td><input type="text" class="form-control form-control-sm row-open-color-code" placeholder="Örn: R-01" value="${openColorCode}" /></td>
                         <td><input type="date" class="form-control form-control-sm row-inspection-date" value="${inspectionDate}" /></td>
                         ${trAcikSizesHtml}
                         <td style="vertical-align:middle; text-align:center; font-weight:800; color:#0284c7; font-size:0.95rem;" class="row-acik-total">0</td>
@@ -1258,7 +1112,6 @@
                 <tbody>
                     <tr class="asorti-row" data-rid="${rId}">
                         <td><input type="text" class="form-control form-control-sm row-asorti-special-code" placeholder="Örn: ASR" value="${asortiSpecialCode}" /></td>
-                        <td><input type="text" class="form-control form-control-sm row-asorti-color-code" placeholder="Örn: R-01" value="${asortiColorCode}" /></td>
                         <td><input type="date" class="form-control form-control-sm row-asorti-inspection-date" value="${asortiInspectionDate}" /></td>
                         ${trAsortiSizesHtml}
                         <td style="vertical-align:middle; text-align:center; font-weight:700; color:#475569;" class="row-asorti-ratio-total">0</td>
@@ -1330,6 +1183,40 @@
             </div>
             `;
             $('#colorsContainer').append(cardHtml);
+            
+            var $card = $('.color-card[data-rid="' + rId + '"]');
+            $card.find('.row-color').select2({ width: '100%' });
+            
+            if (savedData) {
+                if(savedData.color) {
+                    var $col = $card.find('.row-color');
+                    if ($col.find('option[value="'+savedData.color+'"]').length === 0) {
+                        $col.append(new Option(savedData.color, savedData.color, true, true)).trigger('change');
+                    } else {
+                        $col.val(savedData.color).trigger('change');
+                    }
+                }
+                if(savedData.fabricator) {
+                    var $fab = $card.find('.row-fabricator');
+                    if ($fab.find('option[value="'+savedData.fabricator+'"]').length === 0) {
+                        $fab.append('<option value="'+savedData.fabricator+'">'+savedData.fabricator+'</option>');
+                    }
+                    $fab.val(savedData.fabricator);
+                }
+                if(savedData.unitPrice) $card.find('.row-unit-price').val(savedData.unitPrice);
+                if(savedData.revisedInspectionDate) $card.find('.row-revised-inspection-date').val(savedData.revisedInspectionDate);
+                
+                if (savedData.templateId) {
+                    $card.find('.card-size-template').val(savedData.templateId);
+                    
+                    var allSizes = [];
+                    if(savedData.openSizes) { Object.keys(savedData.openSizes).forEach(s => { if(!allSizes.includes(s)) allSizes.push(s); }); }
+                    if(savedData.asortiSizes) { Object.keys(savedData.asortiSizes).forEach(s => { if(!allSizes.includes(s)) allSizes.push(s); }); }
+                    
+                    renderCardCheckboxes($card, savedData.templateId, allSizes.length > 0 ? allSizes : null);
+                    renderCardTables($card, savedData);
+                }
+            }
         }
 
         $(document).on('change', '.card-size-template', function() {
@@ -1366,8 +1253,7 @@
             }
         });
 
-        $(document).on('input', '.size-input, .row-asorti-count', function() {
-            var rId = $(this).closest('tr').data('rid');
+        function calcRowTotal(rId) {
             var $acikRow = $('.acik-row[data-rid="' + rId + '"]');
             var $asortiRow = $('.asorti-row[data-rid="' + rId + '"]');
             
@@ -1384,6 +1270,11 @@
             var asortiTotal = asortiRatioTotal * asortiMultiplier;
             $asortiRow.find('.row-asorti-total').text(asortiTotal);
             $('.color-card[data-rid="' + rId + '"]').find('.card-summary-asorti').text(asortiTotal);
+        }
+
+        $(document).on('input', '.size-input, .row-asorti-count', function() {
+            var rId = $(this).closest('tr').data('rid');
+            calcRowTotal(rId);
         });
 
         function getSavedRowsData() {

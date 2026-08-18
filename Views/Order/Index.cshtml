@@ -470,7 +470,7 @@
             <!-- Top Section Layout -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
 
-                <!-- Sol Kolon: Genel Bilgiler ve Görsel -->
+                <!-- Sol Kolon: Genel Bilgiler -->
                 <div style="display: flex; flex-direction: column; gap: 24px;">
                     <!-- Genel & Ürün Bilgileri Kartı -->
                     <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
@@ -499,8 +499,8 @@
                                 <strong id="detCustomer" style="color: var(--text-main);">LC Waikiki</strong>
                             </div>
                             <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px;">
-                                <span style="color: var(--text-muted);"><i class="fa-solid fa-map-location-dot" style="margin-right: 8px; width: 14px;"></i>Teslim Yeri</span>
-                                <strong id="detDeliveryPlace" style="color: var(--text-main);">...</strong>
+                                <span style="color: var(--text-muted);"><i class="fa-solid fa-cloud-sun" style="margin-right: 8px; width: 14px;"></i>Sezon</span>
+                                <strong id="detSeason" style="color: var(--text-main);">...</strong>
                             </div>
                             <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px;">
                                 <span style="color: var(--text-muted);"><i class="fa-solid fa-tag" style="margin-right: 8px; width: 14px;"></i>Birim Fiyatı</span>
@@ -516,25 +516,18 @@
                             </div>
                         </div>
                     </div>
+                </div>
 
+                <!-- Sağ Kolon: Sipariş Görseli -->
+                <div style="display: flex; flex-direction: column; gap: 24px;">
                     <!-- Sipariş Görseli -->
-                    <div id="detOrderImageSection" style="display: none; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); text-align: center; flex-direction: column;">
+                    <div id="detOrderImageSection" style="display: none; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); text-align: center; flex-direction: column; height: 100%;">
                         <h4 style="margin: 0 0 16px 0; font-size: 1rem; color: var(--primary-color); font-weight: 600; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; text-align: left;">
                             <i class="fa-solid fa-image" style="margin-right: 6px;"></i> Sipariş Görseli
                         </h4>
-                        <a id="detOrderImageLinkFull" href="#" target="_blank" style="display: flex; align-items: center; justify-content: center;">
-                            <img id="detOrderImagePreviewFull" src="" style="max-height: 250px; max-width: 100%; object-fit: contain; border-radius: 8px; border: 1px solid #cbd5e1; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" title="Büyütmek için tıklayın" />
+                        <a id="detOrderImageLinkFull" href="#" target="_blank" style="display: flex; align-items: center; justify-content: center; height: 100%; min-height: 250px;">
+                            <img id="detOrderImagePreviewFull" src="" style="max-height: 350px; max-width: 100%; object-fit: contain; border-radius: 8px; border: 1px solid #cbd5e1; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" title="Büyütmek için tıklayın" />
                         </a>
-                    </div>
-                </div>
-
-                <!-- Sağ Kolon: Aksesuarlar -->
-                <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
-                    <h4 style="margin: 0 0 16px 0; font-size: 1rem; color: var(--primary-color); font-weight: 600; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
-                        <i class="fa-solid fa-tags" style="margin-right: 6px;"></i> Aksesuar ve Model Detayları
-                    </h4>
-                    <div style="display: grid; grid-template-columns: 1fr; gap: 12px; font-size: 0.9rem;" id="detAccessoriesContainer">
-                        <!-- JS ile doldurulacak -->
                     </div>
                 </div>
             </div>
@@ -558,6 +551,16 @@
                     <div id="detTimelineContainer" style="display: flex; gap: 30px; min-width: max-content; position: relative; padding-top: 30px; padding-bottom: 20px;">
                         <!-- JS ile doldurulacak -->
                     </div>
+                </div>
+            </div>
+
+            <!-- Aksesuar ve Model Detayları Kartı -->
+            <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); margin-bottom: 24px;">
+                <h4 style="margin: 0 0 16px 0; font-size: 1rem; color: var(--primary-color); font-weight: 600; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
+                    <i class="fa-solid fa-tags" style="margin-right: 6px;"></i> Aksesuar ve Model Detayları
+                </h4>
+                <div style="display: grid; grid-template-columns: 1fr; gap: 12px; font-size: 0.9rem;" id="detAccessoriesContainer">
+                    <!-- JS ile doldurulacak -->
                 </div>
             </div>
 
@@ -1333,12 +1336,12 @@
                                     $("#detOrderDate").html(formatDetailDate(order.orderDate));
                                     $("#detPlannedPackagingEndDate").html(formatDetailDate(order.plannedPackagingEndDate));
                                     
-                                    var revizeTerminDet = "";
-                                    if (order.productionJson) {
+                                    var revizeTerminDet = order.revisedInspectionDate || "";
+                                    if (!revizeTerminDet && order.productionJson) {
                                         try {
                                             var prodJsonDet = JSON.parse(order.productionJson);
-                                            if (prodJsonDet) {
-                                                revizeTerminDet = prodJsonDet["prod_knn_revize_termin"] || "";
+                                            if (prodJsonDet && prodJsonDet["prod_knn_revize_termin"]) {
+                                                revizeTerminDet = prodJsonDet["prod_knn_revize_termin"];
                                             }
                                         } catch(e) {}
                                     }
@@ -1347,7 +1350,7 @@
                                     $("#detColor").text(order.color || "-");
                                     $("#detBrand").text(order.brand || "-");
                                     $("#detCustomer").text(order.customer || "LC Waikiki");
-                                    $("#detDeliveryPlace").text(order.deliveryPlace || "-");
+                                    $("#detSeason").text(order.season || "-");
                                     $("#detDescription").text(order.goodsDescription || "-");
                                     $("#detUnitPrice").html(formatCurrency(order.unitPrice || order.componentUnitPrice));
                                     $("#detQuantity").text((order.quantity || 0).toLocaleString('tr-TR') + " Adet");
@@ -1490,9 +1493,9 @@ tableHtml += '<th style="padding: 8px; border-left: 1px solid var(--border-color
                                         });
                                     }
                                     // Kumaş Süreci
-                                    addTl("sample_bulk_kumas_onayi", "sample", "Bulk Kumaş Onayı", "fa-check-circle", "#8b5cf6", getSD("sample_bulk_kumas_onayi"), getSD("sample_bulk_kumas_onayi_actual"));
-                                    addTl("sample_test_numune_gelis", "sample", "Test/Numune Kumaş", "fa-box-open", "#8b5cf6", getSD("sample_test_numune_gelis"), getSD("sample_test_numune_gelis_actual"));
-                                    addTl("sample_elyaf_test", "sample", "Kumaş Elyaf Testi", "fa-microscope", "#8b5cf6", getSD("sample_elyaf_test"), getSD("sample_elyaf_test_actual"));
+                                    addTl("sample_bulk_kumas", "sample", "Bulk Kumaş Onayı", "fa-check-circle", "#8b5cf6", getSD("sample_bulk_kumas"), getSD("sample_bulk_kumas_actual"));
+                                    addTl("sample_test_numune_kumas", "sample", "Test/Numune Kumaş", "fa-box-open", "#8b5cf6", getSD("sample_test_numune_kumas"), getSD("sample_test_numune_kumas_actual"));
+                                    addTl("sample_kumas_elyaf_test", "sample", "Kumaş Elyaf Testi", "fa-microscope", "#8b5cf6", getSD("sample_kumas_elyaf_test"), getSD("sample_kumas_elyaf_test_actual"));
                                     addTl("sample_kumas_sevk", "sample", "Kumaş Sevk", "fa-truck-fast", "#8b5cf6", getSD("sample_kumas_sevk"), getSD("sample_kumas_sevk_actual"));
 
                                     // Numune Süreci
@@ -1505,6 +1508,8 @@ tableHtml += '<th style="padding: 8px; border-left: 1px solid var(--border-color
 
                                     // Üretim Süreci
                                     addTl("prod_kumas_gelis_tarihi", "prod", "Kumaş Gelişi", "fa-truck", "#3b82f6", getPD("prod_kumas_gelis_tarihi"), getPD("prod_kumas_gelis_tarihi_actual"));
+                                    addTl("prod_kumas_lot_farki", "prod", "Kumaş Lot Farkı", "fa-layer-group", "#3b82f6", getPD("prod_kumas_lot_farki"), getPD("prod_kumas_lot_farki_actual"));
+                                    addTl("prod_yikama_cekme", "prod", "Yıkama Çekme", "fa-water", "#3b82f6", getPD("prod_yikama_cekme"), getPD("prod_yikama_cekme_actual"));
                                     addTl("prod_kesim_baslangic", "prod", "Kesim Başlangıç", "fa-scissors", "#3b82f6", getPD("prod_kesim_baslangic"), getPD("prod_kesim_baslangic_actual"));
                                     addTl("prod_kesim_bitis", "prod", "Kesim Bitiş", "fa-check-double", "#3b82f6", getPD("prod_kesim_bitis"), getPD("prod_kesim_bitis_actual"));
                                     addTl("prod_dikim_baslangic", "prod", "Dikim Başlangıç", "fa-mitten", "#3b82f6", getPD("prod_dikim_baslangic"), getPD("prod_dikim_baslangic_actual"));

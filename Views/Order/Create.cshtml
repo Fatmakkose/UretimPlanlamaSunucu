@@ -423,8 +423,8 @@
         </div>
 
         <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 12px;">
-            <a href="@(string.IsNullOrEmpty(ViewBag.ReturnUrl as string) ? "/Order/Index" : ViewBag.ReturnUrl)" class="btn-secondary" style="padding: 10px 20px; text-decoration:none;">İptal</a>
-            <button type="button" id="btnSubmitOrder" class="btn-planner" style="padding: 10px 24px;"><i class="fa-solid fa-save"></i> Siparişi Kaydet ve Plana Al</button>
+            <button type="button" onclick="redirectToIndex()" class="btn-secondary" style="padding: 10px 20px; text-decoration:none;">İptal</button>
+            <button type="button" id="btnSubmitOrder" class="btn-planner" style="padding: 10px 24px;"><i class="fa-solid fa-save"></i> Siparişi Kaydet</button>
         </div>
 
 
@@ -817,11 +817,7 @@
 
             // Otomatik Aksesuar Ekleme (2 Düğme, İç Barkod, Yıkama Talimatı, Fiyat Kartı)
             function addDefaultAccessories() {
-                var btnCount = 0;
-                var hasAddedIcBarkod = false;
-                var hasAddedYikamaTalimati = false;
-                var hasAddedFiyatKarti = false;
-                var added = false;
+                var itemsToAdd = [];
 
                 // Türkçe karakter güvenli küçük harf dönüşümü
                 function trLower(str) {
@@ -832,44 +828,42 @@
                         .replace(/ç/g, 'c');
                 }
 
-                stokKartlariList.forEach(function(s) {
+                var icBarkodStok = stokKartlariList.find(s => {
                     var name = trLower(s.StokAdi);
-                    
-                    if ((name.includes("ic barkod") || name.includes("barkod")) && !hasAddedIcBarkod && !name.includes("etiket")) {
-                        addStockMaterialRow(s.Id);
-                        hasAddedIcBarkod = true;
-                        added = true;
-                    }
-                    else if ((name.includes("yikama talimati") || name.includes("yikama")) && !hasAddedYikamaTalimati) {
-                        addStockMaterialRow(s.Id);
-                        hasAddedYikamaTalimati = true;
-                        added = true;
-                    }
-                    else if ((name.includes("fiyat karti") || name.includes("fiyat kart")) && !hasAddedFiyatKarti) {
-                        addStockMaterialRow(s.Id);
-                        hasAddedFiyatKarti = true;
-                        added = true;
-                    }
-                    else if ((name.includes("dugme") || name.includes("dügme")) && btnCount < 2) {
-                        addStockMaterialRow(s.Id);
-                        btnCount++;
-                        added = true;
-                    }
+                    return (name.includes("ic barkod") || name.includes("barkod")) && !name.includes("etiket");
+                });
+                if (icBarkodStok) itemsToAdd.push(icBarkodStok.Id);
+                
+                var yikamaStok = stokKartlariList.find(s => {
+                    var name = trLower(s.StokAdi);
+                    return (name.includes("yikama talimati") || name.includes("yikama"));
+                });
+                if (yikamaStok) itemsToAdd.push(yikamaStok.Id);
+                
+                var fiyatKartiStok = stokKartlariList.find(s => {
+                    var name = trLower(s.StokAdi);
+                    return (name.includes("fiyat karti") || name.includes("fiyat kart"));
+                });
+                if (fiyatKartiStok) itemsToAdd.push(fiyatKartiStok.Id);
+
+                // Düğmeleri alt alta gelecek şekilde birlikte ekleyelim
+                var dugmeler = stokKartlariList.filter(s => {
+                    var name = trLower(s.StokAdi);
+                    return name.includes("dugme") || name.includes("dügme");
                 });
                 
-                // Eğer yeterli düğme bulunamadıysa ama herhangi bir düğme varsa 2'ye tamamla
-                if (btnCount === 1) {
-                    var btnStok = stokKartlariList.find(s => {
-                        var n = trLower(s.StokAdi);
-                        return n.includes("dugme") || n.includes("dügme");
-                    });
-                    if (btnStok) {
-                        addStockMaterialRow(btnStok.Id);
-                        btnCount++;
+                if (dugmeler.length > 0) {
+                    itemsToAdd.push(dugmeler[0].Id);
+                    if (dugmeler.length > 1) {
+                        itemsToAdd.push(dugmeler[1].Id);
+                    } else {
+                        itemsToAdd.push(dugmeler[0].Id); // Aynı düğmeden 2 adet isteniyor
                     }
                 }
 
-                if (added) {
+                itemsToAdd.forEach(id => addStockMaterialRow(id));
+
+                if (itemsToAdd.length > 0) {
                     $("#materialsSectionWrapper").show();
                 }
             }
@@ -900,7 +894,6 @@
                 var thAcik = `
                 <tr>
                     <th rowspan="2" style="width:110px; min-width:110px; vertical-align:middle; text-align:center;">Özel Kod</th>
-                    <th rowspan="2" style="width:110px; min-width:110px; vertical-align:middle; text-align:center;">Özel Renk K.</th>
                     <th rowspan="2" style="width:140px; min-width:140px; vertical-align:middle; text-align:center;">Inspection (Termin)</th>
                     <th colspan="${sizeCount}" style="text-align:center; border-bottom:1px solid #bae6fd;">Açık Adet</th>
                     <th rowspan="2" style="width:90px; min-width:90px; vertical-align:middle; text-align:center; color:#0284c7;">Toplam Adet</th>
@@ -910,7 +903,6 @@
                 var thAsorti = `
                 <tr>
                     <th rowspan="2" style="width:110px; min-width:110px; vertical-align:middle; text-align:center;">Özel Kod</th>
-                    <th rowspan="2" style="width:110px; min-width:110px; vertical-align:middle; text-align:center;">Özel Renk K.</th>
                     <th rowspan="2" style="width:140px; min-width:140px; vertical-align:middle; text-align:center;">Inspection (Termin)</th>
                     <th colspan="${sizeCount}" style="text-align:center; border-bottom:1px solid #bbf7d0;">Asorti Adet</th>
                     <th rowspan="2" style="width:90px; min-width:90px; vertical-align:middle; text-align:center;">Top. Asorti Sayısı</th>
@@ -1024,7 +1016,6 @@
                                 <tbody>
                                     <tr class="acik-row" data-rid="${rId}">
                                         <td><input type="text" class="form-control form-control-sm row-open-special-code" placeholder="Örn: ACK" value="${openSpecialCode}" /></td>
-                                        <td><input type="text" class="form-control form-control-sm row-open-color-code" placeholder="Örn: R-01" value="${openColorCode}" /></td>
                                         <td><input type="date" class="form-control form-control-sm row-inspection-date" value="${inspectionDate}" /></td>
                                         ${trAcikSizesHtml}
                                         <td style="vertical-align:middle; text-align:center; font-weight:800; color:#0284c7; font-size:0.95rem;" class="row-acik-total">0</td>
@@ -1039,7 +1030,6 @@
                                 <tbody>
                                     <tr class="asorti-row" data-rid="${rId}">
                                         <td><input type="text" class="form-control form-control-sm row-asorti-special-code" placeholder="Örn: ASR" value="${asortiSpecialCode}" /></td>
-                                        <td><input type="text" class="form-control form-control-sm row-asorti-color-code" placeholder="Örn: R-01" value="${asortiColorCode}" /></td>
                                         <td><input type="date" class="form-control form-control-sm row-asorti-inspection-date" value="${asortiInspectionDate}" /></td>
                                         ${trAsortiSizesHtml}
                                         <td style="vertical-align:middle; text-align:center; font-weight:700; color:#475569;" class="row-asorti-ratio-total">0</td>
@@ -1066,6 +1056,7 @@
                 }
 
                 $('#colorsContainer').append($card);
+                $card.find('.row-color').select2({ width: '100%' });
                 
                 calcRowTotal(rId);
             }
@@ -1133,11 +1124,11 @@
                 $card.find('.thead-acik').html(thData.thAcik);
                 $card.find('.thead-asorti').html(thData.thAsorti);
 
-                $acikRow.find('td').slice(3, -1).remove();
-                $(trAcikSizesHtml).insertAfter($acikRow.find('td').eq(2));
+                $acikRow.find('td').slice(2, -1).remove();
+                $(trAcikSizesHtml).insertAfter($acikRow.find('td').eq(1));
 
-                $asortiRow.find('td').slice(3, -3).remove();
-                $(trAsortiSizesHtml).insertAfter($asortiRow.find('td').eq(2));
+                $asortiRow.find('td').slice(2, -3).remove();
+                $(trAsortiSizesHtml).insertAfter($asortiRow.find('td').eq(1));
 
                 calcRowTotal(rId);
             }
@@ -1411,7 +1402,7 @@
                         data: JSON.stringify(orders),
                         success: function(res) {
                             if (res.success) {
-                                window.location.href = '/Planning/Index';
+                                redirectToIndex();
                             } else {
                                 showToast("Hata: " + res.message, "danger");
                             }
@@ -1484,6 +1475,14 @@
 
             $("<style type='text/css'> .stock-material-row:hover { cursor: pointer; border-color: #94a3b8 !important; } .stok-detaylari { cursor: default; } </style>").appendTo("head");
         });
+
+        function redirectToIndex() {
+            if (window.parent && window.parent.closeGenericIframeModal) {
+                window.parent.location.reload();
+            } else {
+                window.location.href = '@Html.Raw(string.IsNullOrEmpty(ViewBag.ReturnUrl as string) ? "/Order/Index" : ViewBag.ReturnUrl)';
+            }
+        }
     </script>
 }
 

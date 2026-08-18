@@ -525,9 +525,6 @@
                 <button class="btn" style="background: #ffffff; color: #475569; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 24px; font-weight: 600; font-size: 0.95rem; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); transition: all 0.3s ease; display: inline-flex; align-items: center;" onmouseover="this.style.background='#f8fafc'; this.style.borderColor='#94a3b8'; this.style.color='#0f172a'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='#ffffff'; this.style.borderColor='#cbd5e1'; this.style.color='#475569'; this.style.transform='translateY(0)';" onclick="printDispatchSlip()">
                     <i class="fa-solid fa-print" style="margin-right: 6px;"></i> Çıkış Fişi Yazdır
                 </button>
-                <button class="btn" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border: none; border-radius: 8px; padding: 10px 24px; font-weight: 600; font-size: 0.95rem; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2), 0 2px 4px -1px rgba(37, 99, 235, 0.1); transition: all 0.3s ease; display: inline-flex; align-items: center;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 8px -1px rgba(37, 99, 235, 0.3), 0 4px 6px -1px rgba(37, 99, 235, 0.2)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px -1px rgba(37, 99, 235, 0.2), 0 2px 4px -1px rgba(37, 99, 235, 0.1)';" onclick="processSevkExit()">
-                    Kaydet ve Devam Et <i class="fa-solid fa-arrow-right" style="margin-left: 8px;"></i>
-                </button>
             </div>
 
 <style>
@@ -733,7 +730,6 @@
                     <div>
                         <h5 style="margin: 0 0 8px 0; color: #1e293b; font-weight: 700; font-size: 1.1rem;"><i class="fa-solid fa-shirt" style="margin-right: 8px; color: #3b82f6;"></i>Açık Adet Kesim Takibi</h5>
                     </div>
-                    <button class="btn btn-outline-primary btn-sm" onclick="openComparisonReport('AcikAdet')" style="font-weight: 600;"><i class="fa-solid fa-chart-bar" style="margin-right: 4px;"></i> Karşılaştırma Raporu</button>
                 </div>
                 
                 <div class="table-responsive" style="width: 100%; overflow-x: auto;">
@@ -775,6 +771,9 @@
                         </tfoot>
                     </table>
                 </div>
+                <div style="display: flex; justify-content: flex-end; margin-top: 12px;">
+                    <button class="btn btn-outline-primary btn-sm" onclick="openComparisonReport('AcikAdet')" style="font-weight: 600;"><i class="fa-solid fa-chart-bar" style="margin-right: 4px;"></i> Karşılaştırma Raporu</button>
+                </div>
             </div>
             
             <!-- ASORTİ KESİM TABLOSU -->
@@ -783,7 +782,6 @@
                     <div>
                         <h5 style="margin: 0 0 8px 0; color: #1e293b; font-weight: 700; font-size: 1.1rem;"><i class="fa-solid fa-layer-group" style="margin-right: 8px; color: #3b82f6;"></i>Asorti Kesim Takibi</h5>
                     </div>
-                    <button class="btn btn-outline-primary btn-sm" onclick="openComparisonReport('Asorti')" style="font-weight: 600;"><i class="fa-solid fa-chart-bar" style="margin-right: 4px;"></i> Karşılaştırma Raporu</button>
                 </div>
                 
                 <div class="table-responsive" style="width: 100%; overflow-x: auto;">
@@ -826,6 +824,9 @@
                         </tfoot>
                     </table>
                 </div>
+                <div style="display: flex; justify-content: flex-end; margin-top: 12px;">
+                    <button class="btn btn-outline-primary btn-sm" onclick="openComparisonReport('Asorti')" style="font-weight: 600;"><i class="fa-solid fa-chart-bar" style="margin-right: 4px;"></i> Karşılaştırma Raporu</button>
+                </div>
             </div>
 
             <div style="background: #f8fafc; padding: 16px 24px; border-radius: 6px; margin-bottom: 24px; margin-top: 24px; display: flex; justify-content: flex-end; align-items: center; gap: 12px; border: 1px solid #cbd5e1;">
@@ -833,8 +834,8 @@
                 <span id="grandTotalCut" style="font-size: 1.3rem; color: #0f172a; font-weight: 900; background: #ffffff; border: 1px solid #cbd5e1; padding: 4px 16px; border-radius: 4px; min-width: 80px; text-align: center;">0</span>
             </div>
 
-            <div class="text-end" style="display: flex; justify-content: flex-end; gap: 8px;">
-                <button class="btn btn-success" onclick="finishCutting()" style="font-weight: 700; padding: 10px 24px; font-size: 1.05rem;"><i class="fa-solid fa-check-double"></i> Kesim Aşamasını Bitir ve Tamamla</button>
+            <div id="finishCuttingContainer" class="text-end" style="display: flex; justify-content: flex-end; gap: 8px;">
+                <button id="btnFinishCutting" class="btn btn-success" onclick="finishCutting()" style="font-weight: 700; padding: 10px 24px; font-size: 1.05rem;"><i class="fa-solid fa-check-double"></i> Kesim Aşamasını Bitir ve Tamamla</button>
             </div>
         </div>
 
@@ -975,7 +976,6 @@
                             <th style="border: 1px solid black; padding: 8px;">ÖZEL KOD</th>
                             <th style="border: 1px solid black; padding: 8px;">RENK ADI</th>
                             <th style="border: 1px solid black; padding: 8px;">MODEL ADI</th>
-                            <th style="border: 1px solid black; padding: 8px;">RENK KODU</th>
                             <th style="border: 1px solid black; padding: 8px;">KOLİ SAYISI</th>
                             <th style="border: 1px solid black; padding: 8px;">BEDEN-YAŞ</th>
                             <th style="border: 1px solid black; padding: 8px;">KOLİ İÇİ ADET</th>
@@ -1015,8 +1015,7 @@
                                     <td class="mergeable-cell" data-col="2" onclick="toggleMergeSelection(this)" style="border: 1px solid black; padding: 8px; font-weight: bold; cursor: pointer;">@openSpecialCode</td>
                                     <td class="mergeable-cell" data-col="3" onclick="toggleMergeSelection(this)" style="border: 1px solid black; padding: 8px; font-weight: bold; cursor: pointer;">@Model.Color</td>
                                     <td class="mergeable-cell" data-col="4" onclick="toggleMergeSelection(this)" style="border: 1px solid black; padding: 8px; font-weight: bold; cursor: pointer;">@Model.ModelName</td>
-                                    <td class="mergeable-cell" data-col="5" onclick="toggleMergeSelection(this)" style="border: 1px solid black; padding: 8px; font-weight: bold; cursor: pointer;"></td>
-                                    <td class="mergeable-cell" data-col="6" onclick="toggleMergeSelection(this)" style="border: 1px solid black; padding: 8px; font-weight: bold; background-color: #fefce8; cursor: pointer;" contenteditable="true" title="Manuel düzenleyebilirsiniz / Seçmek için tıklayın"></td>
+                                    <td class="mergeable-cell" data-col="5" onclick="toggleMergeSelection(this)" style="border: 1px solid black; padding: 8px; font-weight: bold; background-color: #fefce8; cursor: pointer;" contenteditable="true" title="Manuel düzenleyebilirsiniz / Seçmek için tıklayın"></td>
                                     
                                     <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@kvp.Key</td>
                                     <td style="border: 1px solid black; padding: 8px; background-color: #fefce8; cursor: text;" contenteditable="true" title="Manuel düzenleyebilirsiniz"></td>
@@ -1030,7 +1029,6 @@
                                 <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@openSpecialCode</td>
                                 <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@Model.Color</td>
                                 <td style="border: 1px solid black; padding: 8px; font-weight: bold;">@Model.ModelName</td>
-                                <td style="border: 1px solid black; padding: 8px;"></td>
                                 <td style="border: 1px solid black; padding: 8px; background-color: #fefce8; cursor: text;" contenteditable="true" title="Manuel düzenleyebilirsiniz"></td>
                                 <td style="border: 1px solid black; padding: 8px; font-weight: bold;">-</td>
                                 <td style="border: 1px solid black; padding: 8px; background-color: #fefce8; cursor: text;" contenteditable="true" title="Manuel düzenleyebilirsiniz"></td>
@@ -1038,12 +1036,12 @@
                             </tr>
                         }
                         <tr>
-                            <td colspan="6" style="border: 1px solid black;"></td>
+                            <td colspan="5" style="border: 1px solid black;"></td>
                             <td colspan="2" style="border: 1px solid black; padding: 8px; text-align: right; font-weight: bold;">TOPLAM ADET</td>
                             <td colspan="2" style="border: 1px solid black; padding: 8px; font-weight: bold;">@(toplamAcikAdet > 0 ? toplamAcikAdet.ToString("N0") : "")</td>
                         </tr>
                         <tr>
-                            <td colspan="6" style="border: 1px solid black;"></td>
+                            <td colspan="5" style="border: 1px solid black;"></td>
                             <td colspan="2" style="border: 1px solid black; padding: 8px; text-align: right; font-weight: bold;">TOPLAM KOLİ SAYISI</td>
                             <td colspan="2" style="border: 1px solid black; padding: 8px; font-weight: bold; background-color: #fefce8; cursor: text;" contenteditable="true" title="Manuel düzenleyebilirsiniz"></td>
                         </tr>
@@ -1127,9 +1125,9 @@
                 }
 
                 // Kumaş Süreci
-                AddTimelineItem("sample_bulk_kumas_onayi", "sample", "Bulk Kumaş Onayı", "fa-check-circle", "#8b5cf6", GetSD("sample_bulk_kumas_onayi"), GetSD("sample_bulk_kumas_onayi_actual"));
-                AddTimelineItem("sample_test_numune_gelis", "sample", "Test/Numune Kumaş", "fa-box-open", "#8b5cf6", GetSD("sample_test_numune_gelis"), GetSD("sample_test_numune_gelis_actual"));
-                AddTimelineItem("sample_elyaf_test", "sample", "Kumaş Elyaf Testi", "fa-microscope", "#8b5cf6", GetSD("sample_elyaf_test"), GetSD("sample_elyaf_test_actual"));
+                AddTimelineItem("sample_bulk_kumas", "sample", "Bulk Kumaş Onayı", "fa-check-circle", "#8b5cf6", GetSD("sample_bulk_kumas"), GetSD("sample_bulk_kumas_actual"));
+                AddTimelineItem("sample_test_numune_kumas", "sample", "Test/Numune Kumaş", "fa-box-open", "#8b5cf6", GetSD("sample_test_numune_kumas"), GetSD("sample_test_numune_kumas_actual"));
+                AddTimelineItem("sample_kumas_elyaf_test", "sample", "Kumaş Elyaf Testi", "fa-microscope", "#8b5cf6", GetSD("sample_kumas_elyaf_test"), GetSD("sample_kumas_elyaf_test_actual"));
                 AddTimelineItem("sample_kumas_sevk", "sample", "Kumaş Sevk", "fa-truck-fast", "#8b5cf6", GetSD("sample_kumas_sevk"), GetSD("sample_kumas_sevk_actual"));
 
                 // Numune Süreci
@@ -1142,6 +1140,8 @@
 
                 // Üretim Süreci
                 AddTimelineItem("prod_kumas_gelis_tarihi", "prod", "Kumaş Gelişi", "fa-truck", "#3b82f6", GetPD("prod_kumas_gelis_tarihi"), GetPD("prod_kumas_gelis_tarihi_actual"));
+                AddTimelineItem("prod_kumas_lot_farki", "prod", "Kumaş Lot Farkı", "fa-layer-group", "#3b82f6", GetPD("prod_kumas_lot_farki"), GetPD("prod_kumas_lot_farki_actual"));
+                AddTimelineItem("prod_yikama_cekme", "prod", "Yıkama Çekme", "fa-water", "#3b82f6", GetPD("prod_yikama_cekme"), GetPD("prod_yikama_cekme_actual"));
                 AddTimelineItem("prod_kesim_baslangic", "prod", "Kesim Başlangıç", "fa-scissors", "#3b82f6", GetPD("prod_kesim_baslangic"), GetPD("prod_kesim_baslangic_actual"));
                 AddTimelineItem("prod_kesim_bitis", "prod", "Kesim Bitiş", "fa-check-double", "#3b82f6", GetPD("prod_kesim_bitis"), GetPD("prod_kesim_bitis_actual"));
                 AddTimelineItem("prod_dikim_baslangic", "prod", "Dikim Başlangıç", "fa-mitten", "#3b82f6", GetPD("prod_dikim_baslangic"), GetPD("prod_dikim_baslangic_actual"));
@@ -1155,7 +1155,7 @@
                 AddTimelineItem("prod_depo_varis", "prod", "Depo Varış", "fa-warehouse", "#10b981", GetPD("prod_depo_varis"), GetPD("prod_depo_varis_actual"));
             }
 
-            <div class="horizontal-timeline-wrapper" style="overflow-x: auto; padding: 10px 10px; margin-bottom: 15px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; position: relative;">
+            <div id="timelineWrapper" class="horizontal-timeline-wrapper" style="overflow-x: auto; padding: 10px 10px; margin-bottom: 15px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; position: relative;">
                 <div style="display: flex; gap: 30px; min-width: max-content; position: relative; padding-top: 20px; padding-bottom: 10px;">
                     <!-- Arka plan çizgisi -->
                     <div style="position: absolute; height: 4px; background-color: #cbd5e1; top: 40px; left: 0; right: 0; border-radius: 2px; z-index: 0;"></div>
@@ -1210,11 +1210,7 @@
                                     </div>
                                     @if(item.ActualDate == null)
                                     {
-                                        string btnText = "Tamamlandı";
-                                        if (item.Id.EndsWith("_baslangic")) btnText = "Başladı";
-                                        else if (item.Id.EndsWith("_bitis")) btnText = "Bitti";
-                                        
-                                        <button class="btn w-100 mt-2" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; border-radius: 8px; font-size: 0.8rem; padding: 6px 10px; font-weight: 700; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3), 0 2px 4px -1px rgba(16, 185, 129, 0.2); transition: all 0.3s ease; display: inline-flex; align-items: center; justify-content: center;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 8px -1px rgba(16, 185, 129, 0.4), 0 4px 6px -1px rgba(16, 185, 129, 0.3)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px -1px rgba(16, 185, 129, 0.3), 0 2px 4px -1px rgba(16, 185, 129, 0.2)';" onclick="markTimelineCompleted('@item.Id', '@item.Type')"><i class="fa-solid fa-check-circle" style="margin-right: 6px; font-size: 1rem;"></i> @btnText</button>
+                                        <button class="btn w-100 mt-2" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; border-radius: 8px; font-size: 0.8rem; padding: 6px 10px; font-weight: 700; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3), 0 2px 4px -1px rgba(16, 185, 129, 0.2); transition: all 0.3s ease; display: inline-flex; align-items: center; justify-content: center;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 8px -1px rgba(16, 185, 129, 0.4), 0 4px 6px -1px rgba(16, 185, 129, 0.3)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px -1px rgba(16, 185, 129, 0.3), 0 2px 4px -1px rgba(16, 185, 129, 0.2)';" onclick="markTimelineCompleted('@item.Id', '@item.Type')"><i class="fa-solid fa-check-circle" style="margin-right: 6px; font-size: 1rem;"></i> Tamamlandı</button>
                                     }
                                 </div>
                             </div>
@@ -1602,6 +1598,14 @@
         }
 
         $(document).ready(function() {
+            var savedScroll = sessionStorage.getItem('timelineScrollPos');
+            if (savedScroll) {
+                var wrapper = document.getElementById('timelineWrapper');
+                if (wrapper) {
+                    wrapper.scrollLeft = parseInt(savedScroll, 10);
+                }
+                sessionStorage.removeItem('timelineScrollPos');
+            }
 
 
             renderCuttingTable();
@@ -1804,8 +1808,16 @@
         }
 
         // --- TIMELINE ---
-        function markTimelineCompleted(id, type) {
-            $.post('/ProcessTracking/MarkTimelineCompleted', { orderId: orderId, key: id, type: type }, function(res) {
+        function markTimelineCompleted(id, type, overrideDate = null) {
+            var wrapper = document.getElementById('timelineWrapper');
+            if (wrapper) {
+                sessionStorage.setItem('timelineScrollPos', wrapper.scrollLeft);
+            }
+            var data = { orderId: orderId, key: id, type: type };
+            if (overrideDate) {
+                data.overrideDate = overrideDate;
+            }
+            $.post('/ProcessTracking/MarkTimelineCompleted', data, function(res) {
                 if(res.success) {
                     showToast("Aşama tamamlandı olarak işaretlendi.", "success");
                     setTimeout(function() { 
@@ -1866,7 +1878,8 @@
         // editCuttingItem and cancelEdit moved below
 
         function calculateEdit() {
-            const multiplier = parseFloat($('#editMultiplier').val()) || 1;
+            let mVal = parseFloat($('#editMultiplier').val());
+            const multiplier = isNaN(mVal) ? 1 : mVal;
             let totalQty = 0;
             $('.edit-acik-input').each(function() {
                 const val = parseFloat($(this).val()) || 0;
@@ -1876,7 +1889,8 @@
         }
 
         function calculateEditAsorti() {
-            const multiplier = parseFloat($('#editMultiplier').val()) || 1;
+            let mVal = parseFloat($('#editMultiplier').val());
+            const multiplier = isNaN(mVal) ? 1 : mVal;
             let totalQty = 0;
             $('.edit-asorti-input').each(function() {
                 const asortiVal = parseFloat($(this).data('asortivalue')) || 0;
@@ -1886,7 +1900,8 @@
         }
         
         function calculateAcik() {
-            const multiplier = parseFloat($('#txtAcikMultiplier').val()) || 1;
+            let mVal = parseFloat($('#txtAcikMultiplier').val());
+            const multiplier = isNaN(mVal) ? 1 : mVal;
             
             let totalQty = 0;
             $('.acik-adet-input-row').each(function() {
@@ -1898,7 +1913,8 @@
         }
 
         function calculateAsorti() {
-            const multiplier = parseFloat($('#txtAsortiMultiplier').val()) || 1;
+            let mVal = parseFloat($('#txtAsortiMultiplier').val());
+            const multiplier = isNaN(mVal) ? 1 : mVal;
             
             let totalQty = 0;
             $('.asorti-input-row').each(function() {
@@ -1913,7 +1929,8 @@
         
         function saveAcikRow() {
             const date = $('#txtAcikDate').val();
-            const multiplier = parseFloat($('#txtAcikMultiplier').val()) || 1;
+            let mVal = parseFloat($('#txtAcikMultiplier').val());
+            const multiplier = isNaN(mVal) ? 1 : mVal;
             const markerLength = 0;
             const totalQty = parseFloat($('#txtAcikTotal').val()) || 0;
             const unitMeterage = 0;
@@ -1971,7 +1988,8 @@
 
         function saveAsortiRow() {
             const date = $('#txtAsortiDate').val();
-            const multiplier = parseFloat($('#txtAsortiMultiplier').val()) || 1;
+            let mVal = parseFloat($('#txtAsortiMultiplier').val());
+            const multiplier = isNaN(mVal) ? 1 : mVal;
             const markerLength = 0;
             const totalQty = parseFloat($('#txtAsortiTotal').val()) || 0;
             const unitMeterage = 0;
@@ -2026,7 +2044,8 @@
 
         function saveEditAcik(index) {
             const date = $('#editDate').val();
-            const multiplier = parseFloat($('#editMultiplier').val()) || 1;
+            let mVal = parseFloat($('#editMultiplier').val());
+            const multiplier = isNaN(mVal) ? 1 : mVal;
             const totalQty = parseFloat($('#editTotal').val()) || 0;
             const markerLength = 0;
             const unitMeterage = 0;
@@ -2080,7 +2099,8 @@
 
         function saveEditAsorti(index) {
             const date = $('#editDate').val();
-            const multiplier = parseFloat($('#editMultiplier').val()) || 1;
+            let mVal = parseFloat($('#editMultiplier').val());
+            const multiplier = isNaN(mVal) ? 1 : mVal;
             const totalQty = parseFloat($('#editTotal').val()) || 0;
             const markerLength = 0;
             const unitMeterage = 0;
@@ -2327,7 +2347,8 @@
         }
 
         function saveEditAcik(actualIndex) {
-            let multiplier = parseFloat($('#editMultiplier').val()) || 1;
+            let mVal = parseFloat($('#editMultiplier').val());
+            let multiplier = isNaN(mVal) ? 1 : mVal;
             let date = $('#editDate').val();
             let total = parseFloat($('#editTotal').val()) || 0;
             
@@ -2364,7 +2385,8 @@
         }
 
         function saveEditAsorti(actualIndex) {
-            let multiplier = parseFloat($('#editMultiplier').val()) || 1;
+            let mVal = parseFloat($('#editMultiplier').val());
+            let multiplier = isNaN(mVal) ? 1 : mVal;
             let date = $('#editDate').val();
             let total = parseFloat($('#editTotal').val()) || 0;
             
@@ -2481,7 +2503,7 @@
                     rowHtml = `
                         <tr style="background: #fffbeb;">
                             <td class="sticky-kesim" style="font-weight: 700; color: #1e293b; text-align: center; vertical-align: middle; position: sticky; left: 0; background: #fffbeb; z-index: 2;">${cutName} <span style="font-size:0.7rem; color:#b45309; display:block;">(Düzenleniyor)</span></td>
-                            <td style="text-align: center; vertical-align: middle;"><input type="number" id="editMultiplier" class="form-control form-control-sm input-field" value="${itemToRender.Multiplier || 1}" oninput="${isAsorti ? 'calculateEditAsorti()' : 'calculateEdit()'}" style="text-align: center;" /></td>
+                            <td style="text-align: center; vertical-align: middle;"><input type="number" id="editMultiplier" class="form-control form-control-sm input-field" value="${itemToRender.Multiplier !== undefined ? itemToRender.Multiplier : 1}" oninput="${isAsorti ? 'calculateEditAsorti()' : 'calculateEdit()'}" style="text-align: center;" /></td>
                             ${editSizesHtml}
                             <td style="text-align: center; vertical-align: middle;"><input type="number" id="editTotal" class="form-control form-control-sm input-field" value="${qty}" readonly style="text-align: center; background: #e2e8f0;" /></td>
                             <td style="text-align: center; vertical-align: middle;"><input type="date" id="editDate" class="form-control form-control-sm input-field" value="${itemToRender.Date || ''}" style="text-align: center;" /></td>
@@ -2515,7 +2537,7 @@
                     rowHtml = `
                         <tr class="hover-row" style="${rowStyle}">
                             <td class="sticky-kesim" style="font-weight: 700; color: #1e293b; text-align: center; vertical-align: middle; position: sticky; left: 0; background: inherit; z-index: 2;">${cutName} ${statusLabel}</td>
-                            <td style="text-align: center; color: #334155; vertical-align: middle;">${itemToRender.Multiplier || 1}</td>
+                            <td style="text-align: center; color: #334155; vertical-align: middle;">${itemToRender.Multiplier !== undefined ? itemToRender.Multiplier : 1}</td>
                             ${sizesHtml}
                             <td style="text-align: center; font-weight: 700; color: #0f172a; font-size: 1.05rem; vertical-align: middle;">${qty}</td>
                             <td style="text-align: center; color: #475569; font-size: 0.85rem; vertical-align: middle;">${itemToRender.Date || '-'}</td>
@@ -2586,10 +2608,11 @@
                                 $.post('/ProcessTracking/MarkTimelineCompleted', { orderId: orderId, key: 'prod_kesim_bitis', type: 'prod' }, function(tlRes) {
                                     if(tlRes.success) {
                                         showToast("Kesim süreci başarıyla bitirildi ve takvime işlendi.", "success");
-                                        setTimeout(function() { 
-                                            window.location.hash = "timeline";
-                                            location.reload(); 
-                                        }, 1000);
+                                        document.getElementById('btnFinishCutting').style.display = 'none';
+                                        let msg = document.createElement('span');
+                                        msg.innerHTML = '<i class="fa-solid fa-check-circle" style="color: #10b981; margin-right:6px;"></i> Kesim aşaması tamamlandı ve takvime işlendi.';
+                                        msg.style = 'color: #10b981; font-weight: 700; font-size: 1.05rem; padding: 10px 20px; border: 1px solid #10b981; border-radius: 6px; background: #ecfdf5; display: inline-flex; align-items: center;';
+                                        document.getElementById('finishCuttingContainer').appendChild(msg);
                                     }
                                 });
                             } else {

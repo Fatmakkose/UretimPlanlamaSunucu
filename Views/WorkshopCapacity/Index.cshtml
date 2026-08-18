@@ -238,24 +238,6 @@
     </div>
 </div>
 
-<!-- Özet Kartlar -->
-<div class="stat-box-container">
-    <div class="stat-box-card">
-        <div class="stat-box-label">Günlük Toplam Hedef</div>
-        <div class="stat-box-value" id="stat-total-target">
-            @totalTarget.ToString("N0") <span class="stat-box-unit">Adet</span>
-        </div>
-    </div>
-    <div class="stat-box-card">
-        <div class="stat-box-label">Aktif Kapasite Kullanımı</div>
-        <div class="stat-box-value" id="stat-overall-usage" style="color: @(overallUsage >= 100 ? "#dc2626" : "var(--text-main)")">
-            @overallUsage.ToString("N1")% 
-            <span style="font-size: 1.1rem; color: #16a34a; font-weight: bold; margin-left: 2px;">
-                <i class="fa-solid fa-arrow-trend-up"></i>
-            </span>
-        </div>
-    </div>
-</div>
 
 <!-- İki Sütunlu Ana Grid -->
 <div class="dashboard-two-col">

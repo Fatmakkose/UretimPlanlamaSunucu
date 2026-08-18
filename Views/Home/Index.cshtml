@@ -495,7 +495,7 @@
 <div class="list-card" style="margin-top: 24px;">
     <div class="card-header" style="border-bottom: 1px solid #bae6fd; background: #e0f2fe; border-radius: 8px 8px 0 0; margin-bottom: 16px;">
         <h2 class="card-title" style="display: flex; align-items: center; gap: 8px; color: #0369a1;">
-            <i class="fa-solid fa-list-check"></i> Kesim & Atölye Atama Panosu
+            <i class="fa-solid fa-list-check"></i> Atölye Planlama
         </h2>
         <span style="font-size: 0.85rem; color: #64748b;">Siparişleri sürükleyerek atölyelere atayabilirsiniz. Kartlara tıklayarak detaylı takip ekranını açabilirsiniz.</span>
     </div>
@@ -533,11 +533,11 @@
                     </div>
                 </div>
             </div>
-            <div id="order-list-container" style="padding: 16px; display: flex; flex-direction: column; gap: 12px; flex: 1; overflow-y: auto;">
+            <div id="order-list-container" class="kanban-dropzone" data-workshop="" style="padding: 16px; display: flex; flex-direction: column; gap: 12px; flex: 1; overflow-y: auto;">
                 @{
-                    var allOrdersList = Model.ToList();
+                    var allOrdersList = Model.Where(o => string.IsNullOrEmpty(o.SewingWorkshop)).ToList();
                     if(allOrdersList.Count == 0) {
-                        <div style="text-align: center; color: #94a3b8; font-size: 0.85rem; margin-top: 20px; font-style: italic;">Sipariş yok.</div>
+                        <div style="text-align: center; color: #94a3b8; font-size: 0.85rem; margin-top: 20px; font-style: italic;">Atanmamış sipariş yok.</div>
                     }
                     foreach (var o in allOrdersList)
                     {
@@ -616,13 +616,12 @@
                             occColor = occRate >= 100 ? "#ef4444" : (occRate >= 75 ? "#f59e0b" : "#10b981");
                         }
 
-                        <div class="pg-workshop-item kanban-dropzone" data-workshop="@w.Name" onclick="openWorkshopOrdersModal('@safeWsName', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(w.Name))')" style="background: white; border: 2px dashed #cbd5e1; border-radius: 6px; padding: 12px; cursor: pointer; transition: all 0.2s; position: relative; min-height: 110px; display: flex; flex-direction: column; justify-content: space-between;">
+                        <div class="pg-workshop-item kanban-dropzone" data-workshop="@w.Name" style="background: white; border: 2px dashed #cbd5e1; border-radius: 6px; padding: 12px; transition: all 0.2s; position: relative; min-height: 110px; display: flex; flex-direction: column; justify-content: space-between;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                                 <div>
                                     <h3 style="font-size: 1rem; font-weight: 800; color: #0f172a; margin: 0;">@w.Name</h3>
                                     <span style="font-size: 0.75rem; color: #64748b;">@w.Type</span>
                                 </div>
-                                <i class="fa-solid fa-arrow-right-to-bracket" style="color: #cbd5e1; font-size: 1.2rem;"></i>
                             </div>
                             <!-- İlerleme Çubuğu (Progress Bar) -->
                             <div style="width: 100%; height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; margin-bottom: 4px;">
@@ -633,27 +632,29 @@
                                 <span>Kapasite: @(w.MonthlyCapacity > 0 ? w.MonthlyCapacity + " (Aylık)" : (w.DailyCapacity > 0 ? w.DailyCapacity + " (Günlük)" : "-"))</span>
                             </div>
 
-                            <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 8px; text-align: center;">Siparişi buraya sürükleyip bırakın veya tıklayıp listeleyin</div>
-                        </div>
-                        <div id="ws-orders-@safeWsName" style="display: none;">
-                            @if(wsOrders.Count == 0) {
-                                <div style="text-align: center; color: #94a3b8; padding: 20px;">Bu atölyeye ait sipariş bulunmamaktadır.</div>
-                            } else {
-                                <ul style="list-style: none; padding: 0; margin: 0;">
-                                @foreach(var wo in wsOrders) {
-                                    <li style="padding: 12px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="closeWorkshopOrdersModal(); openOrderModal(event, @wo.Id)">
-                                        <div>
-                                            <strong style="color: #0f172a;">@wo.OrderCode</strong>
-                                            <div style="font-size: 0.85rem; color: #475569; margin-top: 4px;">@wo.ModelName <span style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem;">@wo.Customer</span></div>
-                                        </div>
-                                        <div style="font-size: 0.85rem; font-weight: 700; color: #0369a1; text-align: right;">
-                                            @wo.CalculatedQuantity.ToString("N0") Adet
-                                            <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 400; margin-top: 4px;"><i class="fa-regular fa-clock"></i> @wo.OrderDate.ToString("dd.MM")</div>
-                                        </div>
-                                    </li>
-                                }
-                                </ul>
+                            <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 8px; text-align: center; margin-bottom: 8px;">Siparişi buraya sürükleyip bırakın</div>
+                            
+                            @if(wsOrders.Count > 0) {
+                                <button type="button" onclick="event.stopPropagation(); const list = document.getElementById('assigned-orders-@safeWsName'); list.style.display = list.style.display === 'none' ? 'flex' : 'none'; this.innerHTML = list.style.display === 'none' ? '<i class=\'fa-solid fa-list\'></i> Atanan Siparişleri Göster (@wsOrders.Count)' : '<i class=\'fa-solid fa-chevron-up\'></i> Gizle';" style="background: #f1f5f9; border: 1px solid #cbd5e1; width: 100%; border-radius: 4px; padding: 4px 0; font-size: 0.75rem; color: #475569; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 6px; transition: all 0.2s;">
+                                    <i class="fa-solid fa-list"></i> Atanan Siparişleri Göster (@wsOrders.Count)
+                                </button>
                             }
+
+                            <div id="assigned-orders-@safeWsName" class="assigned-orders" style="display: none; flex-direction: column; gap: 6px; margin-top: 8px;">
+                                @foreach(var wo in wsOrders) {
+                                    string searchData = $"{wo.OrderCode} {wo.ModelName} {wo.Customer}".ToLower();
+                                    <div class="pg-order-item kanban-card" draggable="true" data-order-id="@wo.Id" data-search="@searchData" onclick="openOrderModal(event, @wo.Id)" ondblclick="openGenericIframeModal('/Order/Edit/@wo.Id', 'Sipariş Düzenle', 'fa-solid fa-pen')" style="background: white; border: 1px solid #cbd5e1; border-left: 4px solid #10b981; border-radius: 6px; padding: 8px; cursor: move; box-shadow: 0 1px 2px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between;" title="Detay için tıklayın">
+                                        <div style="font-weight: 700; color: #0f172a; font-size: 0.85rem; display: flex; justify-content: space-between;">
+                                            <span>@wo.OrderCode</span>
+                                            <span style="font-size: 0.7rem; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; color: #475569;">@wo.Customer</span>
+                                        </div>
+                                        <div style="font-size: 0.75rem; color: #475569; margin-top: 4px; font-weight: 600; display:flex; justify-content:space-between;">
+                                            <span>@wo.ModelName</span>
+                                            <span style="color: #0369a1; font-weight: 700;">@wo.CalculatedQuantity.ToString("N0") Adet</span>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
                         </div>
                     }
                 }
@@ -1130,9 +1131,28 @@
                     const orderId = draggable.getAttribute('data-order-id');
                     const workshopName = zone.getAttribute('data-workshop');
                     
-                    // Sadece bir atölyeye atandığında AJAX at (Havuz alanında workshop name yok)
-                    if (workshopName) {
+                    const originalDropzone = originalZone.closest('.kanban-dropzone');
+                    const originalWorkshopName = originalDropzone ? originalDropzone.getAttribute('data-workshop') : null;
+                    
+                    // Sadece bir atölyeye veya havuza atandığında AJAX at (Havuz alanında workshop name boştur)
+                    if (workshopName !== null && workshopName !== originalWorkshopName) {
+                        // Eğer assigned-orders divi varsa içine ekle, yoksa zone'un direkt içine (havuz)
+                        const assignedOrdersDiv = zone.querySelector('.assigned-orders');
+                        if (assignedOrdersDiv) {
+                            assignedOrdersDiv.appendChild(draggable);
+                            assignedOrdersDiv.style.display = 'flex'; // Göstermeyi garantile
+                        } else {
+                            zone.appendChild(draggable);
+                        }
                         assignWorkshopToOrder(orderId, workshopName, false, false, null, draggable, originalZone);
+                    } else if (workshopName === originalWorkshopName) {
+                        // Aynı yere bırakıldıysa AJAX atma, sadece UI'ı toparla
+                        const assignedOrdersDiv = zone.querySelector('.assigned-orders');
+                        if (assignedOrdersDiv) {
+                            assignedOrdersDiv.appendChild(draggable);
+                        } else {
+                            zone.appendChild(draggable);
+                        }
                     }
                 }
             });
@@ -1294,8 +1314,11 @@
     const ITEMS_PER_PAGE = 3;
 
     function renderOrderPage() {
+        const container = document.getElementById('order-list-container');
+        if (!container) return;
+
         // Filtrelenmemiş öğeleri al
-        const items = Array.from(document.querySelectorAll('.pg-order-item')).filter(i => !i.classList.contains('filtered-out'));
+        const items = Array.from(container.querySelectorAll('.pg-order-item')).filter(i => !i.classList.contains('filtered-out'));
         const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE) || 1;
         
         if (currentOrderPage < 1) currentOrderPage = 1;
@@ -1304,7 +1327,7 @@
         document.getElementById('order-page-info').textContent = currentOrderPage + '/' + totalPages;
         
         // Önce hepsini gizle (filtrelenmişler zaten none, diğerlerini de none yapıyoruz)
-        document.querySelectorAll('.pg-order-item').forEach(item => {
+        container.querySelectorAll('.pg-order-item').forEach(item => {
             if (!item.classList.contains('filtered-out')) {
                 item.style.display = 'none';
             }
@@ -1313,20 +1336,23 @@
         // Sadece bulunduğumuz sayfaya ait olanları göster
         items.forEach((item, index) => {
             if (index >= (currentOrderPage - 1) * ITEMS_PER_PAGE && index < currentOrderPage * ITEMS_PER_PAGE) {
-                item.style.display = 'block';
+                item.style.display = 'flex';
             }
         });
     }
 
     function filterKanbanOrders() {
         const searchText = document.getElementById('kanbanSearchInput').value.toLowerCase();
-        const allItems = document.querySelectorAll('.pg-order-item');
+        const container = document.getElementById('order-list-container');
+        if (!container) return;
+
+        const allItems = container.querySelectorAll('.pg-order-item');
         
         allItems.forEach(el => {
             const searchData = el.getAttribute('data-search') || '';
             if (searchData.includes(searchText)) {
                 el.classList.remove('filtered-out');
-                el.style.display = ''; // Geçici gösterim, sayfalama onu düzeltecek
+                el.style.display = 'flex'; // Geçici gösterim, sayfalama onu düzeltecek
             } else {
                 el.classList.add('filtered-out');
                 el.style.display = 'none';

@@ -334,7 +334,7 @@ namespace UretimPlanlama.Controllers
         }
 
         [HttpPost]
-        public IActionResult MarkTimelineCompleted(int orderId, string key, string type)
+        public IActionResult MarkTimelineCompleted(int orderId, string key, string type, string overrideDate = null)
         {
             if (!User.HasPermission("Write")) return Json(new { success = false, message = "Yetkisiz" });
 
@@ -364,6 +364,10 @@ namespace UretimPlanlama.Controllers
 
             string targetKey = key + "_actual";
             string today = DateTime.Now.ToString("yyyy-MM-dd");
+            if (!string.IsNullOrEmpty(overrideDate) && DateTime.TryParse(overrideDate, out _))
+            {
+                today = overrideDate;
+            }
 
             if (type == "sample")
             {

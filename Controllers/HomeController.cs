@@ -299,6 +299,15 @@ public class HomeController : Controller
             var order = await _context.Orders.FindAsync(model.OrderId);
             if (order == null) return Json(new { success = false, message = "Sipariş bulunamadı." });
 
+            if (string.IsNullOrEmpty(model.WorkshopName))
+            {
+                order.SewingWorkshop = null;
+                order.ProductionPlace = null;
+                _context.Update(order);
+                await _context.SaveChangesAsync();
+                return Json(new { success = true });
+            }
+
             var workshop = await _context.Workshops.FirstOrDefaultAsync(w => w.Name == model.WorkshopName);
             if (workshop == null) return Json(new { success = false, message = "Atölye bulunamadı." });
 
@@ -386,6 +395,29 @@ public class HomeController : Controller
         catch (System.Exception ex)
         {
             return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    [HttpPost]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> ResetDatabase()
+    {
+        try
+        {
+            await _context.Database.ExecuteSqlRawAsync("DELETE FROM OrderMaterials");
+            await _context.Database.ExecuteSqlRawAsync("DELETE FROM StokHareketler");
+            await _context.Database.ExecuteSqlRawAsync("DELETE FROM CariHareketler");
+            await _context.Database.ExecuteSqlRawAsync("DELETE FROM Orders");
+            await _context.Database.ExecuteSqlRawAsync("DELETE FROM StokVaryantlar");
+            await _context.Database.ExecuteSqlRawAsync("DELETE FROM StokKartlari");
+            await _context.Database.ExecuteSqlRawAsync("DELETE FROM CariHesaplar");
+            await _context.Database.ExecuteSqlRawAsync("DELETE FROM Notifications");
+            
+            return Json(new { success = true, message = "Siparişler, stok kayıtları, cari hareketler ve bildirimler başarıyla temizlendi. (Tanımlamalar korundu)" });
+        }
+        catch (System.Exception ex)
+        {
+            return Json(new { success = false, message = "Hata oluştu: " + ex.Message });
         }
     }
 

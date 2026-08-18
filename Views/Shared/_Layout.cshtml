@@ -29,6 +29,7 @@
             transition: background-color 0.15s ease-in-out; 
         }
     </style>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body>
@@ -188,6 +189,7 @@
                                     <li><a href="/Definitions/Customers" class="@(ViewContext.RouteData.Values["Action"]?.ToString() == "Customers" ? "active" : "")"><i class="fa-solid fa-building menu-icon"></i><span class="nav-text">Müşteri Tanımı</span></a></li>
                                     <li><a href="/Definitions/Companies" class="@(ViewContext.RouteData.Values["Action"]?.ToString() == "Companies" ? "active" : "")"><i class="fa-solid fa-building-user menu-icon"></i><span class="nav-text">Firma Tanımı</span></a></li>
                                     <li><a href="/Definitions/Brands" class="@(ViewContext.RouteData.Values["Action"]?.ToString() == "Brands" ? "active" : "")"><i class="fa-solid fa-copyright menu-icon"></i><span class="nav-text">Marka Tanımı</span></a></li>
+                                    <li><a href="javascript:void(0)" onclick="clearSystemData()" style="color: #ef4444;"><i class="fa-solid fa-trash-can menu-icon" style="color: #ef4444;"></i><span class="nav-text">Sistemi Temizle</span></a></li>
                                 </ul>
                             </li>
                         }
@@ -472,6 +474,33 @@
             }
         });
     </script>
+    <script>
+        function clearSystemData() {
+            Swal.fire({
+                title: 'Emin misiniz?',
+                text: 'Sistemdeki tüm siparişler, stok hareketleri ve cari veriler kalıcı olarak silinecektir. Tanımlamalarınız (marka, renk vb.) kalacaktır. Bu işlem geri alınamaz!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Evet, Her Şeyi Temizle',
+                cancelButtonText: 'İptal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.post('/Home/ResetDatabase', function(res) {
+                        if (res.success) {
+                            Swal.fire('Başarılı', res.message, 'success').then(() => {
+                                window.location.href = '/';
+                            });
+                        } else {
+                            Swal.fire('Hata', res.message, 'error');
+                        }
+                    });
+                }
+            });
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
