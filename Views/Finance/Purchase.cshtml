@@ -337,7 +337,7 @@
                 $('#' + rowId).remove();
                 calculateGrandTotal();
             } else {
-                alert("En az bir kalem girmelisiniz.");
+                Swal.fire({ icon: 'warning', title: 'Uyarı', text: 'En az bir kalem girmelisiniz.', confirmButtonColor: '#f59e0b' });
             }
         }
 

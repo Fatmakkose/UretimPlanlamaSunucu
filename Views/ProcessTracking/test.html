@@ -1,0 +1,1575 @@
+<script><script>
+        const orderId = 1;
+        
+        let dispatchItems = [];
+        let cuttingItems = [];
+        let plannedCuttingItems = [];
+        let targetSizes = {};
+        let targetSizesAsorti = {};
+        const asortiCount = 1;
+
+        function getTotalCutForSize(sizeName, cutType) {
+            let total = 0;
+            cuttingItems.forEach(item => {
+                if (item.Status !== 'Pending' && item.CutType === cutType && item.Sizes && item.Sizes[sizeName]) {
+                    total += parseFloat(item.Sizes[sizeName]) || 0;
+                }
+            });
+            return total;
+        }
+
+        $(document).ready(function() {
+
+
+            renderCuttingTable();
+            renderPlannedCuttingComparison();
+            
+            var serverStep = '""';
+            if (serverStep && serverStep !== '') {
+                $('#trackTabs').hide();
+                switchTab(serverStep);
+            } else if (window.location.hash) {
+                // Restore active tab from hash if no serverStep is provided
+                var tabId = window.location.hash.substring(1);
+                switchTab(tabId);
+            }
+
+            // Initial comparison calculation
+            $('input[id^="actual_qty_"]').each(function() {
+                var funcStr = $(this).attr('oninput');
+                if (funcStr) {
+                    eval(funcStr);
+                }
+            });
+
+            // Restore active tab from hash
+            if (window.location.hash) {
+                var tabId = window.location.hash.substring(1);
+                if ($('#' + tabId + '-tab').length) {
+                    switchTab(tabId);
+                }
+            }
+        });
+
+        // --- TAB SWITCH LOGIC ---
+        function switchTab(tabId) {
+            $('#trackTabs .nav-link').removeClass('active');
+            $('#trackTabsContent > .tab-pane').removeClass('active');
+            
+            $('#' + tabId + '-tab').addClass('active');
+            $('#' + tabId).addClass('active');
+        }
+
+        // --- TALOS KUMAŞ TESTLERİ LOGIC ---
+        function toggleTalosSection() {
+            $('#talos_section_container').slideToggle();
+        }
+
+        function updateTalosUI() {
+            var step1 = $('#talos_step1').is(':checked');
+            var step2 = $('#talos_step2').is(':checked');
+            var step3 = $('#talos_step3').is(':checked');
+            var step4 = $('input[name="talos_step4_radio"]:checked').val() === 'yes';
+            var step5 = $('input[name="talos_step5_radio"]:checked').val() === 'yes';
+
+            // Step 1 UI
+            $('#wrapper_step1').css({ 'background': step1 ? "#f0fdf4" : "transparent" });
+            $('#badge_step1').attr('class', step1 ? 'badge bg-success text-white' : 'badge bg-secondary text-white').text(step1 ? '✓ Alındı' : 'Alınmadı');
+
+            // Step 2 UI
+            $('#wrapper_step2').css({ 'background': step2 ? "#f0fdf4" : "transparent" });
+            $('#badge_step2').attr('class', step2 ? 'badge bg-success text-white' : 'badge bg-secondary text-white').text(step2 ? '✓ Gitti' : 'Gitmedi');
+
+            // Step 3 UI
+            $('#wrapper_step3').css({ 'background': step3 ? "#f0fdf4" : "transparent" });
+            $('#badge_step3').attr('class', step3 ? 'badge bg-success text-white' : 'badge bg-secondary text-white').text(step3 ? '✓ Geldi' : 'Gelmedi');
+
+            // Step 4 UI & Step 5 Visibility Logic
+            $('#wrapper_step4').css({ 'background': step4 ? "#fef2f2" : "transparent" });
+            $('#badge_step4').attr('class', step4 ? 'badge bg-danger text-white' : 'badge bg-success text-white').text(step4 ? '⚠ Kalır Değer Var' : '✓ Yok (Tüm Testler Geçti)');
+
+            if (step4) {
+                // Kalır Değer Var ise: Metin kutusunu ve 5. Adımı Göster
+                $('#tr_kalir_deger_txt').show();
+                $('#wrapper_step5').show();
+
+                $('#wrapper_step5').css({ 'background': step5 ? "#f0fdf4" : "#fffbe6" });
+                $('#badge_step5').attr('class', step5 ? 'badge bg-success text-white' : 'badge bg-warning text-dark').text(step5 ? '✓ OK (Onay Alındı)' : 'Onay Alınmadı');
+
+                if (!step5) {
+                    $('#div_islem_nedir').slideDown();
+                } else {
+                    $('#div_islem_nedir').slideUp();
+                }
+            } else {
+                // Kalır Değer Yok ise: Metin kutusunu, 5. Adımı ve İşlem Nedir kutusunu GİZLE!
+                $('#tr_kalir_deger_txt').hide();
+                $('#wrapper_step5').hide();
+                $('#div_islem_nedir').hide();
+            }
+
+            // Overall Badge
+            if (!step4 && step3) {
+                $('#badgeTalosOverall').attr('class', 'badge bg-success text-white').text('OK - ONAYLANDI');
+            } else if (step4 && step5) {
+                $('#badgeTalosOverall').attr('class', 'badge bg-success text-white').text('OK - ONAY ALINDI');
+            } else if (step4 && !step5) {
+                $('#badgeTalosOverall').attr('class', 'badge bg-danger text-white').text('KALIR DEĞER ONAYSIZ - AKSIYON GEREKLİ');
+            } else {
+                $('#badgeTalosOverall').attr('class', 'badge bg-warning text-dark').text('İŞLEM BEKLİYOR / DEVAM EDİYOR');
+            }
+        }
+
+        function saveTalosTestForm() {
+            var data = {
+                talos_step1: $('#talos_step1').is(':checked') ? "true" : "false",
+                talos_step2: $('#talos_step2').is(':checked') ? "true" : "false",
+                talos_step3: $('#talos_step3').is(':checked') ? "true" : "false",
+                talos_step4: $('input[name="talos_step4_radio"]:checked').val() === 'yes' ? "true" : "false",
+                talos_kalir_deger_txt: $('#talos_kalir_deger_txt').val(),
+                talos_step5: $('input[name="talos_step5_radio"]:checked').val() === 'yes' ? "true" : "false",
+                talos_islem_nedir: $('#talos_islem_nedir').val()
+            };
+
+            var jsonStr = JSON.stringify(data);
+
+            $.ajax({
+                url: '/ProcessTracking/SaveTalosTest',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ Id: orderId, TalosTestJson: jsonStr }),
+                success: function(res) {
+                    if(res.success) {
+                        showToast("TALOS test onayları kaydedildi.", "success");
+                        setTimeout(function() {
+                            window.location.hash = "timeline";
+                            location.reload();
+                        }, 800);
+                    } else {
+                        showToast("Hata: " + res.message, "danger");
+                    }
+                },
+                error: function() {
+                    showToast("Kayıt sırasında sunucu hatası oluştu.", "danger");
+                }
+            });
+        }
+
+        // --- COMPARISON LOGIC ---
+        function updateComparison(materialId, plannedQty) {
+            const actualInput = $('#actual_qty_' + materialId);
+            const availableStock = parseFloat(actualInput.val()) || 0;
+            const compSpan = $('#comp_' + materialId);
+            const isChecked = $('#chk_mat_' + materialId).is(':checked');
+            
+            if (isChecked) {
+                compSpan.text("TAHSİS EDİLDİ").css({ 'background': '#dcfce7', 'color': '#166534' });
+            } else if (availableStock >= plannedQty) {
+                compSpan.text("STOK YETERLİ").css({ 'background': '#dcfce7', 'color': '#166534' });
+            } else {
+                const eksik = plannedQty - availableStock;
+                compSpan.text("YETERSİZ STOK (-" + eksik.toLocaleString('tr-TR', { maximumFractionDigits: 2 }) + ")").css({ 'background': '#fee2e2', 'color': '#991b1b' });
+            }
+        }
+
+        // --- TAB 1: SATIN ALMA ONAYI ---
+        function updateMaterialApproval(materialId) {
+            const isChecked = $('#chk_mat_' + materialId).is(':checked');
+            const plannedQtyStr = $('#chk_mat_' + materialId).attr('data-planned') || "0";
+            
+            const availableStock = parseFloat($('#actual_qty_' + materialId).val()) || 0;
+            const plannedQty = parseFloat(plannedQtyStr.replace(',', '.')) || 0;
+
+            if (isChecked && availableStock < plannedQty) {
+                showToast("Yetersiz stok. Lütfen önce alış faturası ile depoya giriş yapınız.", "danger");
+                $('#chk_mat_' + materialId).prop('checked', false);
+                return;
+            }
+            
+            // Update wrapper div styling
+            $('#div_mat_' + materialId)
+                .css('background', isChecked ? "#dcfce7" : "#fffbeb")
+                .css('border-color', isChecked ? "#bbf7d0" : "#fef08a");
+                
+            // Update row background color dynamically
+            $('#chk_mat_' + materialId).closest('tr').css('background', isChecked ? "#f0fdf4" : "transparent");
+            
+            // Backend'e gerceklesen miktar olarak "planlanan miktarı" gonderiyoruz, cunku tamami tahsis edilecek.
+            $.post('/ProcessTracking/UpdateMaterialApproval', { materialId: materialId, actualQuantityStr: plannedQtyStr, isApproved: isChecked }, function(res) {
+                if(res.success) {
+                    showToast(isChecked ? "Siparişe stok tahsis edildi." : "Tahsis iptal edildi ve stok iade edildi.", "success");
+                    if (isChecked) {
+                        $('#actual_qty_' + materialId).val((availableStock - plannedQty).toString());
+                    } else {
+                        $('#actual_qty_' + materialId).val((availableStock + plannedQty).toString());
+                    }
+                    updateComparison(materialId, plannedQty);
+                } else {
+                    showToast("Hata: " + res.message, "danger");
+                    $('#chk_mat_' + materialId).prop('checked', !isChecked);
+                    $('#div_mat_' + materialId)
+                        .css('background', !isChecked ? "#dcfce7" : "#fffbeb")
+                        .css('border-color', !isChecked ? "#bbf7d0" : "#fef08a");
+                    $('#chk_mat_' + materialId).closest('tr').css('background', !isChecked ? "#f0fdf4" : "transparent");
+                    updateComparison(materialId, plannedQty);
+                    
+                    if ($('#varyant_select_' + materialId).length) {
+                        $('#varyant_select_' + materialId).prop('disabled', !isChecked);
+                    }
+                }
+            });
+        }
+
+        // --- TIMELINE ---
+        function markTimelineCompleted(id, type) {
+            $.post('/ProcessTracking/MarkTimelineCompleted', { orderId: orderId, key: id, type: type }, function(res) {
+                if(res.success) {
+                    showToast("Aşama tamamlandı olarak işaretlendi.", "success");
+                    setTimeout(function() { 
+                        if (id === 'prod_kesim_baslangic') {
+                            window.location.hash = "cutting";
+                        } else {
+                            window.location.hash = "timeline";
+                        }
+                        location.reload(); 
+                    }, 1000);
+                } else {
+                    showToast("Hata: " + res.message, "danger");
+                }
+            });
+        }
+
+        // --- TAB 2: MALZEME SEVK (Cari Satış Onayı) ---
+        function updateDispatchApproval(hareketId) {
+            const isChecked = $('#chk_disp_' + hareketId).is(':checked');
+            
+            // Update wrapper div styling
+            $('#div_disp_' + hareketId)
+                .css('background', isChecked ? "#dcfce7" : "#fffbeb")
+                .css('border-color', isChecked ? "#bbf7d0" : "#fef08a");
+                
+            // Update row background color dynamically
+            $('#chk_disp_' + hareketId).closest('tr').css('background', isChecked ? "#f0fdf4" : "transparent");
+            
+            $.post('/ProcessTracking/UpdateDispatchApproval', { hareketId: hareketId, isApproved: isChecked }, function(res) {
+                if(res.success) {
+                    showToast("Sevk onayı güncellendi.", "success");
+                } else {
+                    showToast("Hata: " + res.message, "danger");
+                }
+            });
+        }
+
+        // --- TAB 3: KESİM SÜRECİ ---
+        let currentEditIndex = -1;
+
+        function toggleCutForm(type) {
+            currentEditIndex = -1;
+            if (type === 'AcikAdet') {
+                $('#cuttingEntryAcik').show();
+                $('#txtAcikMultiplier').val(1);
+                $('#txtAcikMarkerLength').val(0);
+                $('.acik-adet-input-row').val(0);
+                calculateAcik();
+                setTimeout(function() { $('#txtAcikMultiplier').focus(); }, 100);
+            } else {
+                $('#cuttingEntryAsorti').show();
+                $('#txtAsortiMultiplier').val(1);
+                $('#txtAsortiMarkerLength').val(0);
+                calculateAsorti();
+                setTimeout(function() { $('#txtAsortiMultiplier').focus(); }, 100);
+            }
+        }
+
+        function editCuttingItem(index, type) {
+            currentEditIndex = index;
+            renderCuttingTable();
+        }
+
+        function cancelEdit() {
+            currentEditIndex = -1;
+            renderCuttingTable();
+        }
+
+        function calculateEdit() {
+            const multiplier = parseFloat($('#editMultiplier').val()) || 1;
+            let totalQty = 0;
+            $('.edit-acik-input').each(function() {
+                const val = parseFloat($(this).val()) || 0;
+                totalQty += (val * multiplier);
+            });
+            $('#editTotal').val(totalQty);
+        }
+
+        function calculateEditAsorti() {
+            const multiplier = parseFloat($('#editMultiplier').val()) || 1;
+            let totalQty = 0;
+            $('.edit-asorti-input').each(function() {
+                const asortiVal = parseFloat($(this).data('asortivalue')) || 0;
+                totalQty += (asortiVal * multiplier);
+            });
+            $('#editTotal').val(totalQty);
+        }
+        
+        function calculateAcik() {
+            const multiplier = parseFloat($('#txtAcikMultiplier').val()) || 1;
+            
+            let totalQty = 0;
+            $('.acik-adet-input-row').each(function() {
+                const val = parseFloat($(this).val()) || 0;
+                totalQty += (val * multiplier);
+            });
+            
+            $('#txtAcikTotal').val(totalQty);
+        }
+
+        function calculateAsorti() {
+            const multiplier = parseFloat($('#txtAsortiMultiplier').val()) || 1;
+            
+            let totalQty = 0;
+            $('.asorti-input-row').each(function() {
+                const asortiValue = parseFloat($(this).data('asortivalue')) || 0;
+                const calculatedValue = asortiValue * multiplier;
+                $(this).val(calculatedValue); 
+                totalQty += calculatedValue;
+            });
+            
+            $('#txtAsortiTotal').val(totalQty);
+        }
+        
+        function saveAcikRow() {
+            const date = $('#txtAcikDate').val();
+            const multiplier = parseFloat($('#txtAcikMultiplier').val()) || 1;
+            const markerLength = 0;
+            const totalQty = parseFloat($('#txtAcikTotal').val()) || 0;
+            const unitMeterage = 0;
+
+            if (totalQty <= 0) {
+                showToast("Lütfen geçerli bir kesim değeri giriniz (toplam adet > 0 olmalı).", "warning");
+                return;
+            }
+
+            const sizes = {};
+            let validationError = "";
+            $('.acik-adet-input-row').each(function() {
+                const sizeName = $(this).data('size');
+                const val = parseFloat($(this).val()) || 0;
+                const calculatedValue = val * multiplier;
+                if(calculatedValue > 0) {
+                    const targetQty = parseFloat(targetSizes[sizeName]) || 0;
+                    let alreadyCut = getTotalCutForSize(sizeName, 'Açık Adet');
+                    
+                    let alreadyCut = getTotalCutForSize(sizeName, 'Açık Adet');
+                    
+                    if ((alreadyCut + calculatedValue) > targetQty) {
+                        validationError = `Hata: '${sizeName}' bedeni için sipariş hedefini aşıyorsunuz! (Hedef: ${targetQty}, Toplam Kesilecek: ${alreadyCut + calculatedValue})`;
+                    }
+                    sizes[sizeName] = calculatedValue;
+                }
+            });
+            
+            if (validationError) {
+                Swal.fire({
+                    title: 'Fazla Kesim Uyarısı',
+                    text: validationError.replace('Hata: ', '') + ' Yine de kaydetmek istiyor musunuz?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Evet, Kaydet',
+                    cancelButtonText: 'İptal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        _addCutToGlobalAndRender('Açık Adet', date, multiplier, sizes, totalQty, markerLength, unitMeterage);
+                        $('.acik-adet-input-row').val('0');
+                        $('#txtAcikMultiplier').val('1');
+                        calculateAcik();
+                    }
+                });
+                return;
+            }
+            
+            _addCutToGlobalAndRender('Açık Adet', date, multiplier, sizes, totalQty, markerLength, unitMeterage);
+            
+            // Reset
+            $('.acik-adet-input-row').val('0');
+            $('#txtAcikMultiplier').val('1');
+            calculateAcik();
+        }
+
+        function saveAsortiRow() {
+            const date = $('#txtAsortiDate').val();
+            const multiplier = parseFloat($('#txtAsortiMultiplier').val()) || 1;
+            const markerLength = 0;
+            const totalQty = parseFloat($('#txtAsortiTotal').val()) || 0;
+            const unitMeterage = 0;
+
+            if (totalQty <= 0) {
+                showToast("Lütfen geçerli bir kesim değeri giriniz (toplam adet > 0 olmalı).", "warning");
+                return;
+            }
+
+            const sizes = {};
+            let validationError = "";
+            $('.asorti-input-row').each(function() {
+                const sizeName = $(this).data('size');
+                const asortiValue = parseFloat($(this).data('asortivalue')) || 0;
+                const val = asortiValue * multiplier;
+                if(val > 0) {
+                    const targetQty = (parseFloat(targetSizesAsorti[sizeName]) || 0) * asortiCount;
+                    let alreadyCut = getTotalCutForSize(sizeName, 'Asorti');
+                    if ((alreadyCut + val) > targetQty) {
+                        validationError = `Hata: '${sizeName}' bedeni için sipariş hedefini aşıyorsunuz! (Hedef: ${targetQty}, Toplam Kesilecek: ${alreadyCut + val})`;
+                    }
+                    sizes[sizeName] = val;
+                }
+            });
+            
+            if (validationError) {
+                Swal.fire({
+                    title: 'Fazla Kesim Uyarısı',
+                    text: validationError.replace('Hata: ', '') + ' Yine de kaydetmek istiyor musunuz?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Evet, Kaydet',
+                    cancelButtonText: 'İptal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        _addCutToGlobalAndRender('Asorti', date, multiplier, sizes, totalQty, markerLength, unitMeterage);
+                        $('#txtAsortiMultiplier').val('1');
+                        calculateAsorti();
+                    }
+                });
+                return;
+            }
+            
+            _addCutToGlobalAndRender('Asorti', date, multiplier, sizes, totalQty, markerLength, unitMeterage);
+            
+            // Reset
+            $('#txtAsortiMultiplier').val('1');
+            calculateAsorti();
+        }
+
+        function saveEditAcik(index) {
+            const date = $('#editDate').val();
+            const multiplier = parseFloat($('#editMultiplier').val()) || 1;
+            const totalQty = parseFloat($('#editTotal').val()) || 0;
+            const markerLength = 0;
+            const unitMeterage = 0;
+
+            if (totalQty <= 0) {
+                showToast("Lütfen geçerli bir kesim değeri giriniz (toplam adet > 0 olmalı).", "warning");
+                return;
+            }
+
+            const sizes = {};
+            let validationError = "";
+            $('.edit-acik-input').each(function() {
+                const sizeName = $(this).data('size');
+                const val = parseFloat($(this).val()) || 0;
+                const calculatedValue = val * multiplier;
+                if(calculatedValue > 0) {
+                    const targetQty = parseFloat(targetSizes[sizeName]) || 0;
+                    let alreadyCut = getTotalCutForSize(sizeName, 'Açık Adet');
+                    
+                    const oldItem = cuttingItems[index];
+                    const oldVal = oldItem.Sizes && oldItem.Sizes[sizeName] ? oldItem.Sizes[sizeName] : 0;
+                    alreadyCut -= oldVal;
+                    
+                    if ((alreadyCut + calculatedValue) > targetQty) {
+                        validationError = `Hata: '${sizeName}' bedeni için sipariş hedefini aşıyorsunuz! (Hedef: ${targetQty}, Toplam Kesilecek: ${alreadyCut + calculatedValue})`;
+                    }
+                    sizes[sizeName] = calculatedValue;
+                }
+            });
+            
+            if (validationError) {
+                Swal.fire({
+                    title: 'Fazla Kesim Uyarısı',
+                    text: validationError.replace('Hata: ', '') + ' Yine de kaydetmek istiyor musunuz?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Evet, Kaydet',
+                    cancelButtonText: 'İptal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        _updateCutInGlobalAndRender(index, 'Açık Adet', date, multiplier, sizes, totalQty, markerLength, unitMeterage);
+                    }
+                });
+                return;
+            }
+            
+            _updateCutInGlobalAndRender(index, 'Açık Adet', date, multiplier, sizes, totalQty, markerLength, unitMeterage);
+        }
+
+        function saveEditAsorti(index) {
+            const date = $('#editDate').val();
+            const multiplier = parseFloat($('#editMultiplier').val()) || 1;
+            const totalQty = parseFloat($('#editTotal').val()) || 0;
+            const markerLength = 0;
+            const unitMeterage = 0;
+
+            if (totalQty <= 0) {
+                showToast("Lütfen geçerli bir kesim değeri giriniz (toplam adet > 0 olmalı).", "warning");
+                return;
+            }
+
+            const sizes = {};
+            let validationError = "";
+            $('.edit-asorti-input').each(function() {
+                const sizeName = $(this).data('size');
+                const asortiValue = parseFloat($(this).data('asortivalue')) || 0;
+                const val = asortiValue * multiplier;
+                if(val > 0) {
+                    const targetQty = (parseFloat(targetSizesAsorti[sizeName]) || 0) * asortiCount;
+                    let alreadyCut = getTotalCutForSize(sizeName, 'Asorti');
+                    
+                    const oldItem = cuttingItems[index];
+                    const oldVal = oldItem.Sizes && oldItem.Sizes[sizeName] ? oldItem.Sizes[sizeName] : 0;
+                    alreadyCut -= oldVal;
+                    
+                    if ((alreadyCut + val) > targetQty) {
+                        validationError = `Hata: '${sizeName}' bedeni için sipariş hedefini aşıyorsunuz! (Hedef: ${targetQty}, Toplam Kesilecek: ${alreadyCut + val})`;
+                    }
+                    sizes[sizeName] = val;
+                }
+            });
+            
+            if (validationError) {
+                Swal.fire({
+                    title: 'Fazla Kesim Uyarısı',
+                    text: validationError.replace('Hata: ', '') + ' Yine de kaydetmek istiyor musunuz?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Evet, Kaydet',
+                    cancelButtonText: 'İptal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        _updateCutInGlobalAndRender(index, 'Asorti', date, multiplier, sizes, totalQty, markerLength, unitMeterage);
+                    }
+                });
+                return;
+            }
+            
+            _updateCutInGlobalAndRender(index, 'Asorti', date, multiplier, sizes, totalQty, markerLength, unitMeterage);
+        }
+
+        function _addCutToGlobalAndRender(cutType, date, multiplier, sizes, totalQty, markerLength, unitMeterage) {
+            const newCutName = "Kesim " + (cuttingItems.length + 1);
+
+            cuttingItems.push({
+                CutName: newCutName,
+                CutType: cutType,
+                Date: date,
+                Multiplier: multiplier,
+                Sizes: sizes,
+                TotalQuantity: totalQty,
+                MarkerLength: markerLength,
+                UnitMeterage: unitMeterage,
+                Status: 'Completed'
+            });
+
+            renderCuttingTable();
+        }
+
+        function _updateCutInGlobalAndRender(index, cutType, date, multiplier, sizes, totalQty, markerLength, unitMeterage) {
+            cuttingItems[index].CutType = cutType;
+            cuttingItems[index].Date = date;
+            cuttingItems[index].Multiplier = multiplier;
+            cuttingItems[index].Sizes = sizes;
+            cuttingItems[index].TotalQuantity = totalQty;
+            cuttingItems[index].MarkerLength = markerLength;
+            cuttingItems[index].UnitMeterage = unitMeterage;
+            cuttingItems[index].Status = 'Completed';
+
+            renderCuttingTable();
+            currentEditIndex = -1;
+        }
+
+        function removeCuttingItem(index) {
+            cuttingItems.splice(index, 1);
+            
+            // Numaraları Yeniden Sırala
+            cuttingItems.forEach((item, idx) => {
+                item.CutName = "Kesim " + (idx + 1);
+            });
+            
+            renderCuttingTable();
+        }
+
+        function getPlannedTotalForSize(sizeName, cutType) {
+            let total = 0;
+            plannedCuttingItems.forEach(item => {
+                if (item.CutType === cutType && item.Sizes && item.Sizes[sizeName]) {
+                    total += parseFloat(item.Sizes[sizeName]) || 0;
+                }
+            });
+            return total;
+        }
+
+        function openComparisonReport(type) {
+            let sizesArr = type === 'AcikAdet' ? (typeof acikSizesArr !== 'undefined' ? acikSizesArr : Object.keys(targetSizes)) : (typeof asortiSizesArr !== 'undefined' ? asortiSizesArr : Object.keys(targetSizesAsorti));
+            let targetDict = type === 'AcikAdet' ? targetSizes : targetSizesAsorti;
+            
+            let html = `
+                <table class="table table-bordered text-center">
+                    <thead style="background: #f8fafc;">
+                        <tr>
+                            <th>Beden</th>
+                            <th>İhtiyaç (Sipariş)</th>
+                            <th>Planlanan Kesim</th>
+                            <th>Gerçekleşen Kesim</th>
+                            <th>Plan/Gerçek Fark</th>
+                            <th>Durum</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            let grandTarget = 0;
+            let grandPlanned = 0;
+            let grandCut = 0;
+
+            sizesArr.forEach(size => {
+                let target = parseFloat(targetDict[size]) || 0;
+                if (type === 'Asorti') target = target * asortiCount; // Asorti ise asortiCount ile çarpılır
+                
+                let cutType = type === 'AcikAdet' ? 'Açık Adet' : 'Asorti';
+                let planned = getPlannedTotalForSize(size, cutType);
+                let cut = getTotalCutForSize(size, cutType);
+                let diff = cut - planned;
+                
+                grandTarget += target;
+                grandPlanned += planned;
+                grandCut += cut;
+
+                let statusText = diff === 0 ? "Birebir Eşleşti" : (diff > 0 ? "Fazla Kesim" : "Eksik Kesim");
+                let statusColor = diff === 0 ? "#10b981" : (diff > 0 ? "#f59e0b" : "#ef4444");
+
+                html += `
+                    <tr>
+                        <td style="font-weight: bold;">${size}</td>
+                        <td>${target}</td>
+                        <td>${planned}</td>
+                        <td style="font-weight: bold;">${cut}</td>
+                        <td style="color: ${statusColor}; font-weight: bold;">${diff > 0 ? '+' : ''}${diff}</td>
+                        <td style="color: ${statusColor};"><i class="fa-solid fa-circle" style="font-size: 0.6rem; margin-right: 4px; vertical-align: middle;"></i>${statusText}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                    </tbody>
+                    <tfoot style="background: #f1f5f9; font-weight: bold;">
+                        <tr>
+                            <td>TOPLAM</td>
+                            <td>${grandTarget}</td>
+                            <td>${grandPlanned}</td>
+                            <td>${grandCut}</td>
+                            <td>${grandCut - grandPlanned > 0 ? '+' : ''}${grandCut - grandPlanned}</td>
+                            <td>-</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            `;
+
+            $('#compModalTitle').text(type === 'AcikAdet' ? 'Açık Adet Kesim Analizi' : 'Asorti Kesim Analizi');
+            $('#compModalContent').html(html);
+
+            var modal = document.getElementById('kesimComparisonModal');
+            modal.style.display = 'flex';
+            modal.firstElementChild.style.transform = 'scale(0.95)';
+            modal.firstElementChild.style.opacity = '0';
+            setTimeout(() => {
+                modal.firstElementChild.style.transform = 'scale(1)';
+                modal.firstElementChild.style.opacity = '1';
+            }, 10);
+        }
+
+        function renderPlannedCuttingComparison() {
+            // === BÖLÜM 1: Planlanan Kesim Tablosunu Render Et ===
+            if (!plannedCuttingItems || plannedCuttingItems.length === 0) {
+                $('#plannedCuttingTablesContainer').html('<p style="color: #94a3b8; font-style: italic; margin: 0;"><i class="fa-solid fa-info-circle" style="margin-right: 6px;"></i>Henüz üretim planlamasında kesim planlanmamış.</p>');
+                $('#cuttingComparisonReport').hide();
+                return;
+            }
+
+            // Planlanan kesimleri türlerine göre ayır
+            let plannedAcikItems = plannedCuttingItems.filter(i => i.CutType !== 'Asorti');
+            let plannedAsortiItems = plannedCuttingItems.filter(i => i.CutType === 'Asorti');
+
+            function buildPlannedTable(items, sizesArr, title, icon) {
+                if (items.length === 0) return '';
+                let allSizes = sizesArr && sizesArr.length > 0 ? sizesArr : [];
+                // Also collect sizes from items
+                items.forEach(item => {
+                    if (item.Sizes) {
+                        Object.keys(item.Sizes).forEach(s => {
+                            if (allSizes.indexOf(s) === -1) allSizes.push(s);
+                        });
+                    }
+                });
+                if (allSizes.length === 0) return '';
+
+                let html = '<div style="margin-bottom: 20px;">';
+                html += '<h6 style="margin: 0 0 10px 0; color: #1e40af; font-weight: 700; font-size: 0.95rem;"><i class="' + icon + '" style="margin-right: 6px;"></i>' + title + '</h6>';
+                html += '<div style="overflow-x: auto;"><table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; border: 1px solid #dbeafe;">';
+                
+                // Header
+                html += '<thead><tr style="background: #dbeafe;">';
+                html += '<th style="padding: 8px 10px; text-align: center; font-weight: 700; color: #1e40af; border: 1px solid #bfdbfe; font-size: 0.75rem;">KESİM</th>';
+                html += '<th style="padding: 8px 10px; text-align: center; font-weight: 700; color: #1e40af; border: 1px solid #bfdbfe; font-size: 0.75rem;">KAT SAYISI</th>';
+                allSizes.forEach(s => {
+                    html += '<th style="padding: 8px 10px; text-align: center; font-weight: 700; color: #1e40af; border: 1px solid #bfdbfe; font-size: 0.75rem;">' + s + '</th>';
+                });
+                html += '<th style="padding: 8px 10px; text-align: center; font-weight: 700; color: #1e40af; border: 1px solid #bfdbfe; font-size: 0.75rem;">TOPLAM</th>';
+                html += '<th style="padding: 8px 10px; text-align: center; font-weight: 700; color: #1e40af; border: 1px solid #bfdbfe; font-size: 0.75rem;">PASTAL BOYU</th>';
+                html += '<th style="padding: 8px 10px; text-align: center; font-weight: 700; color: #1e40af; border: 1px solid #bfdbfe; font-size: 0.75rem;">TARİH</th>';
+                html += '</tr></thead><tbody>';
+
+                let grandPlanned = 0;
+                items.forEach((item, idx) => {
+                    let cutName = item.CutName || ('Kesim ' + (idx + 1));
+                    let qty = parseFloat(item.TotalQuantity) || 0;
+                    let markerLen = parseFloat(item.MarkerLength || item.PastalBoyu) || 0;
+                    let markerLenStr = markerLen > 0 ? markerLen.toFixed(2) + ' m' : '-';
+                    grandPlanned += qty;
+                    html += '<tr style="background: #eff6ff;">';
+                    html += '<td style="padding: 6px 10px; text-align: center; font-weight: 700; color: #1e40af; border: 1px solid #dbeafe;">' + cutName + '</td>';
+                    html += '<td style="padding: 6px 10px; text-align: center; color: #334155; border: 1px solid #dbeafe;">' + (item.Multiplier || 1) + '</td>';
+                    allSizes.forEach(s => {
+                        let val = item.Sizes && item.Sizes[s] ? parseFloat(item.Sizes[s]) : 0;
+                        let multiplier = item.Multiplier && item.Multiplier > 0 ? item.Multiplier : 1;
+                        let displayVal = val / multiplier;
+                        if (displayVal % 1 !== 0) displayVal = displayVal.toFixed(2);
+                        html += '<td style="padding: 6px 10px; text-align: center; color: #334155; border: 1px solid #dbeafe;">' + displayVal + '</td>';
+                    });
+                    html += '<td style="padding: 6px 10px; text-align: center; font-weight: 700; color: #1e40af; border: 1px solid #dbeafe;">' + qty + '</td>';
+                    html += '<td style="padding: 6px 10px; text-align: center; font-weight: 600; color: #0369a1; border: 1px solid #dbeafe;">' + markerLenStr + '</td>';
+                    html += '<td style="padding: 6px 10px; text-align: center; color: #64748b; border: 1px solid #dbeafe; font-size: 0.8rem;">' + (item.Date || '-') + '</td>';
+                    html += '</tr>';
+                });
+
+                // Toplam satırı
+                html += '<tr style="background: #bfdbfe;">';
+                html += '<td colspan="2" style="padding: 8px 10px; text-align: right; font-weight: 800; color: #1e40af; border: 1px solid #93c5fd;">TOPLAM</td>';
+                allSizes.forEach(s => {
+                    let sizeTotal = 0;
+                    items.forEach(item => {
+                        let val = parseFloat(item.Sizes && item.Sizes[s] ? item.Sizes[s] : 0) || 0;
+                        let multiplier = item.Multiplier && item.Multiplier > 0 ? item.Multiplier : 1;
+                        sizeTotal += val / multiplier;
+                    });
+                    let displayTotal = sizeTotal % 1 !== 0 ? sizeTotal.toFixed(2) : sizeTotal;
+                    html += '<td style="padding: 8px 10px; text-align: center; font-weight: 700; color: #1e40af; border: 1px solid #93c5fd;">' + displayTotal + '</td>';
+                });
+                html += '<td style="padding: 8px 10px; text-align: center; font-weight: 800; color: #1e40af; border: 1px solid #93c5fd; font-size: 1rem;">' + grandPlanned + '</td>';
+                html += '<td style="border: 1px solid #93c5fd;"></td>';
+                html += '<td style="border: 1px solid #93c5fd;"></td>';
+                html += '</tr>';
+
+                html += '</tbody></table></div></div>';
+                return html;
+            }
+
+            let tablesHtml = '';
+            tablesHtml += buildPlannedTable(plannedAcikItems, typeof acikSizesArr !== 'undefined' ? acikSizesArr : Object.keys(targetSizes), 'Açık Adet Planlanan Kesimler', 'fa-solid fa-shirt');
+            tablesHtml += buildPlannedTable(plannedAsortiItems, typeof asortiSizesArr !== 'undefined' ? asortiSizesArr : Object.keys(targetSizesAsorti), 'Asorti Planlanan Kesimler', 'fa-solid fa-layer-group');
+            
+            if (tablesHtml === '') {
+                tablesHtml = '<p style="color: #94a3b8; font-style: italic; margin: 0;"><i class="fa-solid fa-info-circle" style="margin-right: 6px;"></i>Henüz üretim planlamasında kesim planlanmamış.</p>';
+            }
+            $('#plannedCuttingTablesContainer').html(tablesHtml);
+
+            // === BÖLÜM 2: Kesim Bazında Karşılaştırma Raporu ===
+            let actualAcikItems = cuttingItems.filter(i => i.CutType !== 'Asorti');
+            let actualAsortiItems = cuttingItems.filter(i => i.CutType === 'Asorti');
+
+            // Hem planlanan hem de gerçekleşen varsa raporu göster
+            if (cuttingItems.length === 0) {
+                $('#cuttingComparisonReport').hide();
+                return;
+            }
+            $('#cuttingComparisonReport').show();
+
+            function buildPerCutComparison(pItems, aItems, sizesArr, title, icon) {
+                let maxLen = Math.max(pItems.length, aItems.length);
+                if (maxLen === 0) return '';
+                
+                let allSizes = sizesArr && sizesArr.length > 0 ? [...sizesArr] : [];
+                [...pItems, ...aItems].forEach(item => {
+                    if (item.Sizes) {
+                        Object.keys(item.Sizes).forEach(s => {
+                            if (allSizes.indexOf(s) === -1) allSizes.push(s);
+                        });
+                    }
+                });
+                if (allSizes.length === 0) return '';
+
+                let totalPlannedAll = 0, totalActualAll = 0;
+                let totalPlannedPerSize = {}, totalActualPerSize = {};
+                allSizes.forEach(s => { totalPlannedPerSize[s] = 0; totalActualPerSize[s] = 0; });
+                
+                for (let i = 0; i < maxLen; i++) {
+                    let pItem = pItems[i];
+                    let aItem = aItems[i];
+                    if (pItem) {
+                        totalPlannedAll += (parseFloat(pItem.TotalQuantity) || 0);
+                        allSizes.forEach(s => { if (pItem.Sizes && pItem.Sizes[s]) totalPlannedPerSize[s] += parseFloat(pItem.Sizes[s]); });
+                    }
+                    if (aItem) {
+                        totalActualAll += (parseFloat(aItem.TotalQuantity) || 0);
+                        allSizes.forEach(s => { if (aItem.Sizes && aItem.Sizes[s]) totalActualPerSize[s] += parseFloat(aItem.Sizes[s]); });
+                    }
+                }
+
+                let efficiency = totalPlannedAll > 0 ? Math.round((totalActualAll / totalPlannedAll) * 100) : (totalActualAll > 0 ? 100 : 0);
+                
+                let uid = title.replace(/[^a-zA-Z0-9]/g, '');
+                if (!window.toggleCutDetail) {
+                    window.toggleCutDetail = function(uid, index) {
+                        $('.cut-detail-card-' + uid).hide();
+                        $('#detail-' + uid + '-cut-' + index).fadeIn(200);
+                        
+                        $('.cut-chart-item-' + uid).css({'opacity': '0.5', 'transform': 'scale(0.95)'});
+                        $('#chart-' + uid + '-cut-' + index).css({'opacity': '1', 'transform': 'scale(1.05)'});
+                    };
+                }
+
+                let html = '<style>.cut-chart-item-' + uid + ' { transition: all 0.2s ease-in-out; } .cut-chart-item-' + uid + ':hover { opacity: 1 !important; transform: scale(1.05); }</style>';
+                html += '<div style="margin-bottom: 40px;">';
+                html += '<h6 style="margin: 0 0 16px 0; color: #0f766e; font-weight: 800; font-size: 1.1rem;"><i class="' + icon + '" style="margin-right: 8px;"></i>' + title + '</h6>';
+
+                // 1. TOP SUMMARY CARDS
+                html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">';
+                
+                html += '<div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">';
+                html += '<div><div style="font-size: 0.7rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">TOPLAM PLANLANAN</div>';
+                html += '<div style="font-size: 1.5rem; font-weight: 800; color: #1e293b;">' + totalPlannedAll + ' <span style="font-size: 0.8rem; color: #94a3b8; font-weight: 500;">Adet</span></div></div>';
+                html += '<div style="width: 48px; height: 48px; border-radius: 50%; background: #f1f5f9; display: flex; align-items: center; justify-content: center; color: #475569; font-size: 1.2rem;"><i class="fa-regular fa-calendar-check"></i></div>';
+                html += '</div>';
+
+                html += '<div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">';
+                html += '<div><div style="font-size: 0.7rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">TOPLAM GERÇEKLEŞEN</div>';
+                html += '<div style="font-size: 1.5rem; font-weight: 800; color: #16a34a;">' + totalActualAll + ' <span style="font-size: 0.8rem; color: #94a3b8; font-weight: 500;">Adet</span></div></div>';
+                html += '<div style="width: 48px; height: 48px; border-radius: 50%; background: #dcfce7; display: flex; align-items: center; justify-content: center; color: #16a34a; font-size: 1.2rem;"><i class="fa-regular fa-circle-check"></i></div>';
+                html += '</div>';
+
+                html += '<div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">';
+                html += '<div><div style="font-size: 0.7rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">VERİMLİLİK ORANI</div>';
+                html += '<div style="font-size: 1.5rem; font-weight: 800; color: #0f766e;">%' + efficiency + ' <i class="fa-solid fa-arrow-trend-up" style="font-size: 1rem; margin-left: 4px;"></i></div></div>';
+                html += '<div style="width: 48px; height: 48px; border-radius: 50%; background: #ccfbf1; display: flex; align-items: center; justify-content: center; color: #0d9488; font-size: 1.2rem;"><i class="fa-solid fa-gauge-high"></i></div>';
+                html += '</div>';
+
+                html += '</div>';
+
+                // 2. CIRCULAR CHARTS
+                html += '<div style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; margin-bottom: 24px; background: white;">';
+                html += '<div style="background: #0f766e; padding: 12px 16px; color: white; font-weight: 700; font-size: 0.9rem;"><i class="fa-solid fa-chart-pie" style="margin-right: 8px;"></i>Kesim Bazlı Analiz</div>';
+                html += '<div style="padding: 24px; display: flex; gap: 40px; overflow-x: auto; justify-content: center;">';
+                
+                for (let i = 0; i < maxLen; i++) {
+                    let pTotal = pItems[i] ? (parseFloat(pItems[i].TotalQuantity) || 0) : 0;
+                    let aTotal = aItems[i] ? (parseFloat(aItems[i].TotalQuantity) || 0) : 0;
+                    let percent = pTotal > 0 ? Math.min(100, Math.round((aTotal / pTotal) * 100)) : (aTotal > 0 ? 100 : 0);
+                    let color = percent === 100 ? '#0f766e' : (percent >= 80 ? '#0284c7' : (percent > 0 ? '#f59e0b' : '#e2e8f0'));
+                    let conic = `conic-gradient(${color} ${percent}%, #f1f5f9 0)`;
+                    
+                    let isFirst = i === 0;
+                    let opacity = isFirst ? '1' : '0.5';
+                    let transform = isFirst ? 'scale(1.05)' : 'scale(0.95)';
+                    
+                    html += `<div id="chart-${uid}-cut-${i}" class="cut-chart-item-${uid}" onclick="toggleCutDetail('${uid}', ${i})" style="display: flex; flex-direction: column; align-items: center; cursor: pointer; opacity: ${opacity}; transform: ${transform};">`;
+                    html += `<div style="width: 100px; height: 100px; border-radius: 50%; background: ${conic}; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; position: relative; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">`;
+                    html += '<div style="width: 80px; height: 80px; border-radius: 50%; background: white; display: flex; flex-direction: column; align-items: center; justify-content: center;">';
+                    html += `<span style="font-size: 1.1rem; font-weight: 800; color: ${color};">%${percent}</span>`;
+                    html += `<span style="font-size: 0.65rem; font-weight: 600; color: #64748b; margin-top: -2px;">${aTotal}/${pTotal}</span>`;
+                    html += '</div></div>';
+                    html += `<div style="font-size: 0.9rem; font-weight: 700; color: #334155;">Kesim ${i+1}</div>`;
+                    html += '</div>';
+                }
+                html += '</div></div>';
+
+                // 3. OPERASYON DETAYLARI
+                html += '<div style="margin-bottom: 16px;"><span style="font-size: 0.95rem; font-weight: 700; color: #475569;"><i class="fa-solid fa-list-check" style="margin-right: 8px;"></i>Operasyon Detayları</span></div>';
+                
+                html += '<div style="display: flex; flex-direction: column; gap: 16px;">';
+                for (let i = 0; i < maxLen; i++) {
+                    let pItem = pItems[i] || null;
+                    let aItem = aItems[i] || null;
+                    let pTotal = pItem ? (parseFloat(pItem.TotalQuantity) || 0) : 0;
+                    let aTotal = aItem ? (parseFloat(aItem.TotalQuantity) || 0) : 0;
+                    let diff = aTotal - pTotal;
+                    
+                    let statusBadge = '';
+                    if (diff === 0 && pTotal > 0) statusBadge = '<span style="background: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;">Tamamlandı</span>';
+                    else if (diff > 0) statusBadge = '<span style="background: #e0e7ff; color: #3730a3; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;">Fazla Kesim</span>';
+                    else statusBadge = '<span style="background: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;">Eksik</span>';
+
+                    if (!pItem) statusBadge = '<span style="background: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;">Plan Dışı</span>';
+                    if (!aItem) statusBadge = '<span style="background: #f1f5f9; color: #475569; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;">Bekliyor</span>';
+
+                    let displayStyle = i === 0 ? 'block' : 'none';
+                    html += `<div id="detail-${uid}-cut-${i}" class="cut-detail-card-${uid}" style="display: ${displayStyle}; background: white; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">`;
+                    html += `<div style="background: #f8fafc; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0;">`;
+                    html += `<div style="font-weight: 800; color: #0f766e; font-size: 1rem;"><i class="fa-solid fa-scissors" style="margin-right: 8px;"></i>Kesim ${i+1}</div>`;
+                    html += `<div>${statusBadge}</div>`;
+                    html += '</div>';
+
+                    html += '<div style="overflow-x: auto; padding: 16px;">';
+                    html += '<table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">';
+                    
+                    // Header
+                    html += '<thead><tr>';
+                    html += '<th style="padding: 0 10px 12px 10px; text-align: left; font-weight: 700; color: #94a3b8; font-size: 0.7rem; text-transform: uppercase; border-bottom: 2px solid #f1f5f9; width: 140px;">DURUM</th>';
+                    allSizes.forEach(s => {
+                        html += `<th style="padding: 0 10px 12px 10px; text-align: center; font-weight: 700; color: #64748b; font-size: 0.75rem; border-bottom: 2px solid #f1f5f9;">${s}</th>`;
+                    });
+                    html += '<th style="padding: 0 10px 12px 10px; text-align: center; font-weight: 800; color: #475569; font-size: 0.75rem; border-bottom: 2px solid #f1f5f9;">TOPLAM</th>';
+                    html += '</tr></thead><tbody>';
+
+                    // Planlanan
+                    html += '<tr>';
+                    html += '<td style="padding: 12px 10px; font-weight: 700; color: #4f46e5; border-bottom: 1px solid #f8fafc; font-size: 0.8rem;"><i class="fa-solid fa-clipboard-check" style="margin-right: 6px; font-size: 0.7rem; color: #818cf8;"></i>Planlanan</td>';
+                    allSizes.forEach(s => {
+                        let val = pItem && pItem.Sizes && pItem.Sizes[s] ? parseFloat(pItem.Sizes[s]) : 0;
+                        html += `<td style="padding: 12px 10px; text-align: center; font-weight: 700; color: #4f46e5; border-bottom: 1px solid #f8fafc;">${val > 0 ? val : '-'}</td>`;
+                    });
+                    html += `<td style="padding: 12px 10px; text-align: center; font-weight: 800; color: #4f46e5; border-bottom: 1px solid #f8fafc; font-size: 0.95rem;">${pTotal > 0 ? pTotal : '-'}</td>`;
+                    html += '</tr>';
+
+                    // Gerçekleşen
+                    html += '<tr>';
+                    html += '<td style="padding: 12px 10px; font-weight: 700; color: #059669; border-bottom: 1px solid #f8fafc; font-size: 0.8rem;"><i class="fa-solid fa-scissors" style="margin-right: 6px; font-size: 0.7rem; color: #34d399;"></i>Gerçekleşen</td>';
+                    allSizes.forEach(s => {
+                        let val = aItem && aItem.Sizes && aItem.Sizes[s] ? parseFloat(aItem.Sizes[s]) : 0;
+                        html += `<td style="padding: 12px 10px; text-align: center; font-weight: 700; color: #059669; border-bottom: 1px solid #f8fafc;">${val > 0 ? val : '-'}</td>`;
+                    });
+                    html += `<td style="padding: 12px 10px; text-align: center; font-weight: 800; color: #059669; border-bottom: 1px solid #f8fafc; font-size: 0.95rem;">${aTotal > 0 ? aTotal : '-'}</td>`;
+                    html += '</tr>';
+
+                    // Fark
+                    html += '<tr>';
+                    html += '<td style="padding: 12px 10px; font-weight: 600; color: #64748b; font-size: 0.8rem;"><i class="fa-solid fa-arrows-left-right" style="margin-right: 6px; font-size: 0.7rem; color: #cbd5e1;"></i>Fark</td>';
+                    allSizes.forEach(s => {
+                        let pVal = pItem && pItem.Sizes && pItem.Sizes[s] ? parseFloat(pItem.Sizes[s]) : 0;
+                        let aVal = aItem && aItem.Sizes && aItem.Sizes[s] ? parseFloat(aItem.Sizes[s]) : 0;
+                        let sDiff = aVal - pVal;
+                        let display = sDiff === 0 ? '—' : (sDiff > 0 ? '+' + sDiff : sDiff);
+                        let color = sDiff === 0 ? '#94a3b8' : '#1e293b';
+                        html += `<td style="padding: 12px 10px; text-align: center; font-weight: 600; color: ${color};">${display}</td>`;
+                    });
+                    let tDiff = aTotal - pTotal;
+                    let tDisplay = tDiff === 0 ? '—' : (tDiff > 0 ? '+' + tDiff : tDiff);
+                    let tColor = tDiff === 0 ? '#94a3b8' : '#0f172a';
+                    html += `<td style="padding: 12px 10px; text-align: center; font-weight: 800; color: ${tColor};">${tDisplay}</td>`;
+html += '</tbody></table></div></div>';
+                }
+                html += '</div></div>';
+                return html;
+            }
+
+            let reportHtml = '';
+            reportHtml += buildPerCutComparison(plannedAcikItems, actualAcikItems, typeof acikSizesArr !== 'undefined' ? acikSizesArr : Object.keys(targetSizes), 'Açık Adet Karşılaştırma', 'fa-solid fa-shirt');
+            reportHtml += buildPerCutComparison(plannedAsortiItems, actualAsortiItems, typeof asortiSizesArr !== 'undefined' ? asortiSizesArr : Object.keys(targetSizesAsorti), 'Asorti Karşılaştırma', 'fa-solid fa-layer-group');
+            $('#cuttingComparisonReport').html(reportHtml);
+        }
+            
+        var currentEditPlannedIndex = -1;
+        var currentEditIndex = -1;
+
+        function approvePlannedCut(plannedIndex) {
+            let pItem = plannedCuttingItems[plannedIndex];
+            if (pItem) {
+                let newActual = JSON.parse(JSON.stringify(pItem));
+                newActual.Status = 'Completed';
+                newActual.PlannedCutIndex = plannedIndex;
+                newActual.Date = new Date().toISOString().split('T')[0];
+                cuttingItems.push(newActual);
+                saveCutting();
+                renderCuttingTable();
+            }
+        }
+
+        function editCuttingItem(actualIndex, type, isPending, plannedIndex) {
+            if (isPending) {
+                currentEditIndex = -1;
+                currentEditPlannedIndex = plannedIndex;
+            } else {
+                currentEditIndex = actualIndex;
+                currentEditPlannedIndex = -1;
+            }
+            renderCuttingTable();
+        }
+
+        function cancelEdit() {
+            currentEditIndex = -1;
+            currentEditPlannedIndex = -1;
+            renderCuttingTable();
+        }
+
+        function removeCuttingItem(actualIndex) {
+            Swal.fire({
+                title: 'Emin misiniz?',
+                text: 'Bu kesim kaydı silinecektir!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: 'Evet, Sil',
+                cancelButtonText: 'İptal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    cuttingItems.splice(actualIndex, 1);
+                    saveCutting();
+                    renderCuttingTable();
+                }
+            });
+        }
+
+        function saveEditAcik(actualIndex) {
+            let multiplier = parseFloat($('#editMultiplier').val()) || 1;
+            let date = $('#editDate').val();
+            let total = parseFloat($('#editTotal').val()) || 0;
+            
+            let sizes = {};
+            $('.edit-acik-input').each(function() {
+                let s = $(this).data('size');
+                let v = parseFloat($(this).val()) || 0;
+                sizes[s] = v * multiplier;
+            });
+            
+            if (actualIndex === -1 && currentEditPlannedIndex !== -1) {
+                let pItem = plannedCuttingItems[currentEditPlannedIndex];
+                let item = {
+                    CutName: pItem.CutName,
+                    CutType: 'AcikAdet',
+                    Multiplier: multiplier,
+                    Sizes: sizes,
+                    TotalQuantity: total,
+                    Date: date,
+                    Status: 'Completed',
+                    PlannedCutIndex: currentEditPlannedIndex
+                };
+                cuttingItems.push(item);
+            } else {
+                let item = cuttingItems[actualIndex];
+                item.Multiplier = multiplier;
+                item.Sizes = sizes;
+                item.TotalQuantity = total;
+                item.Date = date;
+            }
+            
+            cancelEdit();
+            saveCutting();
+        }
+
+        function saveEditAsorti(actualIndex) {
+            let multiplier = parseFloat($('#editMultiplier').val()) || 1;
+            let date = $('#editDate').val();
+            let total = parseFloat($('#editTotal').val()) || 0;
+            
+            let sizes = {};
+            $('.edit-asorti-input').each(function() {
+                let s = $(this).data('size');
+                let v = parseFloat($(this).data('asortivalue')) || 0;
+                sizes[s] = v * multiplier;
+            });
+            
+            if (actualIndex === -1 && currentEditPlannedIndex !== -1) {
+                let pItem = plannedCuttingItems[currentEditPlannedIndex];
+                let item = {
+                    CutName: pItem.CutName,
+                    CutType: 'Asorti',
+                    Multiplier: multiplier,
+                    Sizes: sizes,
+                    TotalQuantity: total,
+                    Date: date,
+                    Status: 'Completed',
+                    PlannedCutIndex: currentEditPlannedIndex
+                };
+                cuttingItems.push(item);
+            } else {
+                let item = cuttingItems[actualIndex];
+                item.Multiplier = multiplier;
+                item.Sizes = sizes;
+                item.TotalQuantity = total;
+                item.Date = date;
+            }
+            
+            cancelEdit();
+            saveCutting();
+        }
+
+        function renderCuttingTable() {
+            let htmlAcik = '';
+            let htmlAsorti = '';
+            let acikTotal = 0;
+            let asortiTotal = 0;
+            let grandTotal = 0;
+            
+            let renderList = [];
+            
+            (plannedCuttingItems || []).forEach((p, idx) => {
+                let matchIdx = cuttingItems.findIndex(a => a && a.PlannedCutIndex === idx);
+                if (matchIdx !== -1) {
+                    renderList.push({ pItem: p, aItem: cuttingItems[matchIdx], isPending: false, actualIndex: matchIdx, plannedIndex: idx });
+                } else {
+                    renderList.push({ pItem: p, aItem: null, isPending: true, actualIndex: -1, plannedIndex: idx });
+                }
+            });
+            
+            cuttingItems.forEach((a, idx) => {
+                if (a && a.PlannedCutIndex === undefined) {
+                    renderList.push({ pItem: null, aItem: a, isPending: false, actualIndex: idx, plannedIndex: -1 });
+                }
+            });
+
+            renderList.forEach(entry => {
+                let pItem = entry.pItem;
+                let aItem = entry.aItem;
+                let isPending = entry.isPending;
+                let actualIndex = entry.actualIndex;
+                let plannedIndex = entry.plannedIndex;
+                
+                let itemToRender = aItem || pItem;
+                
+                let cutName = itemToRender.CutName || `Manuel Kayıt`;
+                let cutTypeLabel = itemToRender.CutType || 'Açık Adet';
+                let isAsorti = cutTypeLabel === 'Asorti';
+                let sizesArr = isAsorti ? Object.keys(targetSizesAsorti) : Object.keys(targetSizes);
+                
+                let qty = parseFloat(itemToRender.TotalQuantity) || 0;
+                if (!isPending) {
+                    if (isAsorti) asortiTotal += qty;
+                    else acikTotal += qty;
+                    grandTotal += qty;
+                }
+                
+                let sizesHtml = '';
+                if (sizesArr && sizesArr.length > 0) {
+                    sizesArr.forEach(s => {
+                        let val = itemToRender.Sizes && itemToRender.Sizes[s] ? parseFloat(itemToRender.Sizes[s]) : 0;
+                        let displayVal = val;
+                        if (itemToRender.Multiplier && itemToRender.Multiplier > 0) {
+                            displayVal = val / itemToRender.Multiplier;
+                        }
+                        if (displayVal % 1 !== 0) displayVal = displayVal.toFixed(2);
+                        sizesHtml += `<td style="text-align: center; color: #334155; vertical-align: middle;">${displayVal}</td>`;
+                    });
+                } else {
+                    sizesHtml = `<td style="text-align: center; vertical-align: middle;">-</td>`;
+                }
+
+                let rowHtml = '';
+                let isEditingThis = (isPending && currentEditPlannedIndex === plannedIndex) || (!isPending && currentEditIndex === actualIndex);
+
+                if (isEditingThis) {
+                    let editSizesHtml = '';
+                    if (sizesArr && sizesArr.length > 0) {
+                        sizesArr.forEach(s => {
+                            let val = itemToRender.Sizes && itemToRender.Sizes[s] ? parseFloat(itemToRender.Sizes[s]) : 0;
+                            let displayVal = val;
+                            if (itemToRender.Multiplier && itemToRender.Multiplier > 0) {
+                                displayVal = val / itemToRender.Multiplier;
+                            }
+                            if (isAsorti) {
+                                editSizesHtml += `<td style="text-align: center; vertical-align: middle;"><input type="number" id="editSize_${s}" class="form-control form-control-sm edit-asorti-input input-field" data-size="${s}" data-asortivalue="${targetSizesAsorti[s] || 0}" value="${targetSizesAsorti[s] || 0}" readonly style="text-align: center; background: #e2e8f0; cursor: not-allowed;" /></td>`;
+                            } else {
+                                editSizesHtml += `<td style="text-align: center; vertical-align: middle;"><input type="number" id="editSize_${s}" class="form-control form-control-sm edit-acik-input input-field" data-size="${s}" value="${displayVal}" oninput="calculateEdit()" style="text-align: center;" /></td>`;
+                            }
+                        });
+                    } else {
+                        editSizesHtml = `<td style="text-align: center; vertical-align: middle;">-</td>`;
+                    }
+
+                    rowHtml = `
+                        <tr style="background: #fffbeb;">
+                            <td class="sticky-kesim" style="font-weight: 700; color: #1e293b; text-align: center; vertical-align: middle; position: sticky; left: 0; background: #fffbeb; z-index: 2;">${cutName} <span style="font-size:0.7rem; color:#b45309; display:block;">(Düzenleniyor)</span></td>
+                            <td style="text-align: center; vertical-align: middle;"><input type="number" id="editMultiplier" class="form-control form-control-sm input-field" value="${itemToRender.Multiplier || 1}" oninput="${isAsorti ? 'calculateEditAsorti()' : 'calculateEdit()'}" style="text-align: center;" /></td>
+                            ${editSizesHtml}
+                            <td style="text-align: center; vertical-align: middle;"><input type="number" id="editTotal" class="form-control form-control-sm input-field" value="${qty}" readonly style="text-align: center; background: #e2e8f0;" /></td>
+                            <td style="text-align: center; vertical-align: middle;"><input type="date" id="editDate" class="form-control form-control-sm input-field" value="${itemToRender.Date || ''}" style="text-align: center;" /></td>
+                            <td class="sticky-islem" style="text-align: center; vertical-align: middle; position: sticky; right: 0; background: #fffbeb; z-index: 2;">
+                                <button class="btn btn-sm btn-success" onclick="${isAsorti ? 'saveEditAsorti(' + actualIndex + ')' : 'saveEditAcik(' + actualIndex + ')'}" title="Kaydet" style="padding: 2px 8px; border-radius: 4px;"><i class="fa-solid fa-check"></i></button>
+                                <button class="btn btn-sm btn-secondary" onclick="cancelEdit()" title="İptal" style="padding: 2px 8px; border-radius: 4px;"><i class="fa-solid fa-xmark"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    let actionHtml = '';
+                    let statusLabel = '';
+                    let rowStyle = '';
+                    
+                    if (isPending) {
+                        rowStyle = "background: #f8fafc; opacity: 0.8; border-bottom: 1px dashed #cbd5e1;";
+                        statusLabel = `<span style="font-size: 0.7rem; color: #f59e0b; display: block; font-weight: 700;">PLANLANDI - BEKLİYOR</span>`;
+                        actionHtml = `
+                            <button class="btn btn-sm" onclick="approvePlannedCut(${plannedIndex})" style="background: #10b981; color: white; padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; font-weight: 600;" title="Birebir Gerçekleşti"><i class="fa-solid fa-check"></i> Onayla</button>
+                            <button class="btn btn-sm btn-outline-primary" onclick="editCuttingItem(-1, '${cutTypeLabel === 'Asorti' ? 'Asorti' : 'AcikAdet'}', true, ${plannedIndex})" title="Değişiklik Yap ve Onayla" style="padding: 4px 8px; font-size: 0.75rem; border-radius: 4px;"><i class="fa-solid fa-pen-to-square"></i></button>
+                        `;
+                    } else {
+                        rowStyle = "background: white;";
+                        statusLabel = plannedIndex !== -1 ? `<span style="font-size: 0.7rem; color: #16a34a; display: block; font-weight: 700;"><i class="fa-solid fa-circle-check"></i> GERÇEKLEŞTİ</span>` : `<span style="font-size: 0.7rem; color: #3b82f6; display: block; font-weight: 700;"><i class="fa-solid fa-info-circle"></i> MANUEL KAYIT</span>`;
+                        actionHtml = `
+                            <button class="btn btn-sm btn-outline-primary" onclick="editCuttingItem(${actualIndex}, '${cutTypeLabel === 'Asorti' ? 'Asorti' : 'AcikAdet'}', false, -1)" title="Düzenle" style="padding: 4px 8px; font-size: 0.75rem; border-radius: 4px;"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="removeCuttingItem(${actualIndex})" title="Sil" style="padding: 4px 8px; font-size: 0.75rem; border-radius: 4px;"><i class="fa-solid fa-trash"></i></button>
+                        `;
+                    }
+
+                    rowHtml = `
+                        <tr class="hover-row" style="${rowStyle}">
+                            <td class="sticky-kesim" style="font-weight: 700; color: #1e293b; text-align: center; vertical-align: middle; position: sticky; left: 0; background: inherit; z-index: 2;">${cutName} ${statusLabel}</td>
+                            <td style="text-align: center; color: #334155; vertical-align: middle;">${itemToRender.Multiplier || 1}</td>
+                            ${sizesHtml}
+                            <td style="text-align: center; font-weight: 700; color: #0f172a; font-size: 1.05rem; vertical-align: middle;">${qty}</td>
+                            <td style="text-align: center; color: #475569; font-size: 0.85rem; vertical-align: middle;">${itemToRender.Date || '-'}</td>
+                            <td class="sticky-islem" style="text-align: center; vertical-align: middle; position: sticky; right: 0; background: inherit; z-index: 2;">
+                                <div style="display: flex; gap: 4px; justify-content: center;">
+                                    ${actionHtml}
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }
+
+                if (isAsorti) {
+                    htmlAsorti += rowHtml;
+                } else {
+                    htmlAcik += rowHtml;
+                }
+            });
+            
+            $('#cuttingBodyAcik').html(htmlAcik);
+            $('#acikTotalCut').text(acikTotal.toLocaleString('tr-TR'));
+            
+            $('#cuttingBodyAsorti').html(htmlAsorti);
+            $('#asortiTotalCut').text(asortiTotal.toLocaleString('tr-TR'));
+            
+            $('#grandTotalCut').text(grandTotal.toLocaleString('tr-TR'));
+
+            renderPlannedCuttingComparison();
+        }
+
+        function markCutAsCompleted(index) {
+            if (cuttingItems[index]) {
+                cuttingItems[index].Status = 'Completed';
+                renderCuttingTable();
+            }
+        }
+
+        function saveCutting() {
+            $.ajax({
+                url: '/ProcessTracking/UpdateCuttingProcess',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ Id: orderId, CuttingProcessJson: JSON.stringify(cuttingItems) }),
+                success: function(res) {
+                    if(res.success) showToast("Günlük kesim bilgileri kaydedildi.", "success");
+                    else showToast("Hata: " + res.message, "danger");
+                }
+            });
+        }
+
+        function finishCutting() {
+            Swal.fire({
+                title: 'Emin misiniz?',
+                text: 'Kesim süreci tamamen bitirilecek ve takvime işlenecektir. Onaylıyor musunuz?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#0284c7',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: 'Evet, Bitir',
+                cancelButtonText: 'İptal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '/ProcessTracking/UpdateCuttingProcess',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ Id: orderId, CuttingProcessJson: JSON.stringify(cuttingItems) }),
+                        success: function(res) {
+                            if(res.success) {
+                                $.post('/ProcessTracking/MarkTimelineCompleted', { orderId: orderId, key: 'prod_kesim_bitis', type: 'prod' }, function(tlRes) {
+                                    if(tlRes.success) {
+                                        showToast("Kesim süreci başarıyla bitirildi ve takvime işlendi.", "success");
+                                        setTimeout(function() { 
+                                            window.location.hash = "timeline";
+                                            location.reload(); 
+                                        }, 1000);
+                                    }
+                                });
+                            } else {
+                                showToast("Hata: " + res.message, "danger");
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
+        function showToast(message, type) {
+            $("#floatingToast").remove();
+            var bgColor = type === "success" ? "#d1fae5" : "#fee2e2";
+            var textColor = type === "success" ? "#065f46" : "#991b1b";
+            var borderClr = type === "success" ? "rgba(52, 211, 153, 0.4)" : "rgba(248, 113, 113, 0.4)";
+            var icon = type === "success" ? "fa-solid fa-circle-check" : "fa-solid fa-circle-exclamation";
+            var toast = $('<div id="floatingToast" style="position: fixed; top: 20px; right: 20px; background-color: ' + bgColor + '; color: ' + textColor + '; border: 1px solid ' + borderClr + '; padding: 16px 24px; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); z-index: 9999; display: flex; align-items: center; gap: 10px; font-weight: 500; font-size: 0.95rem; min-width: 300px; transition: opacity 0.5s;">' +
+                '<i class="' + icon + '" style="font-size: 1.2rem;"></i>' +
+                '<span>' + message + '</span>' +
+                '</div>');
+            $("body").append(toast);
+            setTimeout(function () {
+                toast.css('opacity', '0');
+                setTimeout(function () { toast.remove(); }, 500);
+            }, 3000);
+        }
+
+        function processSevkExit() {
+            $.ajax({
+                url: '/ProcessTracking/ProcessSevkOnayStockExit',
+                type: 'POST',
+                data: { orderId: orderId },
+                success: function(res) {
+                    if (res.success) {
+                        showToast(res.message, "success");
+                        setTimeout(function() {
+                            switchTab('timeline');
+                            location.reload(); 
+                        }, 1500);
+                    } else {
+                        showToast("Hata: " + res.message, "danger");
+                    }
+                },
+                error: function() {
+                    showToast("İşlem sırasında bir hata oluştu.", "danger");
+                }
+            });
+        }
+
+        function printDispatchSlip() {
+            var dateStr = new Date().toLocaleDateString('tr-TR');
+            var timeStr = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+            
+            var printHtml = '<!DOCTYPE html>' +
+            '<' + 'html>' +
+            '<' + 'head>' +
+            '    <title>Malzeme Çıkış Fişi</title>' +
+            '    <style>' +
+            '        body { font-family: "Segoe UI", Arial, sans-serif; padding: 40px; color: #1e293b; }' +
+            '        .header { text-align: center; border-bottom: 2px solid #1e293b; padding-bottom: 15px; margin-bottom: 25px; }' +
+            '        h2 { margin: 0 0 5px 0; font-size: 24px; }' +
+            '        .sub-header { font-size: 16px; color: #475569; }' +
+            '        .info-box { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 15px; padding: 15px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; }' +
+            '        table { width: 100%; border-collapse: collapse; margin-top: 10px; }' +
+            '        th, td { border: 1px solid #cbd5e1; padding: 12px; text-align: left; font-size: 14px; }' +
+            '        th { background-color: #f1f5f9; font-weight: 700; color: #334155; }' +
+            '        .right { text-align: right; }' +
+            '        .footer { margin-top: 60px; display: flex; justify-content: space-between; font-size: 14px; }' +
+            '        .sign-box { width: 220px; border-top: 1px solid #334155; text-align: center; padding-top: 10px; font-weight: 600; }' +
+            '    </style>' +
+            '<' + '/head>' +
+            '<' + 'body>' +
+            '    <div class="header">' +
+            '        <h2>KNN DEPO - MALZEME ÇIKIŞ FİŞİ</h2>' +
+            '    </div>' +
+            '    <div class="info-box">' +
+            '        <div>' +
+            '            <strong>Sipariş No:</strong> @Model.OrderCode <br/>' +
+            '            <strong>Model:</strong> @Model.ModelName <br/>' +
+            '            <strong>Renk:</strong> @Model.Color <br/>' +
+            '            <strong>Atölye:</strong> @(string.IsNullOrEmpty(GetProdVal("prod_dikim_atolyesi")) ? (Model.SewingWorkshop ?? Model.ProductionPlace ?? "-") : GetProdVal("prod_dikim_atolyesi"))' +
+            '        </div>' +
+            '        <div style="text-align: right;">' +
+            '            <strong>Tarih:</strong> ' + dateStr + ' <br/>' +
+            '            <strong>Saat:</strong> ' + timeStr +
+            '        </div>' +
+            '    </div>' +
+            '    <table>' +
+            '        <thead>' +
+            '            <tr>' +
+            '                <th>Malzeme / Stok Adı</th>' +
+            '                <th class="right" style="width: 150px;">Çıkan Miktar</th>' +
+            '            </tr>' +
+            '        </thead>' +
+            '        <tbody>';
+            
+            var itemsFound = false;
+
+            function parseTrNum(str) {
+                if(!str) return 0;
+                str = str.trim().replace(/\./g, '').replace(',', '.');
+                return parseFloat(str) || 0;
+            }
+            
+            function formatTrNum(num) {
+                return num.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+
+            $('#worksheetTable tbody tr').each(function() {
+                if ($(this).find('td').length < 4) return;
+                
+                var matName = $(this).find('td:eq(0)').text().trim();
+                var planStr = $(this).find('td:eq(1)').text().trim();
+                var depoStr = $(this).find('td:eq(2)').text().trim();
+                
+                var planQty = parseTrNum(planStr);
+                var depoQty = parseTrNum(depoStr);
+                
+                if (depoQty >= planQty && planQty > 0) {
+                    itemsFound = true;
+                    var printQty = planQty;
+                    printHtml += '<tr><td>' + matName + '</td><td class="right"><strong>' + formatTrNum(printQty) + '</strong></td></tr>';
+                }
+            });
+
+            printHtml += '        <'+'/tbody>    <'+'/table>';
+            
+            if (!itemsFound) {
+                printHtml += '    <p style="text-align:center; margin-top: 30px; color: #dc2626; font-weight: bold;">Çıkış yapılacak malzeme bulunamadı.</p>';
+            }
+            
+            printHtml += '    <div class="footer">' +
+            '        <div class="sign-box">Depo Yetkilisi<br><span style="font-size: 12px; font-weight: normal; color: #64748b;">(İmza)</span></div>' +
+            '        <div class="sign-box">Teslim Alan<br><span style="font-size: 12px; font-weight: normal; color: #64748b;">(İmza)</span></div>' +
+            '    </div>' +
+            '<' + '/body>' +
+            '<' + '/html>';
+
+            var printWin = window.open('', '_blank', 'width=850,height=700');
+            printWin.document.open();
+            printWin.document.write(printHtml);
+            printWin.document.close();
+            setTimeout(function() { 
+                printWin.print(); 
+                
+                if (itemsFound) {
+                    setTimeout(function() {
+                        Swal.fire({
+                            title: 'Otomatik Stok Düşümü',
+                            text: 'Çıkış fişi yazdırıldı. Yazdırılan malzemeler için stoktan düşüm (çıkış) işlemi otomatik olarak yapılsın mı?',
+                            icon: 'question',
+                            showCancelButton: true,
+                            confirmButtonColor: '#3085d6',
+                            cancelButtonColor: '#d33',
+                            confirmButtonText: 'Evet, Stoktan Düş',
+                            cancelButtonText: 'İptal'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                processSevkExit();
+                            }
+                        });
+                    }, 500); // Wait a bit after print dialog opens
+                }
+            }, 500);
+        }
+function printSection(section) {
+    var printAsorti = document.getElementById('printAsortiArea');
+    var printAcik = document.getElementById('printAcikAdetArea');
+    
+    var origAsorti = printAsorti.style.display;
+    var origAcik = printAcik.style.display;
+    
+    if (section === 'asorti') {
+        printAcik.style.display = 'none';
+    } else if (section === 'acik') {
+        printAsorti.style.display = 'none';
+    }
+    
+    // Geçici olarak media print style
+    var style = document.createElement('style');
+    style.innerHTML = '@@media print { .no-print, .btn, .nav-link, .color-tabs, .sidebar, .main-header, .header-container { display: none !important; } }';
+    document.head.appendChild(style);
+    
+    window.print();
+    
+    printAsorti.style.display = origAsorti;
+    printAcik.style.display = origAcik;
+    document.head.removeChild(style);
+}
+
+function toggleMergeSelection(el) {
+    if (el.classList.contains('selected-cell')) {
+        el.classList.remove('selected-cell');
+    } else {
+        el.classList.add('selected-cell');
+    }
+}
+
+function mergeSelectedCells() {
+    var selected = Array.from(document.querySelectorAll('.selected-cell'));
+    if (selected.length < 2) {
+        Swal.fire({ icon: 'warning', title: 'Uyarı', text: 'Lütfen birleştirmek için aynı sütundan en az iki hücre seçin.', confirmButtonColor: '#f59e0b' });
+        return;
+    }
+    
+    // Sort by DOM order (row index)
+    selected.sort(function(a, b) {
+        return a.closest('tr').rowIndex - b.closest('tr').rowIndex;
+    });
+
+    var first = selected[0];
+    var colId = first.getAttribute('data-col');
+    
+    // Check if they are all in the same column
+    for (var i = 1; i < selected.length; i++) {
+        if (selected[i].getAttribute('data-col') !== colId) {
+            Swal.fire({ icon: 'warning', title: 'Uyarı', text: 'Lütfen aynı sütundaki hücreleri seçin.', confirmButtonColor: '#f59e0b' });
+            return;
+        }
+    }
+    
+    var totalRowspan = 0;
+    
+    for (var i = 0; i < selected.length; i++) {
+        var cell = selected[i];
+        var rSpan = parseInt(cell.getAttribute('rowspan')) || 1;
+        totalRowspan += rSpan;
+        
+        if (i > 0) {
+            cell.style.display = 'none';
+        }
+        cell.classList.remove('selected-cell');
+    }
+    
+    first.setAttribute('rowspan', totalRowspan);
+}
+
+function unmergeSelectedCells() {
+    var selected = document.querySelectorAll('.selected-cell');
+    if (selected.length === 0) {
+        Swal.fire({ icon: 'warning', title: 'Uyarı', text: 'Lütfen ayırmak için daha önce birleştirilmiş bir hücreyi seçin.', confirmButtonColor: '#f59e0b' });
+        return;
+    }
+    
+    for(var k = 0; k < selected.length; k++) {
+        var first = selected[k];
+        var rowspan = parseInt(first.getAttribute('rowspan')) || 1;
+        
+        if (rowspan > 1) {
+            first.setAttribute('rowspan', 1);
+            var colIdx = first.getAttribute('data-col');
+            
+            var tr = first.closest('tr');
+            for (var i = 1; i < rowspan; i++) {
+                tr = tr.nextElementSibling;
+                if (tr) {
+                    var hiddenCell = tr.querySelector('.mergeable-cell[data-col="' + colIdx + '"]');
+                    if (hiddenCell) {
+                        hiddenCell.style.display = '';
+                        hiddenCell.setAttribute('rowspan', 1);
+                    }
+                }
+            }
+        }
+        first.classList.remove('selected-cell');
+    }
+}
+    </script>
+</script>

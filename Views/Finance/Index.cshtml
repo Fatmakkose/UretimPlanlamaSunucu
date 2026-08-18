@@ -748,7 +748,7 @@
         };
 
         if (!data.hesapAdi) {
-            alert('Hesap adı zorunludur!');
+            Swal.fire({ icon: 'warning', title: 'Eksik Bilgi', text: 'Hesap adı zorunludur!', confirmButtonColor: '#f59e0b' });
             return;
         }
 
@@ -763,7 +763,7 @@
                 if (res.success) {
                     location.reload();
                 } else {
-                    alert(res.message);
+                    Swal.fire({ icon: 'error', title: 'Hata!', text: res.message, confirmButtonColor: '#ef4444' });
                 }
             }
         });
@@ -773,7 +773,7 @@
     function showDetail(id) {
         currentCariId = id;
         $.get('/Finance/GetCariDetail?id=' + id, function (res) {
-            if (!res.success) { alert(res.message); return; }
+            if (!res.success) { Swal.fire({ icon: 'error', title: 'Hata!', text: res.message, confirmButtonColor: '#ef4444' }); return; }
 
             var h = res.hesap;
             $('#detailTitle').text(h.hesapKodu + ' — ' + h.hesapAdi);
@@ -904,7 +904,7 @@
     function saveHareket() {
         var tutar = parseFloat($('#hareketTutar').val()) || 0;
         if (tutar <= 0) {
-            alert('Tutar sıfırdan büyük olmalıdır!');
+            Swal.fire({ icon: 'warning', title: 'Geçersiz Tutar', text: 'Tutar sıfırdan büyük olmalıdır!', confirmButtonColor: '#f59e0b' });
             return;
         }
 
@@ -965,31 +965,55 @@
                         }
                     }, 500);
                 } else {
-                    alert(res.message);
+                    Swal.fire({ icon: 'error', title: 'Hata!', text: res.message, confirmButtonColor: '#ef4444' });
                 }
             }
         });
     }
 
     function deleteHareket(id) {
-        if (!confirm('Bu hareketi silmek istediğinize emin misiniz?')) return;
-        $.post('/Finance/DeleteHareket', { id: id }, function (res) {
-            if (res.success) {
-                showDetail(currentCariId);
-                loadSummary();
-            } else {
-                alert(res.message);
+        Swal.fire({
+            title: 'Emin misiniz?',
+            text: 'Bu hareketi silmek istediğinize emin misiniz?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#94a3b8',
+            confirmButtonText: 'Evet, Sil',
+            cancelButtonText: 'İptal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.post('/Finance/DeleteHareket', { id: id }, function (res) {
+                    if (res.success) {
+                        showDetail(currentCariId);
+                        loadSummary();
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'Hata!', text: res.message, confirmButtonColor: '#ef4444' });
+                    }
+                });
             }
         });
     }
 
     function deleteCari(id, name) {
-        if (!confirm('"' + name + '" cari hesabını ve tüm hareketlerini silmek istediğinize emin misiniz?')) return;
-        $.post('/Finance/DeleteCariHesap', { id: id }, function (res) {
-            if (res.success) {
-                location.reload();
-            } else {
-                alert(res.message);
+        Swal.fire({
+            title: 'Emin misiniz?',
+            text: '"' + name + '" cari hesabını ve tüm hareketlerini silmek istediğinize emin misiniz?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#94a3b8',
+            confirmButtonText: 'Evet, Sil',
+            cancelButtonText: 'İptal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.post('/Finance/DeleteCariHesap', { id: id }, function (res) {
+                    if (res.success) {
+                        location.reload();
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'Hata!', text: res.message, confirmButtonColor: '#ef4444' });
+                    }
+                });
             }
         });
     }

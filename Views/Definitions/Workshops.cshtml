@@ -441,11 +441,11 @@
                                 $(this).addClass('active');
                             });
                         } else {
-                            alert(res.message || 'Atölye detayları yüklenemedi.');
+                            Swal.fire({ icon: 'error', title: 'Hata!', text: res.message || 'Atölye detayları yüklenemedi.', confirmButtonColor: '#ef4444' });
                         }
                     },
                     error: function() {
-                        alert('Atölye bilgileri alınırken sunucu tarafında bir hata oluştu.');
+                        Swal.fire({ icon: 'error', title: 'Sunucu Hatası!', text: 'Atölye bilgileri alınırken sunucu tarafında bir hata oluştu.', confirmButtonColor: '#ef4444' });
                     }
                 });
             });
@@ -492,12 +492,12 @@
                                 checkbox.prop('checked', false);
                             }
                         } else {
-                            alert('Bir hata oluştu.');
+                            Swal.fire({ icon: 'error', title: 'Hata!', text: 'Bir hata oluştu.', confirmButtonColor: '#ef4444' });
                             checkbox.prop('checked', !isChecked);
                         }
                     },
                     error: function() {
-                        alert('Bir hata oluştu.');
+                        Swal.fire({ icon: 'error', title: 'Hata!', text: 'Bir hata oluştu.', confirmButtonColor: '#ef4444' });
                         checkbox.prop('checked', !isChecked);
                     }
                 });

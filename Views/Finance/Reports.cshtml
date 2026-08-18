@@ -213,17 +213,27 @@
         }
 
         function deleteTransaction(id) {
-            if (!confirm('Bu cari hareketi ve bağlı stok hareketlerini tamamen silmek istediğinize emin misiniz? (İlgili stoklar ve cari bakiye geri alınacaktır)')) {
-                return;
-            }
-            $.post('/Finance/DeleteTransaction', { id: id }, function (res) {
-                if (res.success) {
-                    location.reload();
-                } else {
-                    alert(res.message);
+            Swal.fire({
+                title: 'Emin misiniz?',
+                text: 'Bu cari hareketi ve bağlı stok hareketlerini tamamen silmek istediğinize emin misiniz? (İlgili stoklar ve cari bakiye geri alınacaktır)',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: 'Evet, Sil',
+                cancelButtonText: 'İptal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.post('/Finance/DeleteTransaction', { id: id }, function (res) {
+                        if (res.success) {
+                            location.reload();
+                        } else {
+                            Swal.fire({ icon: 'error', title: 'Hata!', text: res.message, confirmButtonColor: '#ef4444' });
+                        }
+                    }).fail(function () {
+                        Swal.fire({ icon: 'error', title: 'Sunucu Hatası!', text: 'Sunucu hatası oluştu.', confirmButtonColor: '#ef4444' });
+                    });
                 }
-            }).fail(function () {
-                alert("Sunucu hatası oluştu.");
             });
         }
     </script>

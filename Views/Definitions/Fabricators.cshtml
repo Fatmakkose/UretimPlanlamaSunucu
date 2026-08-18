@@ -198,12 +198,12 @@
                                 checkbox.prop('checked', false);
                             }
                         } else {
-                            alert('Bir hata oluştu.');
+                            Swal.fire({ icon: 'error', title: 'Hata!', text: 'Bir hata oluştu.', confirmButtonColor: '#ef4444' });
                             checkbox.prop('checked', !isChecked); // revert
                         }
                     },
                     error: function() {
-                        alert('Bir hata oluştu.');
+                        Swal.fire({ icon: 'error', title: 'Hata!', text: 'Bir hata oluştu.', confirmButtonColor: '#ef4444' });
                         checkbox.prop('checked', !isChecked); // revert
                     }
                 });
@@ -230,11 +230,11 @@
                         if (res.success) {
                             window.location.reload();
                         } else {
-                            alert('Hata: ' + (res.message || 'Silinemedi.'));
+                            Swal.fire({ icon: 'error', title: 'Hata!', text: res.message || 'Silinemedi.', confirmButtonColor: '#ef4444' });
                         }
                     },
                     error: function() {
-                        alert('Sunucu hatası oluştu.');
+                        Swal.fire({ icon: 'error', title: 'Sunucu Hatası!', text: 'Sunucu hatası oluştu.', confirmButtonColor: '#ef4444' });
                     }
                 });
                 $('#deleteFabModal').fadeOut(200);

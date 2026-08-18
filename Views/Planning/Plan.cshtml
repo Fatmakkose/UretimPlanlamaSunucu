@@ -2725,10 +2725,8 @@ function planGetTotalCutForSize(sizeName, cutType) {
                     text: 'Tarihler başarıyla kaydedildi.',
                     icon: 'success',
                     confirmButtonText: 'Tamam',
-                    confirmButtonColor: '#3085d6'
+                    confirmButtonColor: '#10b981'
                 });
-            } else {
-                alert('Tarihler başarıyla kaydedildi.');
             }
         }).catch(err => {
             if (typeof Swal !== 'undefined') {
@@ -2736,10 +2734,9 @@ function planGetTotalCutForSize(sizeName, cutType) {
                     title: 'Hata!',
                     text: 'Kaydetme sırasında bir hata oluştu: ' + err,
                     icon: 'error',
-                    confirmButtonText: 'Tamam'
+                    confirmButtonText: 'Tamam',
+                    confirmButtonColor: '#ef4444'
                 });
-            } else {
-                alert('Kaydetme sırasında bir hata oluştu: ' + err);
             }
         });
     }
@@ -2857,27 +2854,51 @@ function planGetTotalCutForSize(sizeName, cutType) {
                                     }
                                 });
                             } else {
-                                if (confirm(msg)) {
-                                    let selectedStep = prompt("Hangi süreçten itibaren kaydırılsın? (1: Tümü, 2: Paket Başlangıç, 3: Paket Bitiş, 4: Yola Çıkış, 5: Depo Varış)\nSayı giriniz:", "1");
-                                    if (selectedStep) {
-                                        let stepCode = 'all';
-                                        if (selectedStep == "2") stepCode = 'paket_baslangic';
-                                        else if (selectedStep == "3") stepCode = 'paket_bitis';
-                                        else if (selectedStep == "4") stepCode = 'yola_cikis';
-                                        else if (selectedStep == "5") stepCode = 'depo_varis';
-                                        
-                                        applyShiftToDates(shiftDays, newEndDateStr, stepCode);
-                                        atolyeSelect.dataset.oldValue = atolyeSelect.value;
-                                    } else {
+                                Swal.fire({
+                                    title: 'Tarihleri Kaydır',
+                                    text: msg,
+                                    icon: 'question',
+                                    showCancelButton: true,
+                                    showDenyButton: true,
+                                    confirmButtonColor: '#0284c7',
+                                    cancelButtonColor: '#94a3b8',
+                                    denyButtonColor: '#ef4444',
+                                    confirmButtonText: 'Evet, Kaydır',
+                                    denyButtonText: 'İptal Et',
+                                    cancelButtonText: 'Hayır, Sadece Atölyeyi Değiştir'
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+                                        Swal.fire({
+                                            title: 'Süreç Seçimi',
+                                            text: 'Hangi süreçten itibaren kaydırılsın?',
+                                            input: 'select',
+                                            inputOptions: {
+                                                'all': 'Tümü',
+                                                'paket_baslangic': 'Paket Başlangıç',
+                                                'paket_bitis': 'Paket Bitiş',
+                                                'yola_cikis': 'Yola Çıkış',
+                                                'depo_varis': 'Depo Varış'
+                                            },
+                                            inputValue: 'all',
+                                            showCancelButton: true,
+                                            confirmButtonColor: '#0284c7',
+                                            cancelButtonColor: '#94a3b8',
+                                            confirmButtonText: 'Uygula',
+                                            cancelButtonText: 'İptal'
+                                        }).then((stepResult) => {
+                                            if (stepResult.isConfirmed) {
+                                                applyShiftToDates(shiftDays, newEndDateStr, stepResult.value);
+                                                atolyeSelect.dataset.oldValue = atolyeSelect.value;
+                                            } else {
+                                                atolyeSelect.value = oldVal;
+                                            }
+                                        });
+                                    } else if (result.isDenied) {
                                         atolyeSelect.value = oldVal;
-                                    }
-                                } else {
-                                    if (confirm("Değişiklik tamamen iptal edilsin mi? (İptal edilirse atölye eski haline döner)")) {
-                                        atolyeSelect.value = oldVal;
                                     } else {
                                         atolyeSelect.dataset.oldValue = atolyeSelect.value;
                                     }
-                                }
+                                });
                             }
                         } else if (!oldEndDateStr) {
                             endInput.value = newEndDateStr;

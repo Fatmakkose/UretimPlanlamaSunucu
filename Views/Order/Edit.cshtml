@@ -852,29 +852,32 @@
                                     data: JSON.stringify(newOrders),
                                     success: function(resMult) {
                                         if (resMult.success) {
-                                            alert("Ana sipariş güncellendi ve " + extraRows.length + " yeni renk siparişi başarıyla oluşturuldu.");
-                                            window.location.href = '/Order/Index';
+                                            Swal.fire({ icon: 'success', title: 'Başarılı!', text: 'Ana sipariş güncellendi ve ' + extraRows.length + ' yeni renk siparişi başarıyla oluşturuldu.', confirmButtonColor: '#10b981' }).then(() => {
+                                                window.location.href = '/Order/Index';
+                                            });
                                         } else {
-                                            alert("Ana sipariş güncellendi ancak yeni renkler eklenirken hata oluştu: " + resMult.message);
-                                            window.location.href = '/Order/Index';
+                                            Swal.fire({ icon: 'warning', title: 'Kısmi Başarı', text: 'Ana sipariş güncellendi ancak yeni renkler eklenirken hata oluştu: ' + resMult.message, confirmButtonColor: '#f59e0b' }).then(() => {
+                                                window.location.href = '/Order/Index';
+                                            });
                                         }
                                     },
                                     error: function() {
-                                        alert("Ana sipariş güncellendi ancak yeni renkler kaydedilirken sunucu hatası oluştu.");
-                                        window.location.href = '/Order/Index';
+                                        Swal.fire({ icon: 'error', title: 'Sunucu Hatası!', text: 'Ana sipariş güncellendi ancak yeni renkler kaydedilirken sunucu hatası oluştu.', confirmButtonColor: '#ef4444' }).then(() => {
+                                            window.location.href = '/Order/Index';
+                                        });
                                     }
                                 });
                             } else {
                                 window.location.href = '/Order/Index';
                             }
                         } else {
-                            alert("Hata: " + res.message);
+                            Swal.fire({ icon: 'error', title: 'Hata!', text: res.message, confirmButtonColor: '#ef4444' });
                             var btn = $('#btnSubmitFullEdit');
                             btn.prop('disabled', false).html('<i class="fa-solid fa-floppy-disk"></i> Değişiklikleri Kaydet');
                         }
                     },
                     error: function(err) {
-                        alert('Bir hata oluştu. Veriler kaydedilemedi.');
+                        Swal.fire({ icon: 'error', title: 'Hata!', text: 'Bir hata oluştu. Veriler kaydedilemedi.', confirmButtonColor: '#ef4444' });
                         console.error(err);
                     }
                 });
@@ -894,11 +897,11 @@
                         if (uploadRes.success) {
                             processSubmit(uploadRes.imageUrl);
                         } else {
-                            alert("Görsel yüklenemedi: " + uploadRes.message);
+                            Swal.fire({ icon: 'error', title: 'Hata!', text: 'Görsel yüklenemedi: ' + uploadRes.message, confirmButtonColor: '#ef4444' });
                         }
                     },
                     error: function() {
-                        alert("Görsel yüklenirken sunucu hatası oluştu.");
+                        Swal.fire({ icon: 'error', title: 'Sunucu Hatası!', text: 'Görsel yüklenirken sunucu hatası oluştu.', confirmButtonColor: '#ef4444' });
                     }
                 });
             } else {
@@ -937,23 +940,36 @@
         });
 
         $(document).on('click', '#btnAddNewColor', function() {
-            var colorName = prompt("Yeni eklenecek rengin adını giriniz:");
-            if (colorName && colorName.trim() !== "") {
-                colorName = colorName.trim().toUpperCase();
-                $.post('/ColorDef/CreateAjax', { name: colorName, description: '' }, function(res) {
-                    if (res.success) {
-                        if ($('#orderColorSelect option[value="' + colorName + '"]').length === 0) {
-                            $('#orderColorSelect').append(new Option(colorName, colorName, true, true));
+            Swal.fire({
+                title: 'Yeni Renk Ekle',
+                input: 'text',
+                inputPlaceholder: 'Renk adını giriniz...',
+                showCancelButton: true,
+                confirmButtonColor: '#0284c7',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: 'Ekle',
+                cancelButtonText: 'İptal',
+                inputValidator: (value) => {
+                    if (!value || !value.trim()) return 'Renk adı boş olamaz!';
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    var colorName = result.value.trim().toUpperCase();
+                    $.post('/ColorDef/CreateAjax', { name: colorName, description: '' }, function(res) {
+                        if (res.success) {
+                            if ($('#orderColorSelect option[value="' + colorName + '"]').length === 0) {
+                                $('#orderColorSelect').append(new Option(colorName, colorName, true, true));
+                            } else {
+                                $('#orderColorSelect').val(colorName);
+                            }
                         } else {
-                            $('#orderColorSelect').val(colorName);
+                            Swal.fire({ icon: 'error', title: 'Hata!', text: res.message, confirmButtonColor: '#ef4444' });
                         }
-                    } else {
-                        alert("Hata: " + res.message);
-                    }
-                }).fail(function() {
-                    alert("Sunucu ile iletişimde bir hata oluştu.");
-                });
-            }
+                    }).fail(function() {
+                        Swal.fire({ icon: 'error', title: 'Hata!', text: 'Sunucu ile iletişimde bir hata oluştu.', confirmButtonColor: '#ef4444' });
+                    });
+                }
+            });
         });
 
         // --- İNLİNE RENK KARTLARI MANTIĞI ---

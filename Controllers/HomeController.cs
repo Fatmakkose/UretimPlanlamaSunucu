@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using UretimPlanlama.Models;
 
 namespace UretimPlanlama.Controllers;
@@ -120,6 +121,58 @@ public class HomeController : Controller
 
         ViewBag.WorkshopSummaries = workshopSummaries;
 
+        // Atölye Performans / Termin Başarısı
+        var workshopPerformanceList = new List<object>();
+        foreach (var w in workshops) {
+            int onTime = 0;
+            int delayed = 0;
+            
+            var wsCompletedOrders = orders.Where(o => 
+                (o.SewingWorkshop == w.Name || o.ProductionPlace == w.Name) && 
+                (o.Status == "Tamamlandı" || o.PackagingEndDate.HasValue || (o.ProductionJson != null && (o.ProductionJson.Contains("prod_depo_varis_actual") || o.ProductionJson.Contains("prod_paket_bitis_actual"))))
+            ).ToList();
+            
+            foreach(var o in wsCompletedOrders) {
+                DateTime? actualEnd = null;
+                if (!string.IsNullOrEmpty(o.ProductionJson)) {
+                    try {
+                        var pDict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(o.ProductionJson);
+                        if (pDict != null) {
+                            // Öncelikli olarak Depo Varış tarihini (prod_depo_varis_actual) baz al
+                            if (pDict.TryGetValue("prod_depo_varis_actual", out var depoStr) && DateTime.TryParse(depoStr, out DateTime depoDate)) {
+                                actualEnd = depoDate;
+                            } 
+                            // Eğer depo varış girilmediyse Paket Bitiş tarihini kullan
+                            else if (pDict.TryGetValue("prod_paket_bitis_actual", out var pktStr) && DateTime.TryParse(pktStr, out DateTime pktDate)) {
+                                actualEnd = pktDate;
+                            }
+                        }
+                    } catch {}
+                }
+                
+                // CPS formu kullanılmamışsa ve eski sistem (PackagingEndDate) kullanıldıysa
+                if (!actualEnd.HasValue) {
+                    actualEnd = o.PackagingEndDate;
+                }
+                
+                DateTime? planEnd = o.EffectiveTerminDate;
+                if (actualEnd.HasValue && planEnd.HasValue) {
+                    if (actualEnd.Value.Date <= planEnd.Value.Date) onTime++;
+                    else delayed++;
+                }
+            }
+            
+            if (onTime > 0 || delayed > 0) {
+                workshopPerformanceList.Add(new {
+                    Workshop = w.Name,
+                    OnTime = onTime,
+                    Delayed = delayed,
+                    SuccessRate = (int)Math.Round((double)onTime / (onTime + delayed) * 100)
+                });
+            }
+        }
+        ViewBag.WorkshopPerformanceJson = System.Text.Json.JsonSerializer.Serialize(workshopPerformanceList);
+
         // Atölye bazlı Kapasite ve Doluluk Takibi
         var today = DateTime.Today;
         var currentMonth = today.Month;
@@ -206,6 +259,12 @@ public class HomeController : Controller
             .Where(c => c.ActiveOrderCount > 0)
             .OrderByDescending(c => c.MonthlyOccupancyRate)
             .ToList();
+
+        // Tüm atölyelerin kapasite durumlarını Kanban panosunda bar çizmek için aktar
+        ViewBag.AllWorkshopCapacities = capacityStatuses.ToDictionary(c => c.Workshop.Name, c => c);
+
+        ViewBag.AllActiveWorkshops = workshops.Where(w => w.IsActive).ToList();
+
         return View(orders);
     }
 
@@ -216,6 +275,112 @@ public class HomeController : Controller
         {
             _context.Notifications.RemoveRange(_context.Notifications);
             await _context.SaveChangesAsync();
+            return Json(new { success = true });
+        }
+        catch (System.Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    public class AssignWorkshopModel {
+        public int OrderId { get; set; }
+        public string WorkshopName { get; set; }
+        public bool ForceAssign { get; set; }
+        public bool ForceShift { get; set; }
+        public DateTime? SuggestedStartDate { get; set; }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> AssignWorkshop([FromBody] AssignWorkshopModel model)
+    {
+        try
+        {
+            var order = await _context.Orders.FindAsync(model.OrderId);
+            if (order == null) return Json(new { success = false, message = "Sipariş bulunamadı." });
+
+            var workshop = await _context.Workshops.FirstOrDefaultAsync(w => w.Name == model.WorkshopName);
+            if (workshop == null) return Json(new { success = false, message = "Atölye bulunamadı." });
+
+            if (!model.ForceAssign && !model.ForceShift)
+            {
+                int qty = order.CalculatedQuantity > 0 ? order.CalculatedQuantity : order.Quantity;
+                DateTime refDate = order.PlannedSewingStartDate ?? order.OrderDate;
+
+                if (workshop.DailyCapacity > 0)
+                {
+                    // Fetch relevant orders to calculate load (CalculatedQuantity is NotMapped)
+                    var relevantOrders = await _context.Orders
+                        .Where(o => o.Id != order.Id && 
+                                    (o.SewingWorkshop == workshop.Name || o.ProductionPlace == workshop.Name) &&
+                                    o.Status != "İptal Edildi")
+                        .ToListAsync();
+
+                    int loadOnRefDate = relevantOrders
+                        .Where(o => (o.PlannedSewingStartDate ?? o.OrderDate).Date == refDate.Date)
+                        .Sum(o => o.CalculatedQuantity > 0 ? o.CalculatedQuantity : o.Quantity);
+
+                    if (loadOnRefDate + qty > workshop.DailyCapacity)
+                    {
+                        DateTime? nextAvailableDate = null;
+                        for (int i = 1; i <= 30; i++)
+                        {
+                            DateTime checkDate = refDate.AddDays(i);
+                            int load = relevantOrders
+                                .Where(o => (o.PlannedSewingStartDate ?? o.OrderDate).Date == checkDate.Date)
+                                .Sum(o => o.CalculatedQuantity > 0 ? o.CalculatedQuantity : o.Quantity);
+
+                            if (load + qty <= workshop.DailyCapacity)
+                            {
+                                nextAvailableDate = checkDate;
+                                break;
+                            }
+                        }
+
+                        if (nextAvailableDate.HasValue)
+                        {
+                            return Json(new { 
+                                success = false, 
+                                requiresConfirmation = true, 
+                                suggestedStartDate = nextAvailableDate.Value.ToString("yyyy-MM-dd"), 
+                                message = $"Seçilen atölyenin {refDate:dd.MM.yyyy} tarihindeki günlük kapasitesi doludur. Siparişin planlanan dikim tarihini {nextAvailableDate.Value:dd.MM.yyyy} olarak kaydırmak ister misiniz?" 
+                            });
+                        }
+                        else
+                        {
+                            return Json(new { 
+                                success = false, 
+                                requiresConfirmation = true, 
+                                suggestedStartDate = (DateTime?)null, 
+                                message = $"Seçilen atölyenin {refDate:dd.MM.yyyy} tarihindeki kapasitesi doludur ve önümüzdeki 30 gün içinde boşluk bulunamadı. Kapasiteyi aşarak atamak ister misiniz?" 
+                            });
+                        }
+                    }
+                }
+            }
+
+            if (model.ForceShift && model.SuggestedStartDate.HasValue)
+            {
+                TimeSpan? duration = null;
+                if (order.PlannedSewingStartDate.HasValue && order.PlannedSewingEndDate.HasValue)
+                {
+                    duration = order.PlannedSewingEndDate.Value - order.PlannedSewingStartDate.Value;
+                }
+                
+                order.PlannedSewingStartDate = model.SuggestedStartDate;
+                
+                if (duration.HasValue)
+                {
+                    order.PlannedSewingEndDate = model.SuggestedStartDate.Value.Add(duration.Value);
+                }
+            }
+
+            order.SewingWorkshop = model.WorkshopName;
+            order.ProductionPlace = model.WorkshopName; // Ana üretim yeri olarak da işaretle
+            
+            _context.Update(order);
+            await _context.SaveChangesAsync();
+
             return Json(new { success = true });
         }
         catch (System.Exception ex)

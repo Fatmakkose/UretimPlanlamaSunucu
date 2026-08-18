@@ -815,6 +815,68 @@
 
         $(document).ready(function() {
 
+            // Otomatik Aksesuar Ekleme (2 Düğme, İç Barkod, Yıkama Talimatı, Fiyat Kartı)
+            function addDefaultAccessories() {
+                var btnCount = 0;
+                var hasAddedIcBarkod = false;
+                var hasAddedYikamaTalimati = false;
+                var hasAddedFiyatKarti = false;
+                var added = false;
+
+                // Türkçe karakter güvenli küçük harf dönüşümü
+                function trLower(str) {
+                    return (str || "").toLocaleLowerCase('tr')
+                        .replace(/İ/gi, 'i').replace(/ı/g, 'i')
+                        .replace(/ğ/g, 'g').replace(/ü/g, 'u')
+                        .replace(/ş/g, 's').replace(/ö/g, 'o')
+                        .replace(/ç/g, 'c');
+                }
+
+                stokKartlariList.forEach(function(s) {
+                    var name = trLower(s.StokAdi);
+                    
+                    if ((name.includes("ic barkod") || name.includes("barkod")) && !hasAddedIcBarkod && !name.includes("etiket")) {
+                        addStockMaterialRow(s.Id);
+                        hasAddedIcBarkod = true;
+                        added = true;
+                    }
+                    else if ((name.includes("yikama talimati") || name.includes("yikama")) && !hasAddedYikamaTalimati) {
+                        addStockMaterialRow(s.Id);
+                        hasAddedYikamaTalimati = true;
+                        added = true;
+                    }
+                    else if ((name.includes("fiyat karti") || name.includes("fiyat kart")) && !hasAddedFiyatKarti) {
+                        addStockMaterialRow(s.Id);
+                        hasAddedFiyatKarti = true;
+                        added = true;
+                    }
+                    else if ((name.includes("dugme") || name.includes("dügme")) && btnCount < 2) {
+                        addStockMaterialRow(s.Id);
+                        btnCount++;
+                        added = true;
+                    }
+                });
+                
+                // Eğer yeterli düğme bulunamadıysa ama herhangi bir düğme varsa 2'ye tamamla
+                if (btnCount === 1) {
+                    var btnStok = stokKartlariList.find(s => {
+                        var n = trLower(s.StokAdi);
+                        return n.includes("dugme") || n.includes("dügme");
+                    });
+                    if (btnStok) {
+                        addStockMaterialRow(btnStok.Id);
+                        btnCount++;
+                    }
+                }
+
+                if (added) {
+                    $("#materialsSectionWrapper").show();
+                }
+            }
+
+            // Sayfa yüklendiğinde otomatik ekle
+            setTimeout(addDefaultAccessories, 100);
+
             var colorOptionsHtml = '<option value="">-- Renk Seçin --</option>';
             var colorsList = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.Colors ?? new List<UretimPlanlama.Models.ColorDef>()));
             colorsList.forEach(function(c) {

@@ -942,7 +942,7 @@
 
     function saveStokKarti() {
         if (!$('#newStokAdi').val()) {
-            alert('Stok adı zorunludur!');
+            Swal.fire({ icon: 'warning', title: 'Eksik Bilgi', text: 'Stok adı zorunludur!', confirmButtonColor: '#f59e0b' });
             return;
         }
 
@@ -1005,11 +1005,11 @@
                 if (res.success) {
                     location.reload();
                 } else {
-                    alert(res.message);
+                    Swal.fire({ icon: 'error', title: 'Hata!', text: res.message, confirmButtonColor: '#ef4444' });
                 }
             },
             error: function (err) {
-                alert('İşlem sırasında bir hata oluştu.');
+                Swal.fire({ icon: 'error', title: 'Hata!', text: 'İşlem sırasında bir hata oluştu.', confirmButtonColor: '#ef4444' });
             }
         });
     }
@@ -1017,7 +1017,7 @@
     function showDetail(id) {
         currentStokId = id;
         $.get('/Stock/GetStokDetail?id=' + id, function (res) {
-            if (!res.success) { alert(res.message); return; }
+            if (!res.success) { Swal.fire({ icon: 'error', title: 'Hata!', text: res.message, confirmButtonColor: '#ef4444' }); return; }
 
             var s = res.stok;
             $('#detailTitle').text(s.stokKodu + ' — ' + s.stokAdi);
@@ -1123,12 +1123,24 @@
     // Tüm hareketler Cari Yönetimi - Alış Faturası üzerinden otomatik işlenir.
 
     function deleteStok(id, name) {
-        if (!confirm('"' + name + '" stok kartını ve tüm hareketlerini silmek istediğinize emin misiniz?')) return;
-        $.post('/Stock/DeleteStokKarti', { id: id }, function (res) {
-            if (res.success) {
-                location.reload();
-            } else {
-                alert(res.message);
+        Swal.fire({
+            title: 'Emin misiniz?',
+            text: '"' + name + '" stok kartını ve tüm hareketlerini silmek istediğinize emin misiniz?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#94a3b8',
+            confirmButtonText: 'Evet, Sil',
+            cancelButtonText: 'İptal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.post('/Stock/DeleteStokKarti', { id: id }, function (res) {
+                    if (res.success) {
+                        location.reload();
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'Hata!', text: res.message, confirmButtonColor: '#ef4444' });
+                    }
+                });
             }
         });
     }

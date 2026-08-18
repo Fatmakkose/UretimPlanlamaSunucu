@@ -620,9 +620,20 @@
                     }
                 });
             } else {
-                if (confirm("Siparişi kapatmak ve 'Tamamlandı' statüsüne almak istediğinize emin misiniz?")) {
-                    executeSaveFileClosing(completeOrder);
-                }
+                Swal.fire({
+                    title: 'Emin misiniz?',
+                    text: "Siparişi kapatmak ve 'Tamamlandı' statüsüne almak istediğinize emin misiniz?",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#0284c7',
+                    cancelButtonColor: '#94a3b8',
+                    confirmButtonText: 'Evet, Kapat',
+                    cancelButtonText: 'İptal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        executeSaveFileClosing(completeOrder);
+                    }
+                });
             }
         } else {
             executeSaveFileClosing(completeOrder);

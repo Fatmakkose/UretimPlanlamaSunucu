@@ -478,12 +478,12 @@
                         if (res.success) {
                             window.location.href = '/Order/Index';
                         } else {
-                            alert('Hata: ' + res.message);
+                            Swal.fire({ icon: 'error', title: 'Hata!', text: res.message, confirmButtonColor: '#ef4444' });
                             btn.prop('disabled', false).html(origText);
                         }
                     },
                     error: function(err) {
-                        alert('Sunucu hatası oluştu!');
+                        Swal.fire({ icon: 'error', title: 'Sunucu Hatası!', text: 'İşlem sırasında bir sunucu hatası oluştu.', confirmButtonColor: '#ef4444' });
                         console.error(err);
                         btn.prop('disabled', false).html(origText);
                     }

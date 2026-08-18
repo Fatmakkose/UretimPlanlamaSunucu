@@ -503,19 +503,19 @@
                 data: JSON.stringify(obj),
                 success: function (res) {
                     if (res.success) {
-                        alert("Planlama başarıyla kaydedildi.");
+                        Swal.fire({ icon: 'success', title: 'Başarılı!', text: 'Planlama başarıyla kaydedildi.', confirmButtonColor: '#10b981', timer: 2000, showConfirmButton: false });
                         // Refresh the local array data
                         var index = ordersData.findIndex(x => x.id == obj.Id);
                         if(index > -1) {
                             Object.assign(ordersData[index], obj);
                         }
                     } else {
-                        alert("Hata: " + res.message);
+                        Swal.fire({ icon: 'error', title: 'Hata!', text: res.message, confirmButtonColor: '#ef4444' });
                     }
                 },
                 error: function (err) {
                     console.error(err);
-                    alert("Kayıt sırasında bir hata oluştu.");
+                    Swal.fire({ icon: 'error', title: 'Hata!', text: 'Kayıt sırasında bir hata oluştu.', confirmButtonColor: '#ef4444' });
                 }
             });
         }

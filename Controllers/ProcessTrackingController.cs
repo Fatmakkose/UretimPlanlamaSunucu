@@ -255,6 +255,59 @@ namespace UretimPlanlama.Controllers
             if (order == null) return Json(new { success = false, message = "Sipariş bulunamadı" });
 
             order.CuttingProcessJson = request.CuttingProcessJson;
+
+            // Otomatik Takvime (CPS) Yansıtma
+            try 
+            {
+                if (!string.IsNullOrEmpty(request.CuttingProcessJson))
+                {
+                    using var doc = System.Text.Json.JsonDocument.Parse(request.CuttingProcessJson);
+                    var elements = System.Linq.Enumerable.ToList(doc.RootElement.EnumerateArray());
+                    
+                    if (elements.Any())
+                    {
+                        DateTime? earliestDate = null;
+                        foreach(var item in elements)
+                        {
+                            if (item.TryGetProperty("Date", out var dateProp))
+                            {
+                                string dateStr = dateProp.GetString();
+                                if (DateTime.TryParse(dateStr, out DateTime d))
+                                {
+                                    if (earliestDate == null || d < earliestDate)
+                                        earliestDate = d;
+                                }
+                            }
+                        }
+
+                        if (earliestDate.HasValue)
+                        {
+                            order.CuttingStartDate = earliestDate.Value;
+                            if (!order.PlannedCuttingStartDate.HasValue) 
+                                order.PlannedCuttingStartDate = earliestDate.Value;
+                            
+                            var prodDict = new Dictionary<string, string>();
+                            if (!string.IsNullOrEmpty(order.ProductionJson))
+                            {
+                                try { prodDict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(order.ProductionJson) ?? new Dictionary<string, string>(); } catch {}
+                            }
+                            
+                            string dateString = earliestDate.Value.ToString("yyyy-MM-dd");
+                            prodDict["prod_kesim_baslangic_actual"] = dateString;
+                            
+                            // Planlanan tarihi eğer yoksa doldur
+                            if (!prodDict.ContainsKey("prod_kesim_baslangic") || string.IsNullOrEmpty(prodDict["prod_kesim_baslangic"]))
+                            {
+                                prodDict["prod_kesim_baslangic"] = dateString;
+                            }
+                            
+                            order.ProductionJson = System.Text.Json.JsonSerializer.Serialize(prodDict);
+                        }
+                    }
+                }
+            }
+            catch { }
+
             _context.SaveChanges();
 
             return Json(new { success = true });
